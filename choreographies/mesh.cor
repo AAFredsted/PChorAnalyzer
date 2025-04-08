@@ -1,0 +1,20 @@
+
+Index I{1..n}
+Index J{1..n}
+
+Participant Worker{I, J}
+
+Channel w{I, J}
+
+Mesh = 
+    foreach(i < max(I): I){
+        foreach(j : max(J): J) {
+            W[i][j] -> W[i+1][j]: w[i+1][j]<nat>.
+            W[i][j] -> W[i][j+1]: w[i][j+1]<nat>.
+            end.
+        }
+        W[i][max(J)] -> W[i+1][max(J)]: w[i][max(J)]<nat>.
+    }
+    | foreach(k < max(J) : J) {
+        W[max(i)][k] -> W[max(i)][k+1]: w[max(i)][k+1]<nat>.end.
+    }

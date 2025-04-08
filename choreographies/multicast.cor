@@ -1,0 +1,11 @@
+Index I{1..n}
+
+Participant Sender{1}
+Participant Reciever{i : I}
+
+Channel r{i: I}
+
+Multicast = 
+    foreach(i : I){
+        Sender -> Reciever[i]: r[i]<nat>
+    }
