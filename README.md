@@ -1,5 +1,11 @@
 # PChorAnalyzer
-Implementation of a static code analyzer plugin for c++ where a parametrized choreography written in a  DSL is used to validate a c++ implementation of that choreography.
+
+**PChorAnalyzer** is a static code analyzer seeking to validate c++ code against a formal choreography description written in a DSL.
+
+The Choreography DSL was inspired by the following papers:
+
+- [A Comparative Study of Graph-Based and Constraint-Based Approaches for Program Analysis (arXiv:1208.6483)](https://arxiv.org/pdf/1208.6483)
+- [A Unified Static Analysis Framework Based on Universal Program Representations (DOI:10.1145/2827695)](https://dl.acm.org/doi/10.1145/2827695)
 
 ```ebnf
 <choreography> ::= <declaration>* <global_type_declaration>
@@ -68,3 +74,65 @@ Implementation of a static code analyzer plugin for c++ where a parametrized cho
 <value> ::= <number> | <identifier>
 
 <comment> ::= "#" <text>
+```
+
+## Usage of Plugin
+
+PChorAnalyzer uses Clang's ASTActions to inspect your source file during compilation. 
+Once the .so-file has been built, you can link it in your compilation process as follows.
+
+```bash
+clang++ -std=c++23 -fplugin=../build/libPchorAnalyzerPlugin.so -c test.cpp -o test.o
+```
+
+---
+
+## Prerequisites
+
+- **Compiler**: Clang with C++23 support.
+- **Build System**: CMake (v3.x or higher recommended).
+- **LLVM/Clang Development**: Ensure that the relevant LLVM/Clang headers and libraries are installed.
+
+---
+
+## Installation and Build
+
+Clone the Repository:
+
+```bash
+git clone <repository-url>
+cd PChorAnalyzer
+```
+
+Configure and Build:
+
+```bash
+mkdir build
+cd build
+cmake ..
+make
+```
+
+This generates the plugin shared library (e.g., `libPchorAnalyzerPlugin.so`) in the build directory.
+
+---
+
+## License
+
+MIT License
+
+---
+
+## Acknowledgements
+
+- **Clang Community**: Thanks to the Clang documentation and community examples that provided guidance.
+- **Research References**:
+  - [A Comparative Study of Graph-Based and Constraint-Based Approaches for Program Analysis](https://arxiv.org/pdf/1208.6483)
+  - [A Unified Static Analysis Framework Based on Universal Program Representations](https://dl.acm.org/doi/10.1145/2827695)
+- Developed as part of my master’s thesis.
+
+---
+
+## Contact
+
+For questions or further discussion, please contact **[AAFredsted]** at **[Aandr@itu.dk]** or open an issue on GitHub.
