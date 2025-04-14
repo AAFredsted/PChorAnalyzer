@@ -4,50 +4,38 @@
 #include "PchorAST.hpp"
 
 #include <unordered_map>
-
+#include <memory> // For std::unique_ptr
 
 namespace PchorAST {
 
 class SymbolTable {
 public: 
-    void addDeclaration(const std::string& name, std::shared_ptr<PchorASTNode> node) {
-        table.insert(std::make_pair(name, node));
-    }
-
-    std::shared_ptr<PchorASTNode> resolve(const std::string& name) const {
-        auto it = table.find(name);
-        if(it != table.end()){
-            return it-> second;
-        }
-        return nullptr;
-    }
-
+    void addDeclaration(const std::string& name, std::shared_ptr<PchorASTNode> node);
+    std::shared_ptr<PchorASTNode> resolve(const std::string& name) const;
+    
 private:
     std::unordered_map<std::string, std::shared_ptr<PchorASTNode>> table;
 };
 
 class Parser {
 public:
-    explicit Parser(PchorLexer& lexer, SymbolTable &symbolTable) : lexer(lexer), symbolTable(symbolTable) {}
+    // Constructor now takes ownership of lexer and symbol table
+    explicit Parser(std::unique_ptr<PchorLexer> lexer, std::unique_ptr<SymbolTable> symbolTable)
+        : lexer(std::move(lexer)), symbolTable(std::move(symbolTable)) {}
 
     void parse();
 
 private:
-    PchorLexer& lexer;
-    SymbolTable& symbolTable;
+    std::unique_ptr<PchorLexer> lexer; // Unique ownership of lexer
+    std::unique_ptr<SymbolTable> symbolTable; // Unique ownership of symbol table
     std::vector<TokenType> Tokens;
     
     void parseDeclaration();
-
     void parseParticipant();
-
     void parseChannel();
-
     void parseIndex();
-
     void ParseGlobalType();
-
     void fetchReference();
 };
-    
-} //namespace PchorAST
+
+} // namespace PchorAST
