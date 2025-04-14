@@ -82,7 +82,7 @@ PChorAnalyzer uses Clang's ASTActions to inspect your source file during compila
 Once the .so-file has been built, you can link it in your compilation process as follows.
 
 ```bash
-clang++ -std=c++23 -fplugin=../build/libPchorAnalyzerPlugin.so -c test.cpp -o test.o
+clang++ -std=c++23 -Xclang -load -Xclang ../build/libPchorAnalyzerPlugin.so  -Xclang -plugin-arg-PchorAnalyzer -Xclang --cor=<path_to_cor-file> -c test.cpp -o test
 ```
 
 ---
@@ -136,3 +136,4 @@ MIT License
 ## Contact
 
 For questions or further discussion, please contact **[AAFredsted]** at **[Aandr@itu.dk]** or open an issue on GitHub.
+

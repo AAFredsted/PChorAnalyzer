@@ -101,6 +101,7 @@ Token PchorLexer::parseSymbol(char c) {
 
 Token PchorLexer::parseIdentifierOrKeyword() {
     std::string decl = file->readDecl();
+    line = file->getLine();
     if (decl == "Index" || decl == "Participant" || decl == "Channel" ||
         decl == "foreach" || decl == "Rec" || decl == "end") {
         return {TokenType::Keyword, decl, line};
@@ -114,6 +115,7 @@ Token PchorLexer::parseLiteral(char firstChar) {
         return {TokenType::Literal, "n", line};
     }
     std::string value = file->readLiteral(); // Consume literal
+    line = file->getLine();
     return {TokenType::Literal, value, line};
 }
 

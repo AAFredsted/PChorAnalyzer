@@ -5,6 +5,7 @@
 
 #include <unordered_map>
 #include <memory> // For std::unique_ptr
+#include <print>
 
 namespace PchorAST {
 
@@ -17,18 +18,17 @@ private:
     std::unordered_map<std::string, std::shared_ptr<PchorASTNode>> table;
 };
 
-class Parser {
+class PchorParser {
 public:
     // Constructor now takes ownership of lexer and symbol table
-    explicit Parser(std::unique_ptr<PchorLexer> lexer, std::unique_ptr<SymbolTable> symbolTable)
-        : lexer(std::move(lexer)), symbolTable(std::move(symbolTable)) {}
+    explicit PchorParser(const std::string& filePath) : lexer(std::make_unique<PchorLexer>(filePath)), symbolTable(std::make_unique<SymbolTable>()), tokens(){}
 
     void parse();
 
 private:
     std::unique_ptr<PchorLexer> lexer; // Unique ownership of lexer
     std::unique_ptr<SymbolTable> symbolTable; // Unique ownership of symbol table
-    std::vector<TokenType> Tokens;
+    std::vector<Token> tokens;
     
     void parseDeclaration();
     void parseParticipant();

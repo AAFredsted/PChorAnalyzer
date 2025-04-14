@@ -17,7 +17,7 @@ add_compile_options(-Wall -Wextra -O2)
 
 
 # Setup for Lexer and Semantics Parser of Language, which generates PchorAST
-add_library(PchorCore STATIC
+add_library(PchorCore SHARED
     ./src/pchor/PchorAST.cpp
     ./src/pchor/PchorFileWrapper.hpp
     ./src/pchor/PchorParser.cpp

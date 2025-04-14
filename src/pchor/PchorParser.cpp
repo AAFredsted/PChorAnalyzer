@@ -14,4 +14,12 @@ std::shared_ptr<PchorASTNode> SymbolTable::resolve(const std::string& name) cons
     }
     return nullptr;
 }
+
+void PchorParser::parse() {
+    tokens = lexer->genTokens();
+    for(Token t: tokens){
+        std::println("{}", t.toString());
+    }
+}
+
 }

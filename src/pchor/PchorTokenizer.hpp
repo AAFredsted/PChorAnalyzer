@@ -25,9 +25,7 @@ struct Token {
 class PchorLexer {
 public:
     // Constructor: Takes ownership of the PchorFileWrapper
-    explicit PchorLexer(std::unique_ptr<PchorFileWrapper> file)
-        : file(std::move(file)), line(1) {}
-
+    explicit PchorLexer(const std::string& filePath): file(std::make_unique<PchorFileWrapper>(filePath)), line(1) {}
     // Delete copy constructor and copy assignment operator
     PchorLexer(const PchorLexer &other) = delete;
     PchorLexer &operator=(const PchorLexer &other) = delete;

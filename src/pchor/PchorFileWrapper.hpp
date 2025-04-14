@@ -11,9 +11,11 @@
 namespace PchorAST {
 class PchorFileWrapper {
     int fd;
+    size_t line;
 public:
     explicit PchorFileWrapper(const std::string& filePath) {
         fd = open(filePath.c_str(), O_RDONLY);
+        line = 1;
         if(fd == -1){
             std::println("Failed to open file {}", strerror(errno));
         }
@@ -42,16 +44,34 @@ public:
         return *this;
     }
 
+    size_t getLine(){
+        return line;
+    }
+
     void readChar(char& c) {
-        if(read(fd, &c, 1) <= 0){
-            throw std::runtime_error("Failed to read character from file");
+        ssize_t bytesRead = read(fd, &c, 1);
+        if (bytesRead == 0) {
+            c = '\0';
+        }
+        if (bytesRead < 0) {
+            throw std::runtime_error("Failed to read character from file: " + std::string(strerror(errno)));
+        }
+        if(c == '\n'){
+            line++;
         }
     }
 
     char readChar() {
         char c;
-        if(read(fd, &c, 1) <= 0){
-            throw std::runtime_error("Failed to read character from file");
+        ssize_t bytesRead = read(fd, &c, 1);
+        if (bytesRead == 0) {
+            return '\0';
+        }
+        if (bytesRead < 0) {
+            throw std::runtime_error("Failed to read character from file: " + std::string(strerror(errno)));
+        }
+        if(c == '\n'){
+            line++;
         }
         return c;
     }
@@ -73,10 +93,10 @@ public:
         size_t i = 0;
 
         readChar(buffer[i]);
-        while(buffer[i] != ' ' || buffer[i] != '(' || buffer[i] != ':'){
+        while(buffer[i] != ' ' && buffer[i] != '(' && buffer[i] != ':' && buffer[i] != '\n'){
             i++;
             if(i == 20){
-                throw std::runtime_error("Maximum namespace length exceeded");
+                throw std::runtime_error("Maximum namespace length exceeded, current buffer: " + std::string(buffer));
             }
             readChar(buffer[i]);
         }
@@ -86,9 +106,9 @@ public:
     std::string readLiteral(){
         char buffer[20];
         size_t i = 0;
-        while(isValid() && std::isdigit(peekChar())) {
+        while(isValid() && peekChar() != '\0' && std::isdigit(peekChar())) {
             if(i == 20){
-                throw std::runtime_error("Maximum literal length exceeded");
+                throw std::runtime_error("Maximum literal length exceeded, current buffer: " + std::string(buffer));
             }
              buffer[i] = readChar();
              i++;
