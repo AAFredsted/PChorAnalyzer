@@ -15,24 +15,44 @@ find_package(Clang REQUIRED CONFIG)
 set(CMAKE_BUILD_TYPE Debug)
 add_compile_options(-Wall -Wextra -O2)
 
-# Add the Clang plugin as a shared library
+
+# Setup for Lexer and Semantics Parser of Language, which generates PchorAST
+add_library(PchorCore STATIC
+    ./src/pchor/PchorAST.cpp
+    ./src/pchor/PchorFileWrapper.hpp
+    ./src/pchor/PchorParser.cpp
+    ./src/pchor/PchorTokenizer.cpp
+)
+
+target_include_directories(PchorCore PRIVATE
+    ./src/pchor
+    ./src/utils
+)
+
+
+# Plugin is shared library which is linked to PchorCore later
 add_library(PchorAnalyzerPlugin SHARED
     ./src/analyzer/AstVisitor.cpp
     ./src/analyzer/Analyzer.cpp
     ./src/utils/Utils.cpp
-    ./src/pchor/pchor.cpp
     ./src/analyzer/Plugin.cpp
 )
 
-# Include directories for the target
+
+
+# Include directories for plugin
 target_include_directories(PchorAnalyzerPlugin SYSTEM PRIVATE
     ${LLVM_INCLUDE_DIRS}
     ${CLANG_INCLUDE_DIRS}
     /usr/lib/llvm-18/include
+    ./src/pchor
+    ./src/utils
+    ./src/analyzer
 )
 
 # Link against Clang libraries
 target_link_libraries(PchorAnalyzerPlugin
+    PchorCore
     clangAST
     clangASTMatchers
     clangBasic
