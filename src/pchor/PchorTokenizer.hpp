@@ -20,7 +20,7 @@ struct Token {
     std::string_view value;
     size_t line;
 
-    std::string toString();
+    std::string toString() const;
 };
 
 class PchorLexer {

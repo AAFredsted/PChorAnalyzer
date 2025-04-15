@@ -2,6 +2,7 @@
 
 #include <string>
 #include <memory> // For std::shared_ptr
+#include <limits>
 
 // ASTParser using visitor pattern
 namespace PchorAST {
@@ -36,33 +37,39 @@ protected:
 class DeclPchorASTNode : public PchorASTNode {
 public:
     // Get the name of the declaration
-    const std::string& getName() const { return name; }
+    const std::string getName() const { return std::string(name); }
 
     // Accept a visitor
     void accept(PchorASTVisitor &visitor) const override;
 
 protected:
-    std::string name;
+    std::string_view name;
 
     // Constructor
-    explicit DeclPchorASTNode(Decl declType, std::string name);
+    explicit DeclPchorASTNode(Decl declType, std::string_view name);
 };
 
-// Class for reference AST nodes
-class RefPchorASTNode : public PchorASTNode {
+class IndexASTNode : public DeclPchorASTNode {
 public:
-    // Get the name of the reference
-    const std::string& getName() const { return name; }
-
-    // Accept a visitor
-    void accept(PchorASTVisitor &visitor) const override;
-
+    explicit IndexASTNode(std::string_view name, Token& lower_token, Token& upper_token) : DeclPchorASTNode(Decl::Index_Decl, std::move(name)), lower(parseLiteral(lower_token.value)), upper(parseLiteral(upper_token.value)) {}
 protected:
-    Ref ref;
-    std::string name;
+    const size_t lower;
+    const size_t upper;
+private:
+    static size_t parseLiteral(std::string_view literal) {
+        if (literal == "n") {
+            return std::numeric_limits<size_t>::max(); // Unbounded
+        }
 
-    // Constructor
-    explicit RefPchorASTNode(Decl declType, std::string name);
+        size_t value = 0;
+        auto [ptr, ec] = std::from_chars(literal.data(), literal.data() + literal.size(), value);
+        if (ec == std::errc::invalid_argument) {
+            throw std::runtime_error("Invalid literal: " + std::string(literal));
+        } else if (ec == std::errc::result_out_of_range) {
+            throw std::runtime_error("Literal out of range: " + std::string(literal));
+        }
+        return value;
+    }
+
 };
-
 } // namespace PchorAST

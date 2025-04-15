@@ -30,11 +30,10 @@ private:
     std::unique_ptr<SymbolTable> symbolTable; // Unique ownership of symbol table
     std::vector<Token> tokens;
     
-    void parseDeclaration();
-    void parseParticipant();
-    void parseChannel();
-    void parseIndex();
-    void ParseGlobalType();
+    void parseParticipantDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
+    void parseChannelDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
+    void parseIndexDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
+    void parseGlobalTypeDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
     void fetchReference();
 };
 
