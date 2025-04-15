@@ -29,7 +29,7 @@ std::string Token::toString(){
     return s;
 }
 
-const std::string PchorLexer::symbols = "{}<>[]().|=";
+const std::string PchorLexer::symbols = "{}<>[]().|=+-\\";
 const std::unordered_set<std::string_view> PchorLexer::keywords{
     "Index", "Participant", "Channel", "foreach", "end", "min", "max"
 };
