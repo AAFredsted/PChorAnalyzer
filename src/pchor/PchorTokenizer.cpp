@@ -29,25 +29,26 @@ std::string Token::toString(){
     return s;
 }
 
-const std::string PchorLexer::symbols = "{}<>[].|=";
+const std::string PchorLexer::symbols = "{}<>[]().|=";
 const std::unordered_set<std::string_view> PchorLexer::keywords{
     "Index", "Participant", "Channel", "foreach", "end", "min", "max"
 };
  
 std::vector<Token> PchorLexer::genTokens() {
     std::string_view input = file->getBuffer();
-
-    std::println("\n{}", input);
     std::vector<Token> tokens{};
 
     auto itr = input.begin();
     const auto end = input.end();
 
+    size_t i = 1;
     tokens.emplace_back(nextToken(itr, end));
-    std::println("Token Found: {}", tokens.back().toString());
     while(tokens.back().type != TokenType::EndOfFile){
+        i++;
         tokens.emplace_back(nextToken(itr, end));
-        std::println("Token Found: {}", tokens.back().toString());
+        if(i == 200){
+            break;
+        }
     }
 
     return tokens;
@@ -132,7 +133,7 @@ std::string_view::iterator PchorLexer::isLiteral(std::string_view::iterator& itr
         return end;
     }
 
-    if (*itr == 'n') {
+    if (*itr == 'n' && (itr+1) != end && (symbols.find(*(itr+1)) != std::string_view::npos || std::isspace(*(itr+1)))) {
         return itr + 1;
     }
 

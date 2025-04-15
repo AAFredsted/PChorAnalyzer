@@ -1,11 +1,11 @@
 Index I{1..n}
 
 Participant Sender{1}
-Participant Reciever{i : I}
+Participant Reciever{I}
 
-Channel r{i: I}
+Channel r{I}
 
 Multicast = 
     foreach(i : I){
-        Sender -> Reciever[i]: r[i]<nat>
+        Sender -> Reciever[i]: r[i]<nat>. end
     }

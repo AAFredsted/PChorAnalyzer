@@ -68,6 +68,7 @@ public:
                 lastWasSpace = false;
             }
         }
+        buffer.push_back(' ');
     }
 
     const std::string& getBuffer() const {
