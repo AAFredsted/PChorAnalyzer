@@ -2,9 +2,6 @@ Index I{1..n}
 Participant W{I}
 Channel w{I}
 
-//Ring = foreach(i < max(I)){
-//    W[i] -> W[i+1]: w[i]<nat>. end
-//} | W[max(I)] -> W[min(I)]: w[min(I)]. end
-
-
-
+Ring = foreach(i < max(I)){
+    W[i] -> W[i+1]: w[i]<nat>. end
+} | W[max(I)] -> W[min(I)]: w[min(I)]. end

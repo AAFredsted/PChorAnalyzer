@@ -1,125 +1,77 @@
-#pragma once 
-#include <vector>
+#pragma once
 #include <fcntl.h>
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <print>
-#include "cstring"
-#include <charconv>
+#include <stdexcept>
+#include <cstring>
+#include <cctype>
 
 namespace PchorAST {
 class PchorFileWrapper {
-    int fd;
-    size_t line;
+    std::string buffer;
+
 public:
     explicit PchorFileWrapper(const std::string& filePath) {
-        fd = open(filePath.c_str(), O_RDONLY);
-        line = 1;
-        if(fd == -1){
-            std::println("Failed to open file {}", strerror(errno));
+        int fd = open(filePath.c_str(), O_RDONLY);
+        if (fd == -1) {
+            throw std::runtime_error("Failed to open file: " + std::string(strerror(errno)));
         }
-    }
-    ~PchorFileWrapper() {
-        if(fd != 1) {
+
+        // Get the file size
+        off_t fileSize = lseek(fd, 0, SEEK_END);
+        if (fileSize == -1) {
             close(fd);
+            throw std::runtime_error("Failed to determine file size: " + std::string(strerror(errno)));
         }
-    }
+        lseek(fd, 0, SEEK_SET); // Reset file descriptor to the beginning
 
-    PchorFileWrapper(const PchorFileWrapper& other) = delete;
-    PchorFileWrapper(PchorFileWrapper&& other) noexcept : fd(other.fd) {
-        other.fd = -1;
-    }
-
-    PchorFileWrapper& operator=(const PchorFileWrapper& other) = delete;
-    PchorFileWrapper& operator=(PchorFileWrapper&& other) noexcept {
-        if(this != &other) {
-            //close current filewrapper
-            if(fd != -1) {
-                close(fd);
-            }
-            fd = other.fd;
-            other.fd = -1;
-        }
-        return *this;
-    }
-
-    size_t getLine(){
-        return line;
-    }
-
-    void readChar(char& c) {
-        ssize_t bytesRead = read(fd, &c, 1);
-        if (bytesRead == 0) {
-            c = '\0';
-        }
+        // Read the entire file into a temporary buffer
+        std::string tempBuffer(fileSize, '\0');
+        ssize_t bytesRead = read(fd, tempBuffer.data(), fileSize);
         if (bytesRead < 0) {
-            throw std::runtime_error("Failed to read character from file: " + std::string(strerror(errno)));
+            close(fd);
+            throw std::runtime_error("Failed to read file: " + std::string(strerror(errno)));
         }
-        if(c == '\n'){
-            line++;
-        }
-    }
+        close(fd);
 
-    char readChar() {
-        char c;
-        ssize_t bytesRead = read(fd, &c, 1);
-        if (bytesRead == 0) {
-            return '\0';
-        }
-        if (bytesRead < 0) {
-            throw std::runtime_error("Failed to read character from file: " + std::string(strerror(errno)));
-        }
-        if(c == '\n'){
-            line++;
-        }
-        return c;
-    }
-    
-    char peekChar() {
-        char c = readChar();
-        seekBack();
-        return c;
-    }
+        // Process the buffer to preserve spaces between tokens and handle comments
+        bool inComment = false;
+        bool lastWasSpace = false;
+        for (size_t i = 0; i < tempBuffer.size(); ++i) {
+            char c = tempBuffer[i];
 
-    void seekBack(){
-        if(lseek(fd, -1, SEEK_CUR) == -1){
-            throw std::runtime_error("Failed to rollback during lexing of tokens" + std::string(strerror(errno)));
-        }
-    }
-
-    std::string readDecl() {
-        char buffer[20];
-        size_t i = 0;
-
-        readChar(buffer[i]);
-        while(buffer[i] != ' ' && buffer[i] != '(' && buffer[i] != ':' && buffer[i] != '\n'){
-            i++;
-            if(i == 20){
-                throw std::runtime_error("Maximum namespace length exceeded, current buffer: " + std::string(buffer));
+            if (inComment) {
+                if (c == '\n') {
+                    inComment = false;
+                    buffer.push_back(c);
+                }
+                continue;
             }
-            readChar(buffer[i]);
-        }
-        buffer[i] = '\0';
-        return std::string(buffer);
-    }
-    std::string readLiteral(){
-        char buffer[20];
-        size_t i = 0;
-        while(isValid() && peekChar() != '\0' && std::isdigit(peekChar())) {
-            if(i == 20){
-                throw std::runtime_error("Maximum literal length exceeded, current buffer: " + std::string(buffer));
+
+            if (c == '/' && i + 1 < tempBuffer.size() && tempBuffer[i + 1] == '/') {
+                inComment = true;
+                ++i;
+                continue;
             }
-             buffer[i] = readChar();
-             i++;
+
+            if (std::isspace(c)) {
+                if (c == '\n') {
+                    buffer.push_back(c);
+                    lastWasSpace = false;
+                } else if (!lastWasSpace) {
+                    buffer.push_back(' ');
+                    lastWasSpace = true;
+                }
+            } else {
+                buffer.push_back(c);
+                lastWasSpace = false;
+            }
         }
-        buffer[i] = '\0';
-        return std::string(buffer);
     }
 
-    bool isValid() const {
-        return fd != -1;
+    const std::string& getBuffer() const {
+        return buffer;
     }
-
 };
-} //namespace PchorAST
+} // namespace PchorAST

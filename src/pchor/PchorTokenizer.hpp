@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <memory> // For std::unique_ptr
+#include <unordered_set>
 
 namespace PchorAST {
 
@@ -16,7 +17,7 @@ enum class TokenType {
 
 struct Token {
     TokenType type;
-    std::string value;
+    std::string_view value;
     size_t line;
 
     std::string toString();
@@ -47,19 +48,27 @@ public:
     std::vector<Token> genTokens();
 
     // Get the next token
-    Token nextToken();
+    Token nextToken(std::string_view::iterator& itr, const std::string_view::iterator& end);
 
 private:
+    static const std::string symbols;
+    static const std::unordered_set<std::string_view> keywords;
     std::unique_ptr<PchorFileWrapper> file; // Unique ownership of the file wrapper
     size_t line;
 
-    void skipToNextToken();
 
-    bool isSymbol(char c) const;
+    void skipToNextToken(std::string_view::iterator& itr, const std::string_view::iterator& end);
+
+    std::string_view::iterator isSymbol(std::string_view::iterator& itr, const std::string_view::iterator& end) const;
+    std::string_view::iterator isIdentifier(std::string_view::iterator& itr, const std::string_view::iterator& end) const; 
+    std::string_view::iterator isKeyword(std::string_view::iterator& itr, const std::string_view::iterator& end) const; 
+    std::string_view::iterator isLiteral(std::string_view::iterator& itr, const std::string_view::iterator& end) const;
 
     Token parseSymbol(char c);
 
-    Token parseIdentifierOrKeyword();
+    Token parseIdentifier();
+
+    Token parseKeyWord();
 
     Token parseLiteral(char firstChar);
 };

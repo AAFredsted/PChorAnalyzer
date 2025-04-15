@@ -1,7 +1,7 @@
 #include "PchorTokenizer.hpp"
 #include <string>
 #include <vector>
-
+#include <print>
 namespace  PchorAST{
 std::string Token::toString(){
     std::string s;
@@ -25,98 +25,131 @@ std::string Token::toString(){
             s = "Unknown";
             break;
     }
-    s += " " + value + " " + std::to_string(line) + "\n";
+    s += " " + std::string(value) + " " + std::to_string(line) + "\n";
     return s;
 }
 
+const std::string PchorLexer::symbols = "{}<>[].|=";
+const std::unordered_set<std::string_view> PchorLexer::keywords{
+    "Index", "Participant", "Channel", "foreach", "end", "min", "max"
+};
+ 
 std::vector<Token> PchorLexer::genTokens() {
+    std::string_view input = file->getBuffer();
+
+    std::println("\n{}", input);
     std::vector<Token> tokens{};
-    tokens.emplace_back(nextToken());
-    while (tokens.back().type != TokenType::EndOfFile && tokens.back().type != TokenType::Unknown) {
-        tokens.emplace_back(nextToken());
+
+    auto itr = input.begin();
+    const auto end = input.end();
+
+    tokens.emplace_back(nextToken(itr, end));
+    std::println("Token Found: {}", tokens.back().toString());
+    while(tokens.back().type != TokenType::EndOfFile){
+        tokens.emplace_back(nextToken(itr, end));
+        std::println("Token Found: {}", tokens.back().toString());
     }
+
     return tokens;
 }
 
 
-// Get the next token
-Token PchorLexer::nextToken() {
-    skipToNextToken();
-
-    if (!file->isValid()) {
-        return {TokenType::EndOfFile, "", line};
+Token PchorLexer::nextToken(std::string_view::iterator& itr, const std::string_view::iterator& end) {
+    skipToNextToken(itr, end);
+    
+    
+    if(itr == end){
+        return {TokenType::EndOfFile, std::string_view{itr, end}, 1};
+    }
+    
+    auto possibleEnd = isSymbol(itr, end);
+    if(possibleEnd != end) {
+        std::string_view value(itr, std::distance(itr, possibleEnd));
+        itr = possibleEnd;
+        return {TokenType::Symbol, value, line};
     }
 
-    char c = file->peekChar();
-
-    // Determine the type of token based on the first character
-    if (std::isalpha(c)) {
-        return parseIdentifierOrKeyword();
-    } else if (std::isdigit(c) || c == 'n') {
-        return parseLiteral(c);
-    } else if (isSymbol(c)) {
-        return parseSymbol(file->readChar());
+    possibleEnd = isLiteral(itr, end);
+    if(possibleEnd != end) {
+        std::string_view value(itr, std::distance(itr, possibleEnd));
+        itr = possibleEnd;
+        return {TokenType::Literal, value, line};
     }
 
-    // Unknown token
-    return {TokenType::Unknown, std::string(1, file->readChar()), line};
+    possibleEnd = isKeyword(itr, end);
+    if(possibleEnd != end) {
+        std::string_view value(itr, std::distance(itr, possibleEnd));
+        itr = possibleEnd;
+        return {TokenType::Keyword, value, line};
+    }
+
+    possibleEnd = isIdentifier(itr, end);
+    if(possibleEnd != end){
+        std::string_view value(itr, std::distance(itr, possibleEnd));
+        itr = possibleEnd;
+        return {TokenType::Identifier, value, line};
+    }
+
+    std::string_view value(itr, std::distance(itr, itr + 1));
+    itr++;
+    return {TokenType::Unknown, value, line};
 }
 
-void PchorLexer::skipToNextToken() {
-    bool tokenCharReached = false;
-    while (!tokenCharReached && file->isValid()) {
-        char c = file->readChar();
-        if (c == '\n') {
+void PchorLexer::skipToNextToken(std::string_view::iterator& itr, const std::string_view::iterator& end) {
+    while (itr != end && std::isspace(*itr)) {
+        if (*itr == '\n') {
             line++;
-        } else if (std::isspace(c)) {
-            continue;
-        } else if (c == '/' && file->isValid() && file->peekChar() == '/') {
-            // Skip single-line comments
-            file->readChar(); // Consume the second '/'
-            while (file->isValid() && file->readChar() != '\n') {}
-            line++;
-        } else {
-            file->seekBack();
-            tokenCharReached = true;
         }
+        ++itr;
     }
 }
 
-
-bool PchorLexer::isSymbol(char c) const {
-    return std::string("{}:<>.=|->").find(c) != std::string::npos;
-}
-
-
-Token PchorLexer::parseSymbol(char c) {
-    if (c == '-' && file->isValid()) {
-        file->readChar(); // Consume '-'
-        if (file->readChar() != '>') {
-            throw std::runtime_error("Invalid Symbol: > missing from arrow operator");
-        } // Consume '>'
-        return {TokenType::Symbol, "->", line};
+std::string_view::iterator PchorLexer::isSymbol(std::string_view::iterator& itr, const std::string_view::iterator& end) const {
+    if (itr == end) {
+        return end;
     }
-    return {TokenType::Symbol, std::string(1, c), line};
+    if (*itr == '-' && (itr + 1) != end && *(itr + 1) == '>') {
+        return itr + 2; // Return iterator past "->"
+    }
+
+    if (symbols.find(*itr) != std::string::npos) {
+        return itr + 1;
+    }
+
+    return end;
 }
 
-Token PchorLexer::parseIdentifierOrKeyword() {
-    std::string decl = file->readDecl();
-    line = file->getLine();
-    if (decl == "Index" || decl == "Participant" || decl == "Channel" ||
-        decl == "foreach" || decl == "Rec" || decl == "end") {
-        return {TokenType::Keyword, decl, line};
-    }
-    return {TokenType::Identifier, decl, line};
+
+std::string_view::iterator PchorLexer::isKeyword(std::string_view::iterator& itr, const std::string_view::iterator& end) const {
+    auto spaceItr = std::find_if(itr, end, [](char c) { return std::isspace(c) || symbols.find(c) != std::string_view::npos; });
+    std::string_view possibleKeyword(&(*itr), std::distance(itr, spaceItr));
+
+    return keywords.find(possibleKeyword) != keywords.end() ? spaceItr : end;
 }
 
-Token PchorLexer::parseLiteral(char firstChar) {
-    if (firstChar == 'n') {
-        file->readChar(); // Consume 'n'
-        return {TokenType::Literal, "n", line};
+std::string_view::iterator PchorLexer::isLiteral(std::string_view::iterator& itr, const std::string_view::iterator& end) const {
+    if (itr == end) {
+        return end;
     }
-    std::string value = file->readLiteral(); // Consume literal
-    line = file->getLine();
-    return {TokenType::Literal, value, line};
+
+    if (*itr == 'n') {
+        return itr + 1;
+    }
+
+    if (std::isdigit(*itr)) {
+        auto incr_itr = itr;
+        while (incr_itr != end && std::isdigit(*incr_itr)) {
+            ++incr_itr;
+        }
+        return incr_itr;
+    }
+
+    return end;
 }
+
+std::string_view::iterator PchorLexer::isIdentifier(std::string_view::iterator& itr, const std::string_view::iterator& end) const{
+    return std::find_if(itr, end, [](char c) { return std::isspace(c) || symbols.find(c) != std::string_view::npos; });
+}
+
 
 }//namespace PchorAST
