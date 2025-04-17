@@ -19,8 +19,6 @@ class PchorASTNode {
 public:
     // Enum for declaration types
     enum class Decl : uint8_t { Index_Decl, Participant_Decl, Channel_Decl, Label_Decl, Global_Type_Decl };
-    // Enum for reference types
-    enum class Ref : uint8_t { Index_Ref, Participant_Ref, Channel_Ref, Label_Ref, Global_Type_Ref };
 
     virtual ~PchorASTNode() = default;
 
