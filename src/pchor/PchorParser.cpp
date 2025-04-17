@@ -43,7 +43,7 @@ namespace PchorAST
             Parsing of outer expressions, where expressions are limited to declarations of Indeces, Participants, Channels and Global Types
         */
 
-        while (itr != end)
+        while (itr->type != TokenType::EndOfFile && itr!=end)
         {
             switch (itr->type)
             {
@@ -71,7 +71,10 @@ namespace PchorAST
             default:
                 throw std::runtime_error("Token: " + itr->toString() + "cannot be an Outer Expression Keyword or Identifier");
             }
+            ++itr;
+            std::println("We succesfully parsed something and are now at: {}", itr->toString());
         }
+        std::println("succesfully parsed file");
     }
 
     void PchorParser::parseIndexDecl(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end)
@@ -89,6 +92,8 @@ namespace PchorAST
         {
             throw std::runtime_error("Expected 'Index' keyword, but got: " + itr->toString());
         }
+
+        ++itr;
 
         if (itr == end || itr->type != TokenType::Identifier)
         {
@@ -111,7 +116,13 @@ namespace PchorAST
         Token lowerToken = *itr;
         ++itr;
 
-        if (itr == end || itr->type != TokenType::Symbol || itr->value != "..")
+        if (itr == end || itr->type != TokenType::Symbol || itr->value != ".")
+        {
+            throw std::runtime_error("Expected '.' after lower bound, but got: " + itr->toString());
+        }
+        ++itr;
+
+        if (itr == end || itr->type != TokenType::Symbol || itr->value != ".")
         {
             throw std::runtime_error("Expected '..' after lower bound, but got: " + itr->toString());
         }
@@ -129,7 +140,6 @@ namespace PchorAST
         {
             throw std::runtime_error("Expected '}' after upper bound, but got: " + itr->toString());
         }
-        ++itr;
 
         // Create the IndexASTNode and add it to the symbol table
         auto indexNode = std::make_shared<IndexASTNode>(indexName, lowerToken, upperToken);
@@ -153,6 +163,8 @@ namespace PchorAST
             throw std::runtime_error("Expected 'Participant' keyword, but got: " + itr->toString());
         }
 
+        itr++;
+
         if (itr == end || itr->type != TokenType::Identifier)
         {
             throw std::runtime_error("Expected Identifier after 'Participant', but got: " + itr->toString());
@@ -164,6 +176,7 @@ namespace PchorAST
         {
             throw std::runtime_error("Expected '{' after Identifier, but got: " + itr->toString());
         }
+        ++itr;
 
         std::shared_ptr<PchorASTNode> ASTNode;
         std::shared_ptr<IndexASTNode> IdxNode;
@@ -187,17 +200,85 @@ namespace PchorAST
             IdxNode = nullptr;
             break;
         default:
-            throw std::runtime_error("Expected Literal or Idenfier of Index, but found: " + itr->toString());
+            throw std::runtime_error("Expected Literal or Identifier of Index, but found: " + itr->toString());
         }
-        itr++;
+        ++itr;
 
-        if (itr == end || itr->type != TokenType::Symbol || itr->value != "{")
+        if (itr == end || itr->type != TokenType::Symbol || itr->value != "}")
         {
             throw std::runtime_error("Expected '}' after Identifier, but got: " + itr->toString());
         }
 
         auto Participant = std::make_shared<ParticipantASTNode>(participantName, IdxNode);
         symbolTable->addDeclaration(participantName, Participant);
+    }
+
+    void PchorParser::parseChannelDecl(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end) {
+        /*
+        Declaration Semantics
+        Channel <Identifier>{Index} || {1}
+        which is 5 tokens
+        */
+       if (std::distance(itr, end) < 5)
+       {
+           throw std::runtime_error("Incomplete Index declaration: not enough tokens remaining.");
+       }
+
+       if (itr->value != "Channel")
+       {
+           throw std::runtime_error("Expected 'Channel' keyword, but got: " + itr->toString());
+       }
+        ++itr;
+       if (itr == end || itr->type != TokenType::Identifier)
+       {
+           throw std::runtime_error("Expected Identifier after 'Channel', but got: " + itr->toString());
+       }
+       std::string channelName = std::string(itr->value);
+       ++itr;
+
+       if (itr == end || itr->type != TokenType::Symbol || itr->value != "{")
+       {
+           throw std::runtime_error("Expected '{' after Identifier, but got: " + itr->toString());
+       }
+
+       std::shared_ptr<PchorASTNode> ASTNode;
+       std::shared_ptr<IndexASTNode> IdxNode;
+       ++itr;
+
+       switch (itr->type)
+       {
+       case TokenType::Identifier:
+           ASTNode = symbolTable->resolve(itr->value);
+           if (ASTNode == nullptr) {
+               throw std::runtime_error("Declaration for Identifier " + itr->toString() + "not found");
+           }
+           if(!(ASTNode->getDeclType() == PchorASTNode::Decl::Index_Decl)){
+               throw std::runtime_error("Namespace " + itr->toString() + "is not an Index type");
+           }
+           IdxNode = std::dynamic_pointer_cast<IndexASTNode>(ASTNode);
+           break;
+       case TokenType::Literal:
+           if(itr->value.at(0) != '1') {
+               throw std::runtime_error("Only unary Channels can be declared with literal Type");
+           }
+           IdxNode = nullptr;
+           break;
+       default:
+           throw std::runtime_error("Expected Literal or Identifier of Index, but found: " + itr->toString());
+       }
+       itr++;
+
+       if (itr == end || itr->type != TokenType::Symbol || itr->value != "}")
+       {
+           throw std::runtime_error("Expected '}' after Identifier, but got: " + itr->toString());
+       }
+
+       auto Participant = std::make_shared<ParticipantASTNode>(channelName, IdxNode);
+       symbolTable->addDeclaration(channelName, Participant);
+    }
+
+    void PchorParser::parseGlobalTypeDecl(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end){
+
     }
 
 

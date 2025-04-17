@@ -1,0 +1,4 @@
+Index I{1..n}
+Participant W{I}
+Participant Subscriber{I}
+Channel w{I}

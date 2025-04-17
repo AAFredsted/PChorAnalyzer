@@ -51,7 +51,7 @@ protected:
     std::string_view name;
 
     // Constructor
-    explicit DeclPchorASTNode(Decl declType, std::string_view name);
+    explicit DeclPchorASTNode(Decl declType, std::string_view name): PchorASTNode(declType), name(name) {}
 };
 
 class IndexASTNode : public DeclPchorASTNode {
@@ -89,4 +89,16 @@ protected:
     std::shared_ptr<IndexASTNode> index;
 
 };
+
+class ChannelASTNode : public DeclPchorASTNode {
+    public:
+        explicit ChannelASTNode(std::string_view name, std::shared_ptr<IndexASTNode> index)
+            : DeclPchorASTNode(Decl::Participant_Decl, name), index(index) {}
+    
+        const std::shared_ptr<IndexASTNode>& getIndex() const { return index; }
+    
+    protected:
+        std::shared_ptr<IndexASTNode> index;
+    
+    };
 } // namespace PchorAST

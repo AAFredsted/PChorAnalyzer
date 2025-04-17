@@ -60,7 +60,7 @@ Token PchorLexer::nextToken(std::string_view::iterator& itr, const std::string_v
     
     
     if(itr == end){
-        return {TokenType::EndOfFile, std::string_view{itr, end}, 1};
+        return {TokenType::EndOfFile, std::string_view{itr, end}, line};
     }
     
     auto possibleEnd = isSymbol(itr, end);
