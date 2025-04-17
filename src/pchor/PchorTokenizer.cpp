@@ -3,7 +3,7 @@
 #include <vector>
 #include <print>
 namespace  PchorAST{
-std::string Token::toString(){
+std::string Token::toString() const {
     std::string s;
     switch(type){
         case TokenType::Keyword:
@@ -29,7 +29,7 @@ std::string Token::toString(){
     return s;
 }
 
-const std::string PchorLexer::symbols = "{}<>[]().|=+-\\";
+const std::string PchorLexer::symbols = "{}<>[]().=+-:";
 const std::unordered_set<std::string_view> PchorLexer::keywords{
     "Index", "Participant", "Channel", "foreach", "end", "min", "max"
 };
@@ -151,6 +151,5 @@ std::string_view::iterator PchorLexer::isLiteral(std::string_view::iterator& itr
 std::string_view::iterator PchorLexer::isIdentifier(std::string_view::iterator& itr, const std::string_view::iterator& end) const{
     return std::find_if(itr, end, [](char c) { return std::isspace(c) || symbols.find(c) != std::string_view::npos; });
 }
-
 
 }//namespace PchorAST

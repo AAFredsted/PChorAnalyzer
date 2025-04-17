@@ -4,8 +4,12 @@
 #include <memory> // For std::shared_ptr
 #include <limits>
 
+#include "PchorTokenizer.hpp"
+
 // ASTParser using visitor pattern
 namespace PchorAST {
+
+struct Token;
 
 // Forward declaration of PchorASTVisitor
 class PchorASTVisitor;
@@ -39,6 +43,7 @@ public:
     // Get the name of the declaration
     const std::string getName() const { return std::string(name); }
 
+
     // Accept a visitor
     void accept(PchorASTVisitor &visitor) const override;
 
@@ -70,6 +75,18 @@ private:
         }
         return value;
     }
+
+};
+
+class ParticipantASTNode : public DeclPchorASTNode {
+public:
+    explicit ParticipantASTNode(std::string_view name, std::shared_ptr<IndexASTNode> index)
+        : DeclPchorASTNode(Decl::Participant_Decl, name), index(index) {}
+
+    const std::shared_ptr<IndexASTNode>& getIndex() const { return index; }
+
+protected:
+    std::shared_ptr<IndexASTNode> index;
 
 };
 } // namespace PchorAST

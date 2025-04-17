@@ -1,7 +1,12 @@
 Index I{1..n}
 Participant W{I}
+Participant Subscriber{I}
 Channel w{I}
 
 Ring = foreach(i < max(I)){
-    W[i] -> W[i+1]: w[i]<nat>. end
-} | W[max(I)] -> W[min(I)]: w[min(I)]. end
+    W[n-i-1] -> W[n-1]: w[i]<Message>. end
+} . W[max(I)] -> W[min(I)]: w[min(I)]. end
+
+
+
+

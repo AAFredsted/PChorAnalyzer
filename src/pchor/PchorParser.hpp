@@ -1,5 +1,4 @@
 #pragma once
-#include "PchorTokenizer.hpp"
 #include "PchorFileWrapper.hpp"
 #include "PchorAST.hpp"
 
@@ -13,7 +12,7 @@ class SymbolTable {
 public: 
     void addDeclaration(const std::string& name, std::shared_ptr<PchorASTNode> node);
     std::shared_ptr<PchorASTNode> resolve(const std::string& name) const;
-    
+    std::shared_ptr<PchorASTNode> resolve(const std::string_view name) const;
 private:
     std::unordered_map<std::string, std::shared_ptr<PchorASTNode>> table;
 };
