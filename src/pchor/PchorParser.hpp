@@ -33,7 +33,6 @@ private:
     void parseChannelDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
     void parseIndexDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
     void parseGlobalTypeDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
-    void fetchReference();
 };
 
 } // namespace PchorAST
