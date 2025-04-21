@@ -553,8 +553,66 @@ namespace PchorAST
 
     }
 
+    std::shared_ptr<IndexExpr> PchorParser::parseIndexExpr(std::shared_ptr<IndexASTNode> indexType,  std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end) {
+        
+        itr++;
+        switch(itr->type){
+            case TokenType::Literal: {
+                size_t index = IndexASTNode::parseLiteral(itr->value);
+                if(indexType->getLower() > index || indexType->getUpper() < index){
+                    throw std::runtime_error("Index Literal not within bounds: " + index);
+                }
+
+                return std::make_shared<IndexExpr>(indexType, index);
+                break;
+            }
+            case TokenType::Identifier: {
+                
+                return std::make_shared<IndexExpr>(indexType, itr->value);
+
+                break;
+            }
+            case TokenType::Keyword: {
+                bool ismin;
+                if(itr->value == "min"){
+                    ismin = true;
+                }
+                else if(itr->value == "max") {
+                    ismin = false;
+                }
+                else {
+                    throw std::runtime_error("Unexpected Keyword in Index Expression found: " + itr->toString());
+                }
+
+                itr++;
+                if(itr->type != TokenType::Symbol && itr->value != "("){
+                    throw std::runtime_error("Symbol '(' required after min/max-operator declared. Found: " + itr->toString());
+                }
+                itr++;
+
+                if(itr != end && itr->type != TokenType::Identifier){
+                    throw std::runtime_error(" Identifier required as argument for min/max-operator. Found: " + itr->toString());
+                }
+                std::string indexIdentifier = std::string(itr->value);
+                if(indexIdentifier != indexType->getName()){
+                    throw std::runtime_error("Index Identifier not available for this Participant or Channel. Found: " + itr->toString());
+                }
+                itr++;
+
+                if(itr->type != TokenType::Symbol && itr->value != ")"){
+                    throw std::runtime_error("Symbol ')' required after '('-symbol declared. Found: " + itr->toString());
+                }
+
+                return std::make_shared<IndexExpr>(indexType, ismin ? indexType->getLower(): indexType->getUpper());
+                break;
+            }
+            default: {
+                throw std::runtime_error("Expected valid index expression, recieved: " + itr->toString());
+                break;
+            }
+        }
+    }
 
 
     
-
 }

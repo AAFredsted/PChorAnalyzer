@@ -17,7 +17,7 @@ class PchorASTVisitor;
 
 
 enum class Decl : uint8_t { Index_Decl, Participant_Decl, Channel_Decl, Label_Decl, Global_Type_Decl };
-enum class Expr : uint8_t { ForeachExpr, RecExpr, ComExpr, SelectionExpr, AggregateExpr, ParticipantExpr, ChannelExpr };
+enum class Expr : uint8_t { ForeachExpr, RecExpr, ComExpr, SelectionExpr, AggregateExpr, ParticipantExpr, ChannelExpr, IndexExpr };
 
 // Base Class for Declaration Nodes
 class DeclPchorASTNode {
@@ -51,10 +51,10 @@ protected:
 class IndexASTNode : public DeclPchorASTNode {
 public:
     explicit IndexASTNode(std::string_view name, Token& lower_token, Token& upper_token) : DeclPchorASTNode(Decl::Index_Decl, std::move(name)), lower(parseLiteral(lower_token.value)), upper(parseLiteral(upper_token.value)) {}
-protected:
-    const size_t lower;
-    const size_t upper;
-private:
+    size_t getLower() const {return lower; }
+    size_t getUpper() const {return upper; }
+
+        
     static size_t parseLiteral(std::string_view literal) {
         if (literal == "n") {
             return std::numeric_limits<size_t>::max(); // Unbounded
@@ -69,6 +69,11 @@ private:
         }
         return value;
     }
+
+protected:
+    const size_t lower;
+    const size_t upper;
+
 
 };
 
@@ -123,27 +128,15 @@ protected:
 };  
 
 
-class PchorIndexExpr: public ExprPchorASTNode {
-public:
-    enum class Type { Literal, Variable, Derived }; //mapping to 1 or i
-
-protected:
-    Type type;
-    size_t literal;
-    std::string derivedValue; 
-    std::string variableName;
-    std::shared_ptr<IndexASTNode> baseIndex;
-
-};
-
 
 class IndexExpr: public ExprPchorASTNode {
-
+    explicit IndexExpr(std::shared_ptr<IndexASTNode> baseIndex, size_t literal): ExprPchorASTNode(Expr::IndexExpr), baseIndex(baseIndex), literal(literal), variableName(""){}
+    explicit IndexExpr(std::shared_ptr<IndexASTNode> baseIndex, const std::string& variableName): ExprPchorASTNode(Expr::IndexExpr), baseIndex(baseIndex), literal(), variableName(variableName){}
     protected:
-        size_t literal;
-        std::string derivedValue;
-        std::string variableName;
         std::shared_ptr<IndexASTNode> baseIndex;
+        size_t literal;
+        std::string variableName;
+
 };
 
 class ParticipantExpr: public ExprPchorASTNode { 
