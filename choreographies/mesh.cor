@@ -6,7 +6,7 @@ Participant Worker{I, J}
 
 Channel w{I, J}
 
-Mesh = 
+Mesh {
     foreach(i < max(I): I){
         foreach(j : max(J): J) {
             Worker[i][j] -> Worker[i+1][j]: w[i+1][j]<nat>.
@@ -18,3 +18,4 @@ Mesh =
     | foreach(k < max(J) : J) {
         Worker[max(i)][k] -> W[max(i)][k+1]: w[max(i)][k+1]<nat>.end
     }
+}

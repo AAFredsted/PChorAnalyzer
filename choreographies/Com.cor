@@ -1,0 +1,18 @@
+Participant Anne{1}
+Participant Nicholas{1}
+Participant Drew{1}
+
+Channel k{1}
+Channel d{1}
+Label com{yes no}
+
+Message {
+    Anne -> Nicholas: k<Message>{
+        com::yes:
+            Nicholas -> Drew: d<Message>.
+            Drew -> Anne: k<Message>.
+            end
+        com::no:
+            end
+    }
+}

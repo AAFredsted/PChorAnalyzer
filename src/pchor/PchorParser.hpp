@@ -10,11 +10,11 @@ namespace PchorAST {
 
 class SymbolTable {
 public: 
-    void addDeclaration(const std::string& name, std::shared_ptr<PchorASTNode> node);
-    std::shared_ptr<PchorASTNode> resolve(const std::string& name) const;
-    std::shared_ptr<PchorASTNode> resolve(const std::string_view name) const;
+    void addDeclaration(const std::string& name, std::shared_ptr<DeclPchorASTNode> node);
+    std::shared_ptr<DeclPchorASTNode> resolve(const std::string& name) const;
+    std::shared_ptr<DeclPchorASTNode> resolve(const std::string_view name) const;
 private:
-    std::unordered_map<std::string, std::shared_ptr<PchorASTNode>> table;
+    std::unordered_map<std::string, std::shared_ptr<DeclPchorASTNode>> table;
 };
 
 class PchorParser {
@@ -32,7 +32,13 @@ private:
     void parseParticipantDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
     void parseChannelDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
     void parseIndexDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
+    void parseLabelDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
     void parseGlobalTypeDecl(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
+    std::shared_ptr<ExprPchorASTNode> parseExpression(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
+    std::shared_ptr<ParticipantExpr> parseParticipantExpr(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
+    std::shared_ptr<ChannelExpr> parseChannelExpr(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
+    std::shared_ptr<IndexExpr> parseIndexExpr(std::shared_ptr<IndexASTNode> index,  std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
+    std::shared_ptr<CommunicationExpr> parseCommunicationExpr(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end);
 };
 
 } // namespace PchorAST

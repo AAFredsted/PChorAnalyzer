@@ -3,12 +3,12 @@
 namespace PchorAST
 {
 
-    void SymbolTable::addDeclaration(const std::string &name, std::shared_ptr<PchorASTNode> node)
+    void SymbolTable::addDeclaration(const std::string &name, std::shared_ptr<DeclPchorASTNode> node)
     {
         table.insert(std::make_pair(name, node));
     }
 
-    std::shared_ptr<PchorASTNode> SymbolTable::resolve(const std::string &name) const
+    std::shared_ptr<DeclPchorASTNode> SymbolTable::resolve(const std::string &name) const
     {
         auto it = table.find(name);
         if (it != table.end())
@@ -17,7 +17,7 @@ namespace PchorAST
         }
         return nullptr;
     }
-    std::shared_ptr<PchorASTNode> SymbolTable::resolve(const std::string_view name) const
+    std::shared_ptr<DeclPchorASTNode> SymbolTable::resolve(const std::string_view name) const
     {
         std::string n{name};
         auto it = table.find(n);
@@ -59,6 +59,9 @@ namespace PchorAST
                 else if (itr->value == "Channel")
                 {
                     parseChannelDecl(itr, end);
+                }
+                else if(itr->value == "Label"){
+                    parseLabelDecl(itr, end);
                 }
                 else
                 {
@@ -178,7 +181,7 @@ namespace PchorAST
         }
         ++itr;
 
-        std::shared_ptr<PchorASTNode> ASTNode;
+        std::shared_ptr<DeclPchorASTNode> ASTNode;
         std::shared_ptr<IndexASTNode> IdxNode;
 
         switch (itr->type)
@@ -188,7 +191,7 @@ namespace PchorAST
             if (ASTNode == nullptr) {
                 throw std::runtime_error("Declaration for Identifier " + itr->toString() + "not found");
             }
-            if(!(ASTNode->getDeclType() == PchorASTNode::Decl::Index_Decl)){
+            if(!(ASTNode->getDeclType() == Decl::Index_Decl)){
                 throw std::runtime_error("Namespace " + itr->toString() + "is not an Index type");
             }
             IdxNode = std::dynamic_pointer_cast<IndexASTNode>(ASTNode);
@@ -241,7 +244,7 @@ namespace PchorAST
            throw std::runtime_error("Expected '{' after Identifier, but got: " + itr->toString());
        }
 
-       std::shared_ptr<PchorASTNode> ASTNode;
+       std::shared_ptr<DeclPchorASTNode> ASTNode;
        std::shared_ptr<IndexASTNode> IdxNode;
        ++itr;
 
@@ -252,7 +255,7 @@ namespace PchorAST
            if (ASTNode == nullptr) {
                throw std::runtime_error("Declaration for Identifier " + itr->toString() + "not found");
            }
-           if(!(ASTNode->getDeclType() == PchorASTNode::Decl::Index_Decl)){
+           if(!(ASTNode->getDeclType() == Decl::Index_Decl)){
                throw std::runtime_error("Namespace " + itr->toString() + "is not an Index type");
            }
            IdxNode = std::dynamic_pointer_cast<IndexASTNode>(ASTNode);
@@ -277,9 +280,281 @@ namespace PchorAST
        symbolTable->addDeclaration(channelName, Participant);
     }
 
+    void PchorParser::parseLabelDecl(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end) {
+        /*
+        Declaration Semantics
+        Label <Identifier>{<Identifier List>}
+        which is n tokens
+        */
+       //validate setup
+
+       if (std::distance(itr, end) < 5)
+       {
+           throw std::runtime_error("Incomplete Index declaration: not enough tokens remaining.");
+       }
+
+       if (itr->value != "Label")
+       {
+           throw std::runtime_error("Expected 'Channel' keyword, but got: " + itr->toString());
+       }
+        ++itr;
+       if (itr == end || itr->type != TokenType::Identifier)
+       {
+           throw std::runtime_error("Expected Identifier after 'Channel', but got: " + itr->toString());
+       }
+       std::string labelName = std::string(itr->value);
+       ++itr;
+
+       if(itr == end || itr->type != TokenType::Symbol || itr->value != "{"){
+        throw std::runtime_error("Expected Identifier after 'Channel', but got: " + itr->toString());
+       } 
+
+       auto endofScope = itr;
+
+       while(endofScope!= end && endofScope->type != TokenType::Symbol && endofScope->value != "}"){
+            endofScope++;
+       }
+       
+       if(endofScope == end){
+        throw std::runtime_error("Scope not closed for identifier list of Label Declaration" + itr->toString());
+       }
+       itr++;
+
+       //find endofscope such that we can parse all identifiers inbetween
+       
+       std::unordered_set<std::string> identifierSet;
+
+       while(itr != endofScope){
+        if(itr->type == TokenType::Identifier){
+            identifierSet.insert(std::string(itr->value));
+            itr++;
+        }
+        else {
+            throw std::runtime_error("Identifier List may only consist of identifiers. Instead, parser recieved: " + itr->toString());
+        }
+       }
+
+       auto Label = std::make_shared<LabelASTNode>(labelName, identifierSet);
+       symbolTable->addDeclaration(labelName, Label);
+
+    }
     void PchorParser::parseGlobalTypeDecl(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end){
+        /*
+        Declaration Semantics
+        This is the most complex setup, so it will be split into three parts
+        1. direct parsing <identifier> -> <identifier> : channel<type>{
+        2. other global types aggregatet with . 
+        3. global types wrapped in aggregator Rec X() or foreach(i: I ) or (i::ls: I)
+        }//possible selection based on label !
+        <Identifier> = <aggregate>
+        */
+
+        if(itr->type != TokenType::Identifier){
+            throw std::runtime_error("Statement inferred to be a global Type declaration as no explicit keyword has been used.\n Expected an identifier but got: " + itr->toString());
+        }
+        std::string globalTypeName = std::string(itr->value);
+
+        itr++;
+        if(itr->type != TokenType::Symbol && itr->value != "{"){
+            throw std::runtime_error("Expected '{' followed by Global Type Declaration. Got: " + itr->toString());
+        }
+
+        
+        auto endofScope = itr;
+
+        while(endofScope!= end && endofScope->type != TokenType::Symbol && endofScope->value != "}"){
+             endofScope++;
+        }
+
+        if(endofScope == end){
+            throw std::runtime_error("Scope not closed for Global Type Declaration");
+        }
+        std::shared_ptr<ExprPchorASTNode> expr = nullptr;
+
+        expr = parseExpression(itr, endofScope);
+        
+        auto globaltype = std::make_shared<GlobalTypeASTNode>(globalTypeName, expr);
+        
+    }
+
+
+
+    std::shared_ptr<ExprPchorASTNode> PchorParser::parseExpression(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end) {
+        
+        //first, identify the type of expression 0:
+        // aggregator around non-aggregate or aggregate com expression
+        // aggregate com expression
+        // non-aggregate com expr
+
+        std::shared_ptr<ExprPchorASTNode> expr = nullptr;
+
+        while(itr != end ){
+
+            switch(itr->type){ 
+                    //has to be a communication expression
+                    case TokenType::Identifier: {
+
+                        /*
+                        Declaration Semantics
+                        <Identifier>?[literal/<index identifier>] -> <Identifier>?[literal/<index Identifier>]: <channelIdentifier><Type>?{<GlobalType>} ?.<GlobalType>
+                        which is n tokens
+                        */
+                        //can be identifier of Participant or identifier for other global type
+                        auto identified = symbolTable->resolve(itr->value);
+                        switch(identified->getDeclType()) {
+                            case Decl::Participant_Decl:
+                                auto endofExpr = itr;
+                                while(endofExpr != end && endofExpr->type != TokenType::Symbol && endofExpr->value != "."){
+                                    itr++;
+                                }
+                                expr = parseCommunicationExpr(itr, endofExpr);
+
+                                break;
+                            case Decl::Global_Type_Decl: 
+                                //leave as null for now
+                                break;
+                        }
+                        break;
+                    }
+                    case TokenType::Keyword : {
+                        
+
+                        break;
+                    }
+                    default : {
+                        throw std::runtime_error("Expected expression type but got: " + itr->toString());
+                        break;
+                    }
+
+            }
+
+        }
+
+        return expr;
+    }
+
+    std::shared_ptr<CommunicationExpr> PchorParser::parseCommunicationExpr(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator& end) {
+
+
+        //parseSender
+
+        auto sender = symbolTable ->resolve(itr->value);
+        if(!sender || sender->getDeclType() != Decl::Participant_Decl){
+            throw std::runtime_error("Expected Participant Identifier, but got: " + itr->toString());
+        }
+        itr++;
+
+        auto senderAST = std::dynamic_pointer_cast<ParticipantASTNode>(sender);
+
+        std::shared_ptr<IndexExpr> senderIndex = nullptr;
+
+        if(itr->type == TokenType::Symbol && itr->value == "["){
+            auto endofIndex = itr;
+
+            while(endofIndex != end && endofIndex->type != TokenType::Symbol && endofIndex->value != "]"){
+                endofIndex++;
+            }
+            if(endofIndex == end ||endofIndex->value != "]" ){
+                throw std::runtime_error("Expected ']', but found: " + endofIndex->toString());
+            }
+   
+            senderIndex = parseIndexExpr(senderAST->getIndex(), itr, endofIndex);
+
+        }
+
+        std::shared_ptr<ParticipantExpr> senderexpr = std::make_shared<ParticipantExpr>(senderAST, senderIndex);
+    
+        itr++;
+
+        if(itr == end || itr->type != TokenType::Symbol || itr->value != "->") {
+            throw std::runtime_error("Expected communication operator '->', but got: " + itr->toString());
+        }
+
+        itr++;
+        //parseReciever
+
+
+        auto reciever = symbolTable ->resolve(itr->value);
+        if(!sender || sender->getDeclType() != Decl::Participant_Decl){
+            throw std::runtime_error("Expected Participant Identifier, but got: " + itr->toString());
+        }
+        itr++;
+
+        auto recieverAST = std::dynamic_pointer_cast<ParticipantASTNode>(reciever);
+
+        std::shared_ptr<IndexExpr> recieverIndex = nullptr;
+
+        if(itr->type == TokenType::Symbol && itr->value == "["){
+            auto endofIndex = itr;
+
+            while(endofIndex != end && endofIndex->type != TokenType::Symbol && endofIndex->value != "]"){
+                endofIndex++;
+            }
+            if(endofIndex == end ||endofIndex->value != "]" ){
+                throw std::runtime_error("Expected ']', but found: " + endofIndex->toString());
+            }
+            recieverIndex = parseIndexExpr(recieverAST->getIndex(), itr, endofIndex);
+        }
+
+        std::shared_ptr<ParticipantExpr> recieverexpr = std::make_shared<ParticipantExpr>(senderAST, recieverIndex);
+        itr++;
+
+        if(itr->type != TokenType::Symbol || itr->value != ":"){
+            throw std::runtime_error("Communication statement requires specifier ':'. Instead, parser recieved: " + itr->toString());
+
+        }
+
+        itr++;
+
+
+        auto channel = symbolTable->resolve(itr->value);
+        if(!channel || channel->getDeclType() != Decl::Channel_Decl){
+            throw std::runtime_error("Communication statement requires reference to declared channel. Instead, parser recieved: " + itr->toString());
+        }
+
+        itr++;
+
+        auto channelAST = std::dynamic_pointer_cast<ChannelASTNode>(channel);
+        std::shared_ptr<IndexExpr> channelIndex = nullptr;
+
+        if(itr->type == TokenType::Symbol && itr->value == "["){
+            auto endofIndex = itr;
+
+            while(endofIndex != end && endofIndex->type != TokenType::Symbol && endofIndex->value != "]"){
+                endofIndex++;
+            }
+            if(endofIndex == end ||endofIndex->value != "]" ){
+                throw std::runtime_error("Expected ']', but found: " + endofIndex->toString());
+            }
+            channelIndex = parseIndexExpr(channelAST->getIndex(), itr, endofIndex);
+            itr++;
+        }
+
+        std::shared_ptr<ChannelExpr> channelexpr = std::make_shared<ChannelExpr>(channelAST, channelIndex);
+
+
+        if(itr->type != TokenType::Symbol || itr->value != "<" ){
+            throw std::runtime_error("Expected '<' but recieved: " + itr->toString());
+        }
+
+        itr++;
+
+        if(itr->type != TokenType::Identifier){
+            throw std::runtime_error("Expected DataType Namespace, but recieved: " + itr->toString());
+        }
+        std::string dataType = std::string(itr->value); 
+        itr++;
+
+        if(itr->type != TokenType::Symbol || itr->value != ">" ){
+            throw std::runtime_error("Expected '>' but recieved: " + itr->toString());
+        }
+
+        return std::make_shared<CommunicationExpr>(senderexpr, recieverexpr, channelexpr, dataType, nullptr);
 
     }
 
+
+
+    
 
 }

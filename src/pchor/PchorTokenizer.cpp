@@ -31,7 +31,7 @@ std::string Token::toString() const {
 
 const std::string PchorLexer::symbols = "{}<>[]().=+-:";
 const std::unordered_set<std::string_view> PchorLexer::keywords{
-    "Index", "Participant", "Channel", "foreach", "end", "min", "max"
+    "Index", "Participant", "Channel", "Label", "foreach", "end", "min", "max"
 };
  
 std::vector<Token> PchorLexer::genTokens() {
