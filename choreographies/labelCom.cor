@@ -6,7 +6,7 @@ Channel k{1}
 Channel d{1}
 Label com{yes no}
 
-Message {
+Message =
     Anne -> Nicholas: k<Message>{
         com::yes:
             Nicholas -> Drew: d<Message>.
@@ -14,5 +14,5 @@ Message {
             end
         com::no:
             end
-    }
-}
+    }.
+    end

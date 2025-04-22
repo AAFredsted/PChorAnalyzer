@@ -5,8 +5,8 @@ Participant Reciever{I}
 
 Channel r{I}
 
-Multicast {
+Multicast =
     foreach(i : I){
         Sender -> Reciever[i]: r[i]<nat>. end
-    }
-}
+    }.
+    end
