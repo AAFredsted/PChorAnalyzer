@@ -64,6 +64,14 @@ private:
   std::shared_ptr<CommunicationExpr>
   parseCommunicationExpr(std::vector<Token>::iterator &itr,
                          const std::vector<Token>::iterator &end);
+  std::shared_ptr<RecExpr>                       
+  parseRecursiveExpr(std::vector<Token>::iterator &itr,
+                      const std::vector<Token>::iterator &end);
+
+  std::vector<Token>::iterator
+  findEndofScope(std::vector<Token>::iterator &itr,
+                const std::vector<Token>::iterator &end);
+  
 };
 
 } // namespace PchorAST

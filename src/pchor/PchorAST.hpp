@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "PchorTokenizer.hpp"
+#include "../analyzer/AstVisitor.hpp"
 
 // ASTParser using visitor pattern
 namespace PchorAST {
@@ -15,7 +16,6 @@ namespace PchorAST {
 struct Token;
 
 // Forward declaration of PchorASTVisitor
-class PchorASTVisitor;
 class ExprPchorASTNode;
 class ExprList;
 
@@ -27,8 +27,8 @@ enum class Decl : uint8_t {
   Global_Type_Decl
 };
 enum class Expr : uint8_t {
-  ForeachExpr,
   RecExpr,
+  ConExpr,
   ComExpr,
   SelectionExpr,
   AggregateExpr,
@@ -45,7 +45,7 @@ public:
   const std::string getName() const { return std::string(name); }
   Decl getDeclType() const { return decl; }
   // Accept a visitor
-  virtual void accept([[maybe_unused]] PchorASTVisitor &visitor) const = 0;
+  virtual void accept(PchorASTVisitor &visitor) const = 0;
   virtual void print() const = 0;
 
 protected:
@@ -60,7 +60,7 @@ class ExprPchorASTNode {
 public:
   virtual ~ExprPchorASTNode() = default;
   Expr getExprType() const { return exprType; }
-  virtual void accept([[maybe_unused]] PchorASTVisitor &visitor) const = 0;
+  virtual void accept(PchorASTVisitor &visitor) const = 0;
   virtual void print() const = 0;
 
 protected:
@@ -83,8 +83,8 @@ public:
                  upper);
   }
 
-  void accept([[maybe_unused]] PchorASTVisitor &visitor) const override {
-    // donothing for now
+  void accept(PchorASTVisitor &visitor) const override {
+    visitor.visit(*this);
   }
 
   static size_t parseLiteral(std::string_view literal) {
@@ -116,8 +116,8 @@ public:
 
   const std::shared_ptr<IndexASTNode> &getIndex() const { return index; }
 
-  void accept([[maybe_unused]] PchorASTVisitor &visitor) const override {
-    // donothing for now
+  void accept(PchorASTVisitor &visitor) const override {
+    visitor.visit(*this);
   }
 
   void print() const override {
@@ -137,8 +137,8 @@ public:
 
   const std::shared_ptr<IndexASTNode> &getIndex() const { return index; }
 
-  void accept([[maybe_unused]] PchorASTVisitor &visitor) const override {
-    // donothing for now
+  void accept(PchorASTVisitor &visitor) const override {
+    visitor.visit(*this);
   }
 
   void print() const override {
@@ -160,8 +160,8 @@ public:
     return labels.contains(label);
   }
 
-  void accept([[maybe_unused]] PchorASTVisitor &visitor) const override {
-    // donothing for now
+  void accept(PchorASTVisitor &visitor) const override {
+    visitor.visit(*this);
   }
 
   void print() const override {
@@ -190,9 +190,10 @@ public:
       : ExprPchorASTNode(Expr::IndexExpr), baseIndex(baseIndex), literal(),
         variableName(std::string(variableName)), isLiteral(false) {}
 
-  void accept([[maybe_unused]] PchorASTVisitor &visitor) const override {
-    // donothing for now
-  }
+    void accept(PchorASTVisitor &visitor) const override {
+        visitor.visit(*this);
+    }
+    
   void print() const override {
     if (isLiteral) {
       std::println("Index Expr with base {} and value: {}",
@@ -221,8 +222,8 @@ public:
   }
   const std::shared_ptr<IndexExpr> &getIndex() const { return index; }
 
-  void accept([[maybe_unused]] PchorASTVisitor &visitor) const override {
-    // donothing for now
+  void accept(PchorASTVisitor &visitor) const override {
+      visitor.visit(*this);
   }
 
   void print() const override {
@@ -248,8 +249,8 @@ public:
   }
   const std::shared_ptr<IndexExpr> &getIndex() const { return index; }
 
-  void accept([[maybe_unused]] PchorASTVisitor &visitor) const override {
-    // donothing for now
+  void accept(PchorASTVisitor &visitor) const override {
+    visitor.visit(*this);
   }
 
   void print() const override {
@@ -275,9 +276,10 @@ public:
         reciever(std::move(reciever)), channel(std::move(channel)),
         dataType(dataType), dependantExpr(expression) {}
 
-  void accept([[maybe_unused]] PchorASTVisitor &visitor) const override {
-    // donothing for now
-  }
+    void accept(PchorASTVisitor &visitor) const override {
+      visitor.visit(*this);
+    }
+    
 
   void print() const override {
     std::println("Communication Expression:");
@@ -303,9 +305,6 @@ protected:
 class ExprList : public ExprPchorASTNode {
 public:
   explicit ExprList() : ExprPchorASTNode(Expr::AggregateExpr), exprlist() {}
-  void accept([[maybe_unused]] PchorASTVisitor &visitor) const override {
-    // donothing for now
-  }
 
   void addExpr(std::shared_ptr<ExprPchorASTNode> expr) {
     exprlist.emplace_back(expr);
@@ -318,8 +317,55 @@ public:
     }
   }
 
+  void accept(PchorASTVisitor &visitor) const override {
+    visitor.visit(*this);
+  }
+
 protected:
   std::vector<std::shared_ptr<ExprPchorASTNode>> exprlist;
+};
+/*
+Recexpr is defined as a initial state X(index list)
+and substitution for X, which is a Expr-list, which must end with a Continuation-Expr
+*/
+
+class ConExpr: public ExprPchorASTNode {
+public:
+  explicit ConExpr(const std::string& recVar, std::shared_ptr<std::vector<IndexExpr>> indexContDomain): 
+  ExprPchorASTNode(Expr::ConExpr), recVar(recVar), indexContDomain(indexContDomain) {}
+
+  void accept(PchorASTVisitor &visitor) const override {
+    visitor.visit(*this);
+  }
+  
+  void print() const override {
+    std::println("We print recursive expr");
+  }
+
+protected:
+  std::string recVar;
+  std::shared_ptr<std::vector<IndexExpr>> indexContDomain;
+
+};
+
+class RecExpr: public ExprPchorASTNode {
+public:
+
+  explicit RecExpr(const std::string& recVar, std::shared_ptr<std::vector<IndexExpr>> indexDomain, std::shared_ptr<ExprList> body): 
+  ExprPchorASTNode(Expr::RecExpr), recVar(recVar), indexDomain(std::move(indexDomain)), body(std::move(body)) {}
+
+  void accept(PchorASTVisitor &visitor) const override {
+    visitor.visit(*this);
+  }
+ 
+  void print() const override {
+    std::println("We print recursive expr");
+  }
+
+protected:
+  std::string recVar; //Ie X.. 
+  std::shared_ptr<std::vector<IndexExpr>> indexDomain;
+  std::shared_ptr<ExprList> body; //final element of list must be a continuation
 };
 
 class GlobalTypeASTNode : public DeclPchorASTNode {
@@ -332,10 +378,10 @@ public:
   explicit GlobalTypeASTNode(std::string_view name)
       : DeclPchorASTNode(Decl::Global_Type_Decl, name) {}
 
-  void accept([[maybe_unused]] PchorASTVisitor &visitor) const override {
-    // donothing for now
+  void accept(PchorASTVisitor &visitor) const override {
+    visitor.visit(*this);
   }
-
+  
   void print() const override {
     std::println("Global Type {} with expressions:", name);
     expr_ptr->print();

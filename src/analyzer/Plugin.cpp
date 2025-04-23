@@ -3,7 +3,8 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "PchorParser.hpp"
+#include "../pchor/PchorParser.hpp"
+#include "AstVisitor.hpp"
 
 #include <memory>
 #include <string>
@@ -12,7 +13,7 @@
 using namespace clang;
 
 namespace {
-class HelloWorldAstConsumer : public ASTConsumer {
+class ChoreographyAstConsumer : public ASTConsumer {
 public:
   void HandleTranslationUnit(ASTContext &Context) override {
     // This is called after the AST for the entire translation unit is created
@@ -22,14 +23,14 @@ public:
   }
 };
 
-class HelloWorldFrontendAction : public PluginASTAction {
+class ChoreographyValidatorFrontendAction : public PluginASTAction {
   std::string corFilePath;
 
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  llvm::StringRef) override {
     // Create and return your AST consumer that prints messages.
-    return std::make_unique<HelloWorldAstConsumer>();
+    return std::make_unique<ChoreographyAstConsumer>();
   }
 
   bool ParseArgs(const CompilerInstance &CI,
@@ -52,6 +53,7 @@ protected:
     try {
       PchorAST::PchorParser parser{corFilePath};
       parser.parse();
+      
     } catch (const std::exception &e) {
       llvm::errs() << "Error processing .cor-file:" << e.what() << "\n";
       return false;
@@ -67,6 +69,6 @@ protected:
 };
 } // namespace
 // Register the plugin with Clang
-static FrontendPluginRegistry::Add<HelloWorldFrontendAction>
+static FrontendPluginRegistry::Add<ChoreographyValidatorFrontendAction>
     X("PchorAnalyzer",
       "A simple plugin that prints a message after the AST is created");

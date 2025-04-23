@@ -1,1 +1,49 @@
+#pragma once
 #include "AstVisitor.hpp"
+#include <memory>
+#include <print>
+
+namespace PchorAST {
+
+    //Visit Declaration Nodes
+
+    void PchorASTVisitor::visit(const ParticipantASTNode& node) {
+        std::println("Not implemented yet");
+    }
+    void PchorASTVisitor::visit(const ChannelASTNode& node) {
+        std::println("Not implemented yet");
+    }
+    void PchorASTVisitor::visit(const LabelASTNode& node) {
+        std::println("Not implemented yet");
+    }
+    void PchorASTVisitor::visit(const GlobalTypeASTNode& node) {
+        std::println("Not Implemented yet");
+    }
+    void PchorASTVisitor::visit(const IndexASTNode& node)  {
+        std::println("Not Implemented yet");
+    }
+
+    //Visit Expression Nodes
+    void PchorASTVisitor::visit(const CommunicationExpr& expr) {
+        std::println("Not Implemented yet");
+    }
+    void PchorASTVisitor::visit(const ExprList& expr)  {
+        std::println("Not Implemented yet");
+    }
+    void PchorASTVisitor::visit(const ParticipantExpr& expr) {
+        std::println("Not Implemented yet");
+    }
+    void PchorASTVisitor::visit(const ChannelExpr& expr)  {
+        std::println("Not Implemented yet");
+    }
+    void PchorASTVisitor::visit(const IndexExpr& expr)  {
+        std::println("Not Implemented yet");
+    }
+    void PchorASTVisitor::visit(const RecExpr& expr)  {
+        std::println("Not Implemented yet");
+    }
+    void PchorASTVisitor::visit(const ConExpr& expr)  {
+        std::println("Not Implemented yet");
+    }
+
+} //namespace PchorAST

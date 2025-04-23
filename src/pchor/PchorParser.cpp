@@ -2,6 +2,28 @@
 
 namespace PchorAST {
 
+
+
+//HelperFunctions
+
+std::vector<Token>::iterator PchorParser::findEndofScope(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end) {
+    auto endofScope = itr;
+    endofScope++;
+    while(endofScope != end && endofScope->value != "}"){
+        if(endofScope->value == "{"){
+            endofScope = findEndofScope(endofScope, end);
+        }
+        endofScope++;
+    }
+    if(endofScope == end){
+        throw std::runtime_error("End of Scope not found. Scope Initiater found at: " + itr->toString());
+    }
+    return endofScope;
+}
+
+
+
+//Parsing Tree
 void SymbolTable::addDeclaration(const std::string &name,
                                  std::shared_ptr<DeclPchorASTNode> node) {
   table.insert(std::make_pair(name, node));
@@ -420,6 +442,7 @@ PchorParser::parseExpressionList(std::vector<Token>::iterator &itr,
       // can be identifier of Participant or identifier for other global type
       auto identified = symbolTable->resolve(itr->value);
       auto endofExpr = itr;
+
       switch (identified->getDeclType()) {
       case Decl::Participant_Decl:
         while (endofExpr != end && endofExpr->value != ".") {
@@ -442,7 +465,11 @@ PchorParser::parseExpressionList(std::vector<Token>::iterator &itr,
       if (itr->value == "end") {
         itr++;
         break;
-      } else {
+      } 
+      else if(itr->value == "Rec") {
+        expr->addExpr(parseRecursiveExpr(itr, end));
+      }
+      else {
         throw std::runtime_error("expected end of expression. Found: " +
                                  itr->toString());
       }
@@ -685,6 +712,41 @@ PchorParser::parseIndexExpr(std::shared_ptr<IndexASTNode> indexType,
                              itr->toString());
   }
   return expr;
+}
+//Todo: Implement recursive expression parser
+std::shared_ptr<RecExpr>  PchorParser::parseRecursiveExpr(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end) {
+    itr++;
+    if(itr->type != TokenType::Identifier){
+        throw std::runtime_error("Expected Recursive Expression Identifier. Found: " + itr->toString());
+    }
+    std::string recVar = std::string(itr->value);
+
+    itr++;
+    if(itr->type != TokenType::Symbol || itr->value != "("){
+        throw std::runtime_error("Expected beginning of Index List");
+    }
+
+    auto endofIndexList = itr;
+    while(endofIndexList != end && endofIndexList->type != TokenType::Symbol && endofIndexList->value != ")") {
+        endofIndexList++;
+    }
+
+    if(endofIndexList == end){
+        throw std::runtime_error("Index List not closed for recursive statement: " + recVar);
+    }
+    //assume we parse this 0:::
+
+    itr++;
+
+    if(itr->type != TokenType::Symbol || itr->value != "{"){
+        throw std::runtime_error("Expected '{'. Found: " + itr->toString());
+    }
+
+    auto endofBody = findEndofScope(itr, end);
+
+    
+
+    
 }
 
 } // namespace PchorAST

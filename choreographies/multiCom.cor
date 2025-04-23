@@ -2,8 +2,10 @@ Participant Anne{1}
 Participant Nicholas{1}
 
 Channel k{1}
+Channel j{1}
+
 
 Message =
-    Anne -> Nicholas: k<Query>
-    Nicholas -> Anne: k<Response>
-    .end
+    Anne -> Nicholas: k<Query>.
+    Nicholas -> Anne: j<Response>.
+    end
