@@ -26,6 +26,7 @@ std::vector<Token>::iterator PchorParser::findEndofScope(std::vector<Token>::ite
 //Parsing Tree
 void SymbolTable::addDeclaration(const std::string &name,
                                  std::shared_ptr<DeclPchorASTNode> node) {
+  keys.push_back(name); 
   table.insert(std::make_pair(name, node));
 }
 
@@ -88,6 +89,7 @@ void PchorParser::parse() {
     ++itr;
   }
   std::println("succesfully parsed file");
+  symbolTable->print();
 }
 
 void PchorParser::parseIndexDecl(std::vector<Token>::iterator &itr,
@@ -210,6 +212,7 @@ void PchorParser::parseParticipantDecl(
     IdxNode = std::dynamic_pointer_cast<IndexASTNode>(ASTNode);
     break;
   case TokenType::Literal:
+    std::println("IdxNode is nullptr");
     if (itr->value.at(0) != '1') {
       throw std::runtime_error(
           "Only unary Participants can be declared with literal Type");
@@ -227,10 +230,14 @@ void PchorParser::parseParticipantDecl(
     throw std::runtime_error("Expected '}' after Identifier, but got: " +
                              itr->toString());
   }
+  if(IdxNode == nullptr) {
+    std::println("it is nullptr");
+  }
 
   auto Participant =
       std::make_shared<ParticipantASTNode>(participantName, IdxNode);
   symbolTable->addDeclaration(participantName, Participant);
+  Participant->print();
 }
 
 void PchorParser::parseChannelDecl(std::vector<Token>::iterator &itr,
@@ -411,9 +418,8 @@ void PchorParser::parseGlobalTypeDecl(std::vector<Token>::iterator &itr,
   }
 
   std::shared_ptr<ExprList> expr = parseExpressionList(itr, endofScope);
-  expr->print();
   auto globaltype = std::make_shared<GlobalTypeASTNode>(globalTypeName, expr);
-  globaltype->print();
+  symbolTable->addDeclaration(globalTypeName, globaltype);
 }
 
 std::shared_ptr<ExprList>
@@ -568,7 +574,7 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
   }
 
   std::shared_ptr<ParticipantExpr> recieverexpr =
-      std::make_shared<ParticipantExpr>(senderAST, recieverIndex);
+      std::make_shared<ParticipantExpr>(recieverAST, recieverIndex);
 
   if (itr->type != TokenType::Symbol || itr->value != ":") {
     throw std::runtime_error("Communication statement requires specifier ':'. "
@@ -577,7 +583,6 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
   }
 
   itr++;
-  symbolTable->print();
   auto channel = symbolTable->resolve(itr->value);
 
   if (!channel || channel->getDeclType() != Decl::Channel_Decl) {
@@ -710,6 +715,9 @@ PchorParser::parseIndexExpr(std::shared_ptr<IndexASTNode> indexType,
   if (itr != end) {
     throw std::runtime_error("Expected end of index expression ']'. Found: " +
                              itr->toString());
+  }
+  if (expr == nullptr) {
+    std::println("Waaat");
   }
   return expr;
 }

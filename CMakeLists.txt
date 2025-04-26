@@ -1,36 +1,39 @@
 cmake_minimum_required(VERSION 3.20)
 
+# Set compiler and standard
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Project name
 project(PChorAnalyzer)
 
-# Find Clang and LLVM
+# Find LLVM
 find_package(LLVM REQUIRED CONFIG)
-find_package(Clang REQUIRED CONFIG)
 
-# Adds warnings and allows debug with gdb
-set(CMAKE_BUILD_TYPE Debug)
-add_compile_options(-Wall -Wextra -O2)
+# Add build type
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
 
-
-# Setup for Lexer and Semantics Parser of Language, which generates PchorAST
+# Add PchorCore library
 add_library(PchorCore SHARED
     ./src/pchor/PchorAST.cpp
-    ./src/pchor/PchorFileWrapper.hpp
     ./src/pchor/PchorParser.cpp
     ./src/pchor/PchorTokenizer.cpp
 )
 
+target_compile_options(PchorCore PRIVATE
+    -isystem /usr/lib/llvm-18/include
+)
 target_include_directories(PchorCore PRIVATE
     ./src/pchor
-    ./src/utils
-)
+    ./src/utils)
 
+target_compile_options(PchorCore PRIVATE -Wall -Wextra -O2)
 
-# Plugin is shared library which is linked to PchorCore later
+# Add PchorAnalyzerPlugin library
 add_library(PchorAnalyzerPlugin SHARED
     ./src/analyzer/AstVisitor.cpp
     ./src/analyzer/Analyzer.cpp
@@ -39,18 +42,21 @@ add_library(PchorAnalyzerPlugin SHARED
 )
 
 
-
-# Include directories for plugin
+target_compile_options(PchorAnalyzerPlugin PRIVATE
+    -isystem /usr/lib/llvm-18/include
+)
 target_include_directories(PchorAnalyzerPlugin SYSTEM PRIVATE
-    ${LLVM_INCLUDE_DIRS}
-    ${CLANG_INCLUDE_DIRS}
-    /usr/lib/llvm-18/include
     ./src/pchor
     ./src/utils
     ./src/analyzer
 )
 
+target_compile_options(PchorAnalyzerPlugin PRIVATE -Wall -Wextra -O2)
+
 # Link against Clang libraries
+execute_process(COMMAND llvm-config --libdir OUTPUT_VARIABLE LLVM_LIB_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+link_directories(${LLVM_LIB_DIR})
+
 target_link_libraries(PchorAnalyzerPlugin
     PchorCore
     clangAST
@@ -58,12 +64,13 @@ target_link_libraries(PchorAnalyzerPlugin
     clangBasic
     clangFrontend
     clangTooling
-    ${LLVM_LIBRARIES}
 )
 
-# Set the plugin name
-set_target_properties(PchorAnalyzerPlugin PROPERTIES
-    OUTPUT_NAME "PchorAnalyzerPlugin"
+# Installation rules
+install(TARGETS PchorCore PchorAnalyzerPlugin
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
 )
 
-cmake_policy(SET CMP0167 NEW)
+install(DIRECTORY ./src/pchor DESTINATION include FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY ./src/analyzer DESTINATION include FILES_MATCHING PATTERN "*.hpp")

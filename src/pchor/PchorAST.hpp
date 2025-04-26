@@ -41,8 +41,20 @@ enum class Expr : uint8_t {
 class DeclPchorASTNode {
 public:
   virtual ~DeclPchorASTNode() = default;
+  // Delete copy constructor and copy assignment operator
+  DeclPchorASTNode(const DeclPchorASTNode&) = delete;
+  DeclPchorASTNode& operator=(const DeclPchorASTNode&) = delete;
+
+  // Delete move constructor and move assignment operator
+  DeclPchorASTNode(DeclPchorASTNode&&) = delete;
+  DeclPchorASTNode& operator=(DeclPchorASTNode&&) = delete;
+
+  
   // Get the name of the declaration
-  const std::string getName() const { return std::string(name); }
+  const std::string getName() const { 
+    std::println("getname called");
+    return std::string(name); 
+  }
   Decl getDeclType() const { return decl; }
   // Accept a visitor
   virtual void accept(PchorASTVisitor &visitor) const = 0;
@@ -59,6 +71,16 @@ protected:
 class ExprPchorASTNode {
 public:
   virtual ~ExprPchorASTNode() = default;
+
+
+  // Delete copy constructor and copy assignment operator
+  ExprPchorASTNode(const ExprPchorASTNode&) = delete;
+  ExprPchorASTNode& operator=(const ExprPchorASTNode&) = delete;
+
+  // Delete move constructor and move assignment operator
+  ExprPchorASTNode(ExprPchorASTNode&&) = delete;
+  ExprPchorASTNode& operator=(ExprPchorASTNode&&) = delete;
+
   Expr getExprType() const { return exprType; }
   virtual void accept(PchorASTVisitor &visitor) const = 0;
   virtual void print() const = 0;
@@ -102,7 +124,6 @@ public:
     }
     return value;
   }
-
 protected:
   const size_t lower;
   const size_t upper;
@@ -121,8 +142,11 @@ public:
   }
 
   void print() const override {
-    std::println("Participant {} indexed with {}", name,
-                 index ? index->getName() : "1");
+    if (index == nullptr) {
+        std::println("Participant {} indexed with 1", name);
+    } else {
+        std::println("Participant {} indexed with {}", name, index->getName());
+    }
   }
 
 protected:
@@ -202,6 +226,10 @@ public:
       std::println("Index Expr with base {} and value: {}",
                    baseIndex->getName(), variableName);
     }
+  }
+  
+  std::string getName() const {
+    baseIndex->getName();
   }
 
 protected:

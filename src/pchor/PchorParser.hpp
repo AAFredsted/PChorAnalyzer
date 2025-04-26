@@ -14,14 +14,19 @@ public:
                       std::shared_ptr<DeclPchorASTNode> node);
   std::shared_ptr<DeclPchorASTNode> resolve(const std::string &name) const;
   std::shared_ptr<DeclPchorASTNode> resolve(const std::string_view name) const;
+  
   void print() {
-    for (auto itr = table.begin(); itr != table.end(); itr++) {
-      itr->second->print();
+    size_t i = 0;
+    for (const std::string& key: keys) {
+      i++;
+      std::println("We print ASTElement {}", i);
+      table[key]->print();
     }
   }
 
 private:
   std::unordered_map<std::string, std::shared_ptr<DeclPchorASTNode>> table;
+  std::vector<std::string> keys;
 };
 
 class PchorParser {
@@ -29,13 +34,17 @@ public:
   // Constructor now takes ownership of lexer and symbol table
   explicit PchorParser(const std::string &filePath)
       : lexer(std::make_unique<PchorLexer>(filePath)),
-        symbolTable(std::make_unique<SymbolTable>()), tokens() {}
+        symbolTable(std::make_shared<SymbolTable>()), tokens() {}
 
   void parse();
 
+  std::shared_ptr<SymbolTable> getChorAST() {
+    return symbolTable;
+  }
+
 private:
   std::unique_ptr<PchorLexer> lexer;        // Unique ownership of lexer
-  std::unique_ptr<SymbolTable> symbolTable; // Unique ownership of symbol table
+  std::shared_ptr<SymbolTable> symbolTable; // Unique ownership of symbol table
   std::vector<Token> tokens;
 
   void parseParticipantDecl(std::vector<Token>::iterator &itr,

@@ -1,5 +1,8 @@
 #pragma once
 #include <memory>
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/Decl.h>
+#include <clang/AST/Stmt.h>
 
 namespace PchorAST {
 
@@ -23,7 +26,7 @@ public:
     struct Context {
 
     };
-    PchorASTVisitor(): ctx(std::make_shared<Context>()) {}
+    PchorASTVisitor(clang::ASTContext &clangContext): clangContext(clangContext), ctx(std::make_shared<Context>()) {}
 
     ~PchorASTVisitor() = default;
 
@@ -43,8 +46,17 @@ public:
     void visit(const RecExpr& expr);
     void visit(const ConExpr& expr);
 
+    std::shared_ptr<Context> getContext(){
+        return ctx;
+    }
+
 private:
+    clang::ASTContext &clangContext;
     std::shared_ptr<Context> ctx;
+
+    const clang::Decl* tryFindClangDecl(const std::string& val);
+    const clang::Stmt* tryFindClangStmt(const std::string& val);
+
 };
 
 } //namespace PchorAST

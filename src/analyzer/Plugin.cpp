@@ -16,11 +16,16 @@ namespace {
 class ChoreographyAstConsumer : public ASTConsumer {
 public:
   void HandleTranslationUnit(ASTContext &Context) override {
-    // This is called after the AST for the entire translation unit is created
-    llvm::outs()
-        << "AST has been fully created. Hello from HandleTranslationUnit!\n";
-    llvm::outs().flush();
+    llvm::outs() << "AST has been fully created. Hello from HandleTranslationUnit!\n";
+
+    // Create the PchorASTVisitor
+    PchorAST::PchorASTVisitor visitor(Context);
+
+    // Traverse the choreography AST (example)
   }
+private: 
+  std::unique_ptr<PchorAST::SymbolTable> sTable;
+  
 };
 
 class ChoreographyValidatorFrontendAction : public PluginASTAction {
