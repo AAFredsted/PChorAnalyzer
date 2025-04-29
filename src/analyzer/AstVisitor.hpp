@@ -3,21 +3,10 @@
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/Stmt.h>
+#include "../pchor/PchorAST.hpp"
 
 namespace PchorAST {
 
-class ParticipantASTNode;
-class ChannelASTNode;
-class LabelASTNode;
-class GlobalTypeASTNode;
-class IndexASTNode;
-class CommunicationExpr;
-class ExprList;
-class ParticipantExpr;
-class ChannelExpr;
-class IndexExpr;
-class RecExpr;
-class ConExpr;
 
 class PchorASTVisitor {
 
@@ -54,8 +43,6 @@ private:
     clang::ASTContext &clangContext;
     std::shared_ptr<Context> ctx;
 
-    const clang::Decl* tryFindClangDecl(const std::string& val);
-    const clang::Stmt* tryFindClangStmt(const std::string& val);
 
 };
 
