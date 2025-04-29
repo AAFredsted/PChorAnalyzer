@@ -14,26 +14,28 @@ namespace PchorAST {
         auto* decl = AnalyzerUtils::findDecl(clangContext, node.getName());
         if (decl == nullptr) {
             llvm::outs() << "Declaration for " << node.getName() << " not found.\n";
+            mappingSuccess=false;
         } else {
             llvm::outs() << "Found declaration for " << node.getName() << ": "
                          << decl->getDeclKindName() << "\n";
         }
-    
         // Additional test logic
         llvm::outs() << "Test visit function executed successfully.\n";
+        ctx->addMapping(node.getName(), decl);
     }
 
     void PchorASTVisitor::visit(const ChannelASTNode& node) {
-        std::println("Not implemented yet");
+        std::println("No Visit Required");
     }
     void PchorASTVisitor::visit(const LabelASTNode& node) {
-        std::println("Not implemented yet");
+        std::println("Not Implemented Yet");
     }
     void PchorASTVisitor::visit(const GlobalTypeASTNode& node) {
-        std::println("Not Implemented yet");
+        llvm::outs() << "Visiting GlobalASTVisitor" << node.getName() << "\n";
+        node.accept(*this);
     }
     void PchorASTVisitor::visit(const IndexASTNode& node)  {
-        std::println("Not Implemented yet");
+        std::println("Not Implemented Yet");
     }
 
     //Visit Expression Nodes

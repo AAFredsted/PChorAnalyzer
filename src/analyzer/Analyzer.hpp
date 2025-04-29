@@ -61,17 +61,43 @@ enum class ContextType {
 struct Context {
     ContextType type;
     std::variant<const clang::Decl*, const clang::Stmt*> value;
-    Context(const clang::Decl* decl): type(ContextType::Decl), value(decl) {}
-    Context(const clang::Stmt* stmt): type(ContextType::Stmt), value(stmt) {}
 
-    ContextType getType(){
+    // Delete default constructor
+    Context() = delete;
+
+    // Delete copy constructor and copy assignment operator
+    Context(const Context& other) = delete;
+    Context& operator=(const Context& other) = delete;
+
+    // Move constructor
+    Context(Context&& other) noexcept : type(other.type), value(std::move(other.value)) {}
+
+    // Move assignment operator
+    Context& operator=(Context&& other) noexcept {
+        if (this != &other) {
+            type = other.type;
+            value = std::move(other.value);
+        }
+        return *this;
+    }
+
+    // Constructor for Decl
+    explicit Context(const clang::Decl* decl) : type(ContextType::Decl), value(decl) {}
+
+    // Constructor for Stmt
+    explicit Context(const clang::Stmt* stmt) : type(ContextType::Stmt), value(stmt) {}
+
+    // Get the type of the context
+    ContextType getType() const {
         return type;
     }
-    
+
+    // Get the Decl
     const clang::Decl* getDecl() const {
         return std::get<const clang::Decl*>(value);
     }
 
+    // Get the Stmt
     const clang::Stmt* getStmt() const {
         return std::get<const clang::Stmt*>(value);
     }
@@ -82,11 +108,11 @@ public:
     CASTMapping(): map() {}
 
     void addMapping(const std::string& name, const clang::Decl* decl) {
-        map[name] = Context(decl);
+        map.emplace(name, Context(decl));
     }
 
     void addMapping(const std::string& name, const clang::Stmt* stmt) {
-        map[name] = Context(stmt);
+        map.emplace(name, Context(stmt));
     }
 
 private:

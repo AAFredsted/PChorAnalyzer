@@ -1,5 +1,5 @@
 Index I{1..n}
-Participant W{I}
+Participant Worker{I}
 Participant Subscriber{I}
 Channel w{I}
 
