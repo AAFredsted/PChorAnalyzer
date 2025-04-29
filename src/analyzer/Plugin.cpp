@@ -15,27 +15,38 @@ using namespace clang;
 namespace {
 class ChoreographyAstConsumer : public ASTConsumer {
 public:
+  explicit ChoreographyAstConsumer(std::shared_ptr<PchorAST::SymbolTable> sTable): sTable(std::move(sTable)) {}
   void HandleTranslationUnit(ASTContext &Context) override {
     llvm::outs() << "AST has been fully created. Hello from HandleTranslationUnit!\n";
 
     // Create the PchorASTVisitor
     PchorAST::PchorASTVisitor visitor(Context);
 
+    if(sTable){
+      llvm::outs() << "Symbol table correctly passed to ChoreographyAstConsumer\n";
+      for(auto itr = sTable->begin(); itr != sTable->end(); ++itr){
+        (*itr)->accept(visitor);
+      }
+    }
+
+
+
     // Traverse the choreography AST (example)
   }
 private: 
-  std::unique_ptr<PchorAST::SymbolTable> sTable;
+  std::shared_ptr<PchorAST::SymbolTable> sTable;
   
 };
 
 class ChoreographyValidatorFrontendAction : public PluginASTAction {
   std::string corFilePath;
+  std::shared_ptr<PchorAST::SymbolTable> sTable;
 
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  llvm::StringRef) override {
     // Create and return your AST consumer that prints messages.
-    return std::make_unique<ChoreographyAstConsumer>();
+    return std::make_unique<ChoreographyAstConsumer>(std::move(sTable));
   }
 
   bool ParseArgs(const CompilerInstance &CI,
@@ -58,6 +69,7 @@ protected:
     try {
       PchorAST::PchorParser parser{corFilePath};
       parser.parse();
+      sTable = parser.getChorAST();
       
     } catch (const std::exception &e) {
       llvm::errs() << "Error processing .cor-file:" << e.what() << "\n";

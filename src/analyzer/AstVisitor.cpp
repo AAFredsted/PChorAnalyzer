@@ -8,8 +8,21 @@ namespace PchorAST {
     //Visit Declaration Nodes
 
     void PchorASTVisitor::visit(const ParticipantASTNode& node) {
-        std::println("Not implemented yet");
+        llvm::outs() << "Visiting ParticipantASTNode: " << node.getName() << "\n";
+    
+        // Simulate finding a declaration in the C++ AST
+        auto* decl = AnalyzerUtils::findDecl(clangContext, node.getName());
+        if (decl == nullptr) {
+            llvm::outs() << "Declaration for " << node.getName() << " not found.\n";
+        } else {
+            llvm::outs() << "Found declaration for " << node.getName() << ": "
+                         << decl->getDeclKindName() << "\n";
+        }
+    
+        // Additional test logic
+        llvm::outs() << "Test visit function executed successfully.\n";
     }
+
     void PchorASTVisitor::visit(const ChannelASTNode& node) {
         std::println("Not implemented yet");
     }

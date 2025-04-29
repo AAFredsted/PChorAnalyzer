@@ -4,6 +4,7 @@
 #include <clang/AST/Decl.h>
 #include <clang/AST/Stmt.h>
 #include "../pchor/PchorAST.hpp"
+#include "Analyzer.hpp"
 
 namespace PchorAST {
 
@@ -15,7 +16,7 @@ public:
     struct Context {
 
     };
-    PchorASTVisitor(clang::ASTContext &clangContext): clangContext(clangContext), ctx(std::make_shared<Context>()) {}
+    PchorASTVisitor(clang::ASTContext &clangContext): clangContext(clangContext), ctx() {}
 
     ~PchorASTVisitor() = default;
 
@@ -35,13 +36,13 @@ public:
     void visit(const RecExpr& expr);
     void visit(const ConExpr& expr);
 
-    std::shared_ptr<Context> getContext(){
+    std::shared_ptr<CASTMapping> getContext(){
         return ctx;
     }
 
 private:
     clang::ASTContext &clangContext;
-    std::shared_ptr<Context> ctx;
+    std::shared_ptr<CASTMapping> ctx ;
 
 
 };
