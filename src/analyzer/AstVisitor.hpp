@@ -13,7 +13,7 @@ class PchorASTVisitor {
 
 public:
     
-    PchorASTVisitor(clang::ASTContext &clangContext): clangContext(clangContext), ctx(std::make_shared<CASTMapping>()), mappingSuccess(true) {}
+    PchorASTVisitor(clang::ASTContext &clangContext): clangContext(clangContext), ctx(std::make_shared<CASTMapping>()), mappingSuccess(true), currentDataType("") {}
 
     ~PchorASTVisitor() = default;
 
@@ -39,7 +39,9 @@ public:
 
 private:
     clang::ASTContext &clangContext;
-    std::shared_ptr<CASTMapping> ctx ;
+    std::shared_ptr<CASTMapping> ctx;
+    std::string currentDataType;
+
     bool mappingSuccess;
 
 };

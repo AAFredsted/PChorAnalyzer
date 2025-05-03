@@ -222,6 +222,9 @@ public:
   std::string getName() const {
     baseIndex->getName();
   }
+  bool isExprLiteral() const {
+    return isLiteral;
+  }
 
 protected:
   std::shared_ptr<IndexASTNode> baseIndex;
@@ -310,6 +313,19 @@ public:
     std::println("Datatype: {}", dataType);
   }
 
+  std::string getDataType() const {
+    return dataType;
+  }
+  std::shared_ptr<ParticipantExpr> getSender() const {
+    return sender;
+  }
+  std::shared_ptr<ParticipantExpr> getReciever() const {
+    return reciever;
+  }
+  std::shared_ptr<ChannelExpr> getChannel() const {
+    return channel;
+  }
+
 protected:
   // consists of sender, reciever, channel and type (and dependant expression if
   // it exists)
@@ -337,6 +353,20 @@ public:
 
   void accept(PchorASTVisitor &visitor) const override;
 
+  std::vector<std::shared_ptr<ExprPchorASTNode>>::iterator begin() {
+    return exprlist.begin();
+  }
+  std::vector<std::shared_ptr<ExprPchorASTNode>>::iterator end() {
+    return exprlist.end();
+  }
+  std::vector<std::shared_ptr<ExprPchorASTNode>>::const_iterator begin() const {
+    return exprlist.cbegin();
+  }
+  std::vector<std::shared_ptr<ExprPchorASTNode>>::const_iterator end() const {
+    return exprlist.cend();
+  }
+
+  
 protected:
   std::vector<std::shared_ptr<ExprPchorASTNode>> exprlist;
 };
@@ -396,7 +426,9 @@ public:
     std::println("Global Type {} with expressions:", name);
     expr_ptr->print();
   }
-
+  std::shared_ptr<ExprList> getExprList() const {
+    return expr_ptr;
+  }
 protected:
   std::shared_ptr<ExprList> expr_ptr;
 };

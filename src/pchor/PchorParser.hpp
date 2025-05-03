@@ -34,12 +34,13 @@ public:
         std::shared_ptr<DeclPchorASTNode> operator*() const {
             return table.at(*keyIt);
         }
+        //itr++
     
         STIterator& operator++() {
             ++keyIt;
             return *this;
         }
-    
+
         bool operator==(const STIterator& other) const {
             return keyIt == other.keyIt;
         }

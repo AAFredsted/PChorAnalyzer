@@ -19,8 +19,7 @@ namespace PchorAST {
             llvm::outs() << "Found declaration for " << node.getName() << ": "
                          << decl->getDeclKindName() << "\n";
         }
-        // Additional test logic
-        llvm::outs() << "Test visit function executed successfully.\n";
+        AnalyzerUtils::analyzeDeclChildren(decl);
         ctx->addMapping(node.getName(), decl);
     }
 
@@ -32,24 +31,62 @@ namespace PchorAST {
     }
     void PchorASTVisitor::visit(const GlobalTypeASTNode& node) {
         llvm::outs() << "Visiting GlobalASTVisitor" << node.getName() << "\n";
-        node.accept(*this);
+        node.getExprList()->accept(*this);
     }
     void PchorASTVisitor::visit(const IndexASTNode& node)  {
         std::println("Not Implemented Yet");
     }
-
     //Visit Expression Nodes
     void PchorASTVisitor::visit(const CommunicationExpr& expr) {
         std::println("Not Implemented yet");
+
+        //1. find data type
+        //2. find data type in the classes
+        auto* dataTypeDecl = AnalyzerUtils::findDecl(clangContext, expr.getDataType());
+
+        if (dataTypeDecl == nullptr) {
+            llvm::outs() << "Declaration for " << expr.getDataType() << " not found.\n";
+            mappingSuccess=false;
+        } else {
+            llvm::outs() << "Found declaration for " << expr.getDataType() << ": "
+                         << dataTypeDecl->getDeclKindName() << "\n";
+        }
+        ctx->addMapping(expr.getDataType(), dataTypeDecl); 
+        this->currentDataType = expr.getDataType();
+
+        //visit participants and channel {figure out who owns the collective state}
+
+        //sender
+        expr.getSender()->accept(*this);
+        //reciever
+        expr.getReciever()->accept(*this);
+
+        //channel 
+        expr.getChannel()->accept(*this);
     }
     void PchorASTVisitor::visit(const ExprList& expr)  {
-        std::println("Not Implemented yet");
+        for (auto it = expr.begin(); it != expr.end(); ++it) {
+            (*it)->accept(*this); // Read-only access
+        }
     }
     void PchorASTVisitor::visit(const ParticipantExpr& expr) {
-        std::println("Not Implemented yet");
+        if(expr.getIndex() == nullptr){
+            std::println("We implement this !");
+            auto dataTypeUse = AnalyzerUtils::findDataTypeInClass(clangContext, ctx->getMapping<const clang::Decl*>(expr.getBaseParticipant()->getName()), this->currentDataType);
+        }
+        else {
+            std::println("indexed expressions not supported yet :(");
+        }
+
     }
     void PchorASTVisitor::visit(const ChannelExpr& expr)  {
-        std::println("Not Implemented yet");
+        if(expr.getIndex() == nullptr){
+            //we have singular type without index
+            std::println("We implement this !");
+        }
+        else {
+            std::println("Not Implemented yet");
+        }
     }
     void PchorASTVisitor::visit(const IndexExpr& expr)  {
         std::println("Not Implemented yet");
