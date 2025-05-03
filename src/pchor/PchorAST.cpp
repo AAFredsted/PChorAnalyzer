@@ -2,50 +2,50 @@
 #include "../analyzer/AstVisitor.hpp"
 
 namespace PchorAST {
-    void IndexASTNode::accept(PchorASTVisitor &visitor) const {
+    void IndexASTNode::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
     }
 
-    void ParticipantASTNode::accept(PchorASTVisitor &visitor) const {
+    void ParticipantASTNode::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
       }
     
-    void ChannelASTNode::accept(PchorASTVisitor &visitor) const {
+    void ChannelASTNode::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
     }
 
-    void LabelASTNode::accept(PchorASTVisitor &visitor) const {
+    void LabelASTNode::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
       }
-    void IndexExpr::accept(PchorASTVisitor &visitor) const {
+    void IndexExpr::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
     }
 
-    void ParticipantExpr::accept(PchorASTVisitor &visitor) const {
+    void ParticipantExpr::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
     }
 
-    void ChannelExpr::accept(PchorASTVisitor &visitor) const {
+    void ChannelExpr::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
     }
 
-    void CommunicationExpr::accept(PchorASTVisitor &visitor) const {
+    void CommunicationExpr::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
     }
 
-    void ExprList::accept(PchorASTVisitor &visitor) const {
+    void ExprList::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
     }
 
-    void ConExpr::accept(PchorASTVisitor &visitor) const {
+    void ConExpr::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
     }
       
-    void RecExpr::accept(PchorASTVisitor &visitor) const {
+    void RecExpr::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
     }
 
-    void GlobalTypeASTNode::accept(PchorASTVisitor &visitor) const {
+    void GlobalTypeASTNode::accept(CAST_PchorASTVisitor &visitor) const {
         visitor.visit(*this);
     }
      

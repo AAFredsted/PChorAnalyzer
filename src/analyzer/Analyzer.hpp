@@ -99,6 +99,7 @@ public:
             
         // Define the matcher to validate individual child declarations
         auto methodMatcher = clang::ast_matchers::cxxMethodDecl(
+            clang::ast_matchers::unless(clang::ast_matchers::cxxConstructorDecl()),
             clang::ast_matchers::anyOf(
                 // Match methods with a parameter of the specified type
                 clang::ast_matchers::hasAnyParameter(
@@ -183,7 +184,6 @@ public:
         }
         return results;
     }
-
 private: 
 };
 

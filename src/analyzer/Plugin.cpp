@@ -20,7 +20,7 @@ public:
     llvm::outs() << "AST has been fully created. Hello from HandleTranslationUnit!\n";
 
     // Create the PchorASTVisitor
-    PchorAST::PchorASTVisitor visitor(Context);
+    PchorAST::CAST_PchorASTVisitor visitor(Context);
 
     if(sTable){
       llvm::outs() << "Symbol table correctly passed to ChoreographyAstConsumer\n";
