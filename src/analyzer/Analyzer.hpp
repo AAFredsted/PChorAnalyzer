@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../pchor/PchorProjection.hpp"
+
 #include <clang/AST/ASTContext.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
@@ -306,6 +308,20 @@ private:
   std::unordered_map<std::string, Context> map;
 };
 
-class PchorProjection {};
+class PchorProjection {
+  PchorProjection(): projectionMap() {}
+
+  void addParticipant(const std::string& participantName) {
+    projectionMap.insert(std::make_pair(participantName, std::vector<PchorAST::AbstractProjection>()));
+  } 
+  void addProjection(const std::string& participantName, PchorAST::AbstractProjection&& proj) {
+    projectionMap[participantName].emplace_back(proj);
+  }
+  void printProjections() const {
+
+  }
+private:
+  std::unordered_map<std::string, std::vector<PchorAST::AbstractProjection>> projectionMap;
+};
 
 } // namespace PchorAST

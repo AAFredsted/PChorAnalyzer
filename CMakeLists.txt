@@ -22,6 +22,7 @@ add_library(PchorCore SHARED
     ./src/pchor/PchorAST.cpp
     ./src/pchor/PchorParser.cpp
     ./src/pchor/PchorTokenizer.cpp
+    .src/pchor/PchorProjection.cpp
 )
 
 target_compile_options(PchorCore PRIVATE
