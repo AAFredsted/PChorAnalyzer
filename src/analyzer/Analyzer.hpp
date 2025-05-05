@@ -14,7 +14,7 @@
 template <typename NodeType>
 class MatchCallback : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  explicit MatchCallback(const NodeType *&result, const std::string &bindName)
+  explicit MatchCallback(const NodeType* &result, const std::string &bindName)
       : result(result), bindName(bindName) {}
 
   void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult)
@@ -151,12 +151,12 @@ public:
 
     auto ctx = decl->getDeclContext();
 
-    for (const auto childDecl : ctx->decls()) {
-      clang::ast_matchers::MatchFinder finder;
-      MatchTypeUseCallback<const clang::FunctionDecl> callback(results,
-                                                               "methodDecl");
-      finder.addMatcher(methodMatcher, &callback);
+    clang::ast_matchers::MatchFinder finder;
+    MatchTypeUseCallback<const clang::FunctionDecl> callback(results,
+                                                             "methodDecl");
+    finder.addMatcher(methodMatcher, &callback);
 
+    for (const auto childDecl : ctx->decls()) {
       // Match the child declaration
       finder.match(*childDecl, context);
     }
@@ -177,6 +177,56 @@ public:
                    << " found.\n";
     }
     return results;
+  }
+
+  static const clang::FieldDecl* findMatchingMember(clang::ASTContext &context, const clang::Decl *decl, const std::string &typeName) {
+
+    auto memberMatcher = clang::ast_matchers::fieldDecl(
+      clang::ast_matchers::hasType(
+        clang::ast_matchers::qualType(
+          clang::ast_matchers::anyOf(
+            clang::ast_matchers::hasDeclaration(
+              clang::ast_matchers::namedDecl(clang::ast_matchers::hasName(typeName))            
+            ),
+            clang::ast_matchers::pointerType(
+              clang::ast_matchers::pointee(
+                clang::ast_matchers::hasDeclaration(
+                  clang::ast_matchers::namedDecl(clang::ast_matchers::hasName(typeName))            
+                )
+              )
+            ),
+            clang::ast_matchers::templateSpecializationType(
+              clang::ast_matchers::hasAnyTemplateArgument(
+                clang::ast_matchers::templateArgument(
+                  clang::ast_matchers::refersToType(
+                    clang::ast_matchers::qualType(
+                      clang::ast_matchers::hasDeclaration(
+                        clang::ast_matchers::namedDecl(clang::ast_matchers::hasName(typeName))            
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    ).bind("fieldDecl");
+    const clang::FieldDecl* field = nullptr;
+
+    auto ctx = decl->getDeclContext();
+
+    clang::ast_matchers::MatchFinder finder;
+    MatchCallback<clang::FieldDecl> callback(field, "fieldDecl");
+    finder.addMatcher(memberMatcher, &callback);
+
+    for(const auto childDecl: ctx->decls()){
+      finder.match(*childDecl, context);
+      if(field != nullptr) {
+        break;
+      }
+    }
+    return field;
   }
 
 private:

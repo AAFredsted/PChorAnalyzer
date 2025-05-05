@@ -52,7 +52,11 @@ void CAST_PchorASTVisitor::visit(const CommunicationExpr &expr) {
   this->currentDataType = expr.getDataType();
 
   // visit participants and channel {figure out who owns the collective state}
-
+  auto sender = expr.getSender();
+  auto reciever = expr.getReciever();
+  
+  this->senderIdentifier = sender->getBaseParticipant()->getName();
+  this->recieverIdentifier = reciever->getBaseParticipant()->getName();
   // sender
   expr.getSender()->accept(*this);
   // reciever
@@ -68,7 +72,6 @@ void CAST_PchorASTVisitor::visit(const ExprList &expr) {
 }
 void CAST_PchorASTVisitor::visit(const ParticipantExpr &expr) {
   if (expr.getIndex() == nullptr) {
-    std::println("We implement this !");
     auto dataTypeUse = AnalyzerUtils::findDataTypeInClass(
         clangContext,
         ctx->getMapping<const clang::Decl *>(
@@ -83,8 +86,29 @@ void CAST_PchorASTVisitor::visit(const ParticipantExpr &expr) {
 }
 void CAST_PchorASTVisitor::visit(const ChannelExpr &expr) {
   if (expr.getIndex() == nullptr) {
-    // we have singular type without index
-    std::println("We implement this !");
+    auto sender = ctx->getMapping<const clang::Decl*>(this->senderIdentifier);
+    auto reciever = ctx->getMapping<const clang::Decl*>(this->recieverIdentifier);
+
+    //Try Find Reciever Member
+    //Try Find Sender Member
+
+    auto senderUse = AnalyzerUtils::findMatchingMember(
+      clangContext,
+      sender,
+      this->currentDataType
+    );
+
+    if(senderUse){
+      ctx->addMapping(expr.getBaseParticipant()->getName(), senderUse);
+    }
+    else {
+      auto recieverUse = AnalyzerUtils::findMatchingMember(
+        clangContext,
+        reciever,
+        this->currentDataType
+      );
+      ctx->addMapping(expr.getBaseParticipant()->getName(), recieverUse);
+    }
   } else {
     std::println("Not Implemented yet");
   }
