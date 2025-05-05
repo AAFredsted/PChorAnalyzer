@@ -15,27 +15,29 @@ using namespace clang;
 namespace {
 class ChoreographyAstConsumer : public ASTConsumer {
 public:
-  explicit ChoreographyAstConsumer(std::shared_ptr<PchorAST::SymbolTable> sTable): sTable(std::move(sTable)) {}
+  explicit ChoreographyAstConsumer(
+      std::shared_ptr<PchorAST::SymbolTable> sTable)
+      : sTable(std::move(sTable)) {}
   void HandleTranslationUnit(ASTContext &Context) override {
-    llvm::outs() << "AST has been fully created. Hello from HandleTranslationUnit!\n";
+    llvm::outs()
+        << "AST has been fully created. Hello from HandleTranslationUnit!\n";
 
     // Create the PchorASTVisitor
     PchorAST::CAST_PchorASTVisitor visitor(Context);
 
-    if(sTable){
-      llvm::outs() << "Symbol table correctly passed to ChoreographyAstConsumer\n";
-      for(auto itr = sTable->begin(); itr != sTable->end(); ++itr){
+    if (sTable) {
+      llvm::outs()
+          << "Symbol table correctly passed to ChoreographyAstConsumer\n";
+      for (auto itr = sTable->begin(); itr != sTable->end(); ++itr) {
         (*itr)->accept(visitor);
       }
     }
 
-
-
     // Traverse the choreography AST (example)
   }
-private: 
+
+private:
   std::shared_ptr<PchorAST::SymbolTable> sTable;
-  
 };
 
 class ChoreographyValidatorFrontendAction : public PluginASTAction {
@@ -43,13 +45,14 @@ class ChoreographyValidatorFrontendAction : public PluginASTAction {
   std::shared_ptr<PchorAST::SymbolTable> sTable;
 
 protected:
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 llvm::StringRef) override {
+  std::unique_ptr<ASTConsumer>
+  CreateASTConsumer([[maybe_unused]] CompilerInstance &CI,
+                    llvm::StringRef) override {
     // Create and return your AST consumer that prints messages.
     return std::make_unique<ChoreographyAstConsumer>(std::move(sTable));
   }
 
-  bool ParseArgs(const CompilerInstance &CI,
+  bool ParseArgs([[maybe_unused]] const CompilerInstance &CI,
                  const std::vector<std::string> &args) override {
     // Handle plugin arguments if any.
 
@@ -70,7 +73,7 @@ protected:
       PchorAST::PchorParser parser{corFilePath};
       parser.parse();
       sTable = parser.getChorAST();
-      
+
     } catch (const std::exception &e) {
       llvm::errs() << "Error processing .cor-file:" << e.what() << "\n";
       return false;

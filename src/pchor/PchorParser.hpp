@@ -14,54 +14,52 @@ public:
                       std::shared_ptr<DeclPchorASTNode> node);
   std::shared_ptr<DeclPchorASTNode> resolve(const std::string &name) const;
   std::shared_ptr<DeclPchorASTNode> resolve(const std::string_view name) const;
-  
+
   void print() const {
-      size_t i = 0;
-      for (auto it = begin(); it != end(); ++it) {
-          i++;
-          std::println("We print ASTElement {}", i);
-          (*it)->print();
-      }
+    size_t i = 0;
+    for (auto it = begin(); it != end(); ++it) {
+      i++;
+      std::println("We print ASTElement {}", i);
+      (*it)->print();
+    }
   }
   class STIterator {
-    public:
-        using difference_type = std::ptrdiff_t;
-        using value_type = DeclPchorASTNode;
-    
-        STIterator(const SymbolTable& sTable, std::vector<std::string>::const_iterator keyIt)
-            : keyIt(keyIt), table(sTable.table) {}
-    
-        std::shared_ptr<DeclPchorASTNode> operator*() const {
-            return table.at(*keyIt);
-        }
-        //itr++
-    
-        STIterator& operator++() {
-            ++keyIt;
-            return *this;
-        }
+  public:
+    using difference_type = std::ptrdiff_t;
+    using value_type = DeclPchorASTNode;
 
-        bool operator==(const STIterator& other) const {
-            return keyIt == other.keyIt;
-        }
-    
-        bool operator!=(const STIterator& other) const {
-            return keyIt != other.keyIt;
-        }
-    
-    private:
-        std::vector<std::string>::const_iterator keyIt;
-        const std::unordered_map<std::string, std::shared_ptr<DeclPchorASTNode>>& table;
-    };
+    STIterator(const SymbolTable &sTable,
+               std::vector<std::string>::const_iterator keyIt)
+        : keyIt(keyIt), table(sTable.table) {}
 
-  STIterator begin() const {
-      return STIterator(*this, keys.begin());
-  }
-  
-  STIterator end() const {
-      return STIterator(*this, keys.end());
-  }
-  
+    std::shared_ptr<DeclPchorASTNode> operator*() const {
+      return table.at(*keyIt);
+    }
+    // itr++
+
+    STIterator &operator++() {
+      ++keyIt;
+      return *this;
+    }
+
+    bool operator==(const STIterator &other) const {
+      return keyIt == other.keyIt;
+    }
+
+    bool operator!=(const STIterator &other) const {
+      return keyIt != other.keyIt;
+    }
+
+  private:
+    std::vector<std::string>::const_iterator keyIt;
+    const std::unordered_map<std::string, std::shared_ptr<DeclPchorASTNode>>
+        &table;
+  };
+
+  STIterator begin() const { return STIterator(*this, keys.begin()); }
+
+  STIterator end() const { return STIterator(*this, keys.end()); }
+
 private:
   std::unordered_map<std::string, std::shared_ptr<DeclPchorASTNode>> table;
   std::vector<std::string> keys;
@@ -77,9 +75,7 @@ public:
 
   void parse();
 
-  std::shared_ptr<SymbolTable> getChorAST() {
-    return std::move(symbolTable);
-  }
+  std::shared_ptr<SymbolTable> getChorAST() { return std::move(symbolTable); }
 
 private:
   std::unique_ptr<PchorLexer> lexer;        // Unique ownership of lexer
@@ -112,14 +108,13 @@ private:
   std::shared_ptr<CommunicationExpr>
   parseCommunicationExpr(std::vector<Token>::iterator &itr,
                          const std::vector<Token>::iterator &end);
-  std::shared_ptr<RecExpr>                       
+  std::shared_ptr<RecExpr>
   parseRecursiveExpr(std::vector<Token>::iterator &itr,
-                      const std::vector<Token>::iterator &end);
+                     const std::vector<Token>::iterator &end);
 
   std::vector<Token>::iterator
   findEndofScope(std::vector<Token>::iterator &itr,
-                const std::vector<Token>::iterator &end);
-  
+                 const std::vector<Token>::iterator &end);
 };
 
 } // namespace PchorAST

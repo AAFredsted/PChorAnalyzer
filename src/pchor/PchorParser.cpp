@@ -2,31 +2,30 @@
 
 namespace PchorAST {
 
+// HelperFunctions
 
-
-//HelperFunctions
-
-std::vector<Token>::iterator PchorParser::findEndofScope(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end) {
-    auto endofScope = itr;
+std::vector<Token>::iterator
+PchorParser::findEndofScope(std::vector<Token>::iterator &itr,
+                            const std::vector<Token>::iterator &end) {
+  auto endofScope = itr;
+  endofScope++;
+  while (endofScope != end && endofScope->value != "}") {
+    if (endofScope->value == "{") {
+      endofScope = findEndofScope(endofScope, end);
+    }
     endofScope++;
-    while(endofScope != end && endofScope->value != "}"){
-        if(endofScope->value == "{"){
-            endofScope = findEndofScope(endofScope, end);
-        }
-        endofScope++;
-    }
-    if(endofScope == end){
-        throw std::runtime_error("End of Scope not found. Scope Initiater found at: " + itr->toString());
-    }
-    return endofScope;
+  }
+  if (endofScope == end) {
+    throw std::runtime_error(
+        "End of Scope not found. Scope Initiater found at: " + itr->toString());
+  }
+  return endofScope;
 }
 
-
-
-//Parsing Tree
+// Parsing Tree
 void SymbolTable::addDeclaration(const std::string &name,
                                  std::shared_ptr<DeclPchorASTNode> node) {
-  keys.push_back(name); 
+  keys.push_back(name);
   table.insert(std::make_pair(name, node));
 }
 
@@ -230,7 +229,7 @@ void PchorParser::parseParticipantDecl(
     throw std::runtime_error("Expected '}' after Identifier, but got: " +
                              itr->toString());
   }
-  if(IdxNode == nullptr) {
+  if (IdxNode == nullptr) {
     std::println("it is nullptr");
   }
 
@@ -471,11 +470,9 @@ PchorParser::parseExpressionList(std::vector<Token>::iterator &itr,
       if (itr->value == "end") {
         itr++;
         break;
-      } 
-      else if(itr->value == "Rec") {
+      } else if (itr->value == "Rec") {
         expr->addExpr(parseRecursiveExpr(itr, end));
-      }
-      else {
+      } else {
         throw std::runtime_error("expected end of expression. Found: " +
                                  itr->toString());
       }
@@ -717,44 +714,16 @@ PchorParser::parseIndexExpr(std::shared_ptr<IndexASTNode> indexType,
                              itr->toString());
   }
   if (expr == nullptr) {
-    std::println("Waaat");
+    std::println("Not Implemented");
   }
   return expr;
 }
-//Todo: Implement recursive expression parser
-std::shared_ptr<RecExpr>  PchorParser::parseRecursiveExpr(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end) {
-    itr++;
-    if(itr->type != TokenType::Identifier){
-        throw std::runtime_error("Expected Recursive Expression Identifier. Found: " + itr->toString());
-    }
-    std::string recVar = std::string(itr->value);
-
-    itr++;
-    if(itr->type != TokenType::Symbol || itr->value != "("){
-        throw std::runtime_error("Expected beginning of Index List");
-    }
-
-    auto endofIndexList = itr;
-    while(endofIndexList != end && endofIndexList->type != TokenType::Symbol && endofIndexList->value != ")") {
-        endofIndexList++;
-    }
-
-    if(endofIndexList == end){
-        throw std::runtime_error("Index List not closed for recursive statement: " + recVar);
-    }
-    //assume we parse this 0:::
-
-    itr++;
-
-    if(itr->type != TokenType::Symbol || itr->value != "{"){
-        throw std::runtime_error("Expected '{'. Found: " + itr->toString());
-    }
-
-    auto endofBody = findEndofScope(itr, end);
-
-    
-
-    
+// Todo: Implement recursive expression parser
+std::shared_ptr<RecExpr> PchorParser::parseRecursiveExpr(
+    [[maybe_unused]] std::vector<Token>::iterator &itr,
+    [[maybe_unused]] const std::vector<Token>::iterator &end) {
+  std::println("Not Implemented");
+  return nullptr;
 }
 
 } // namespace PchorAST
