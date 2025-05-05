@@ -12,6 +12,7 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include <memory>
 
 template <typename NodeType>
 class MatchCallback : public clang::ast_matchers::MatchFinder::MatchCallback {
@@ -309,19 +310,21 @@ private:
 };
 
 class PchorProjection {
+public:
   PchorProjection(): projectionMap() {}
 
   void addParticipant(const std::string& participantName) {
-    projectionMap.insert(std::make_pair(participantName, std::vector<PchorAST::AbstractProjection>()));
-  } 
-  void addProjection(const std::string& participantName, PchorAST::AbstractProjection&& proj) {
-    projectionMap[participantName].emplace_back(proj);
+    projectionMap.emplace(participantName, std::vector<std::unique_ptr<PchorAST::AbstractProjection>>());
+  }
+
+  void addProjection(const std::string& participantName, std::unique_ptr<PchorAST::AbstractProjection> proj) {
+    projectionMap[participantName].emplace_back(std::move(proj));
   }
   void printProjections() const {
 
   }
 private:
-  std::unordered_map<std::string, std::vector<PchorAST::AbstractProjection>> projectionMap;
+  std::unordered_map<std::string, std::vector<std::unique_ptr<PchorAST::AbstractProjection>>> projectionMap;
 };
 
 } // namespace PchorAST
