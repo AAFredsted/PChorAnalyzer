@@ -85,6 +85,12 @@ Once the .so-file has been built, you can link it in your compilation process as
 clang++ -std=c++23 -Xclang -load -Xclang ../build/libPchorAnalyzerPlugin.so  -Xclang -plugin-arg-PchorAnalyzer -Xclang --cor=<path_to_cor-file> -c test.cpp -o test
 ```
 
+Debug Output can be accessed with the following command setup:
+
+```bash
+clang++ -std=c++23 -Xclang -load -Xclang ../build/libPchorAnalyzerPlugin.so  -Xclang -plugin-arg-PchorAnalyzer -Xclang --cor=<path_to_cor-file> -Xclang -plugin-arg-PchorAnalyzer -Xclang --debug -c test.cpp -o test
+```
+
 ---
 
 ## Prerequisites
