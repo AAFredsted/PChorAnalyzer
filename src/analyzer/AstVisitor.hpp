@@ -48,20 +48,20 @@ public:
   ~CAST_PchorASTVisitor() = default;
 
   // Visiting Declarations
-  void visit(const ParticipantASTNode &node);
-  void visit(const ChannelASTNode &node);
-  void visit(const LabelASTNode &node);
-  void visit(const GlobalTypeASTNode &node);
-  void visit(const IndexASTNode &node);
+  void visit(const ParticipantASTNode &node) override;
+  void visit(const ChannelASTNode &node) override;
+  void visit(const LabelASTNode &node) override;
+  void visit(const GlobalTypeASTNode &node) override;
+  void visit(const IndexASTNode &node) override;
 
   // Visiting Expressions
-  void visit(const CommunicationExpr &expr);
-  void visit(const ExprList &expr);
-  void visit(const ParticipantExpr &expr);
-  void visit(const ChannelExpr &expr);
-  void visit(const IndexExpr &expr);
-  void visit(const RecExpr &expr);
-  void visit(const ConExpr &expr);
+  void visit(const CommunicationExpr &expr) override;
+  void visit(const ExprList &expr) override;
+  void visit(const ParticipantExpr &expr) override;
+  void visit(const ChannelExpr &expr) override;
+  void visit(const IndexExpr &expr) override;
+  void visit(const RecExpr &expr) override;
+  void visit(const ConExpr &expr) override;
 
   std::shared_ptr<CASTMapping> getContext() { return ctx; }
 
@@ -77,32 +77,34 @@ class Proj_PchorASTVisitor : public AbstractPchorASTVisitor {
 public:
   Proj_PchorASTVisitor(clang::ASTContext &clangContext)
       : AbstractPchorASTVisitor(clangContext),
-        ctx(std::make_shared<PchorProjection>()), currentDataType(""),
+        ctx(std::make_shared<PchorProjection>()), currentDataType(""), currentChannelName(""), channelIndex(),
         mappingSuccess(true) {}
 
   ~Proj_PchorASTVisitor() = default;
 
   // Visiting Declarations
-  void visit(const ParticipantASTNode &node);
-  void visit(const ChannelASTNode &node);
-  void visit(const LabelASTNode &node);
-  void visit(const GlobalTypeASTNode &node);
-  void visit(const IndexASTNode &node);
+  void visit(const ParticipantASTNode &node) override;
+  void visit(const ChannelASTNode &node) override;
+  void visit(const LabelASTNode &node) override;
+  void visit(const GlobalTypeASTNode &node) override;
+  void visit(const IndexASTNode &node) override;
 
   // Visiting Expressions
-  void visit(const CommunicationExpr &expr);
-  void visit(const ExprList &expr);
-  void visit(const ParticipantExpr &expr);
-  void visit(const ChannelExpr &expr);
-  void visit(const IndexExpr &expr);
-  void visit(const RecExpr &expr);
-  void visit(const ConExpr &expr);
+  void visit(const CommunicationExpr &expr) override;
+  void visit(const ExprList &expr) override;
+  void visit(const ParticipantExpr &expr) override;
+  void visit(const ChannelExpr &expr) override;
+  void visit(const IndexExpr &expr) override;
+  void visit(const RecExpr &expr) override;
+  void visit(const ConExpr &expr) override;
 
   std::shared_ptr<PchorProjection> getContext() { return ctx; }
 
 private:
   std::shared_ptr<PchorProjection> ctx;
   std::string currentDataType;
+  std::string currentChannelName;
+  size_t channelIndex;
   bool mappingSuccess;
 };
 

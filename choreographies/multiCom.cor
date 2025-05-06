@@ -7,5 +7,8 @@ Channel j{1}
 
 Message =
     Anne -> Nicholas: k<Query>.
-    Nicholas -> Anne: j<Response>.
+    Nicholas -> Anne: k<Ack>.
+    Nicholas -> Anne: k<Response>.
     end
+
+//the above works as we have a dependency

@@ -4,6 +4,7 @@
 
 struct Message {
     explicit Message(): str("") {}
+    explicit Message(std::string str): str(str) {}
     std::string str;
 };
 

@@ -14,8 +14,8 @@ Mesh =
             end
         }
         Worker[i][max(J)] -> Worker[i+1][max(J)]: w[i][max(J)]<nat>.end
-    }
-    | foreach(k < max(J) : J) {
+    }.
+    foreach(k < max(J) : J) {
         Worker[max(i)][k] -> W[max(i)][k+1]: w[max(i)][k+1]<nat>.end
     }.
     end

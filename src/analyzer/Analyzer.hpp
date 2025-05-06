@@ -313,12 +313,28 @@ class PchorProjection {
 public:
   PchorProjection(): projectionMap() {}
 
+  PchorProjection(const PchorProjection& other) = delete;
+  PchorProjection& operator=(const PchorProjection& other) = delete;
+
+  PchorProjection(PchorProjection&& other) noexcept : projectionMap(std::move(other.projectionMap)) {
+    other.projectionMap.clear();
+  }
+  PchorProjection& operator=(PchorProjection&& other) noexcept {
+    if (this != &other) {
+      projectionMap = std::move(other.projectionMap);
+      other.projectionMap.clear();
+    }
+    return *this;
+  }
   void addParticipant(const std::string& participantName) {
     projectionMap.emplace(participantName, std::vector<std::unique_ptr<PchorAST::AbstractProjection>>());
   }
 
   void addProjection(const std::string& participantName, std::unique_ptr<PchorAST::AbstractProjection> proj) {
     projectionMap[participantName].emplace_back(std::move(proj));
+  }
+  bool hasProjection(const std::string& participantName) const {
+    return projectionMap.contains(participantName);
   }
   void printProjections() const {
 

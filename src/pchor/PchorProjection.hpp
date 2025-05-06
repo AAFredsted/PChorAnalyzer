@@ -1,6 +1,7 @@
 #include <string>
 #include <format>
 #include <cstdint>
+#include <print>
 
 namespace PchorAST {
 
@@ -47,6 +48,10 @@ class Psend: public AbstractComProjection {
 public:
     Psend(const std::string& channelName, const std::string& typeName, std::size_t channelIndex): AbstractComProjection(ProjectionType::Send, channelName, typeName, channelIndex) {}
     ~Psend() = default;
+
+    virtual void print() const override {
+        std::print("!{}[{}]<{}>.", this->channelName, this->channelIndex, this->typeName);
+    }
     
 private:
 };
@@ -55,6 +60,10 @@ class Precieve: public AbstractComProjection {
 public:
     Precieve(const std::string& channelName, const std::string& typeName, std::size_t channelIndex): AbstractComProjection(ProjectionType::Recieve, channelName, typeName, channelIndex) {}
     ~Precieve() = default;
+
+    virtual void print() const override {
+        std::print("?{}[{}]<{}>.", this->channelName, this->channelIndex, this->typeName);
+    }
 private:    
 };
 

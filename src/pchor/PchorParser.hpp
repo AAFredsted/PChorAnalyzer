@@ -59,6 +59,12 @@ public:
   STIterator begin() const { return STIterator(*this, keys.begin()); }
 
   STIterator end() const { return STIterator(*this, keys.end()); }
+  STIterator back() const { 
+    if(keys.empty()){
+      throw std::runtime_error("Symboltable is empty: choreography File must contain at least one global type declaration");
+    }
+    return STIterator(*this, std::prev(keys.end())); 
+  }
 
 private:
   std::unordered_map<std::string, std::shared_ptr<DeclPchorASTNode>> table;

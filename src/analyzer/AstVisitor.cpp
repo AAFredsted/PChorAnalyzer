@@ -123,7 +123,95 @@ void CAST_PchorASTVisitor::visit([[maybe_unused]] const ConExpr &expr) {
   std::println("Not Implemented yet");
 }
 
+//visitor functions for ProjectionVisitor
+// Visiting Declarations
+void Proj_PchorASTVisitor::visit( [[maybe_unused]] const ParticipantASTNode &node) {
+  std::println("No visit Required: projection only performed on final global type declaration");
+}
+void Proj_PchorASTVisitor::visit( [[maybe_unused]] const ChannelASTNode &node) {
+  std::println("No visit Required: projection only performed on final global type declaration");
 
+}
+void Proj_PchorASTVisitor::visit( [[maybe_unused]] const LabelASTNode &node) {
+  std::println("No visit Required: projection only performed on final global type declaration");
 
-//implementation of ProjectionASTVisitor
+}
+void Proj_PchorASTVisitor::visit(const GlobalTypeASTNode &node) {
+    llvm::outs() << "Visiting GlobalASTVisitor" << node.getName() << "\n";
+    node.getExprList()->accept(*this);
+}
+void Proj_PchorASTVisitor::visit( [[maybe_unused]] const IndexASTNode &node) {
+  std::println("No visit Required: projection only performed on final global type declaration");
+
+}
+
+// Visiting Expressions
+void Proj_PchorASTVisitor::visit(const CommunicationExpr &expr) {
+
+  //store datatype for projection generation
+  this->currentDataType = expr.getDataType();
+
+  //set currentChannelName through this ! 
+  expr.getChannel()->accept(*this);
+
+  //project sender
+  expr.getSender()->accept(*this);
+    //check if sender exists
+    //check if index is defined, otherwise, throw error
+
+  //project reciever
+    //check if reciever exists
+  expr.getReciever()->accept(*this);
+    //check if index is defined, otherwise throw error
+
+  //done
+
+}
+void Proj_PchorASTVisitor::visit(const ExprList &expr) {
+  //visit each com expression
+  std::println("Visiting expressionlist");
+  for (auto it = expr.begin(); it != expr.end(); ++it) {
+    (*it)->accept(*this); // Read-only access
+  }
+}
+void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
+  std::println("Visiting participant expression");
+  std::string name = expr.getBaseParticipant()->getName();
+  if(expr.getIndex() == nullptr) {
+    if(!this->ctx->hasProjection(name)) {
+      this->ctx->addParticipant(name);
+    }
+    this->ctx->addProjection(name, std::make_unique<Psend>(this->currentChannelName, this->currentDataType,  this->channelIndex));
+  }
+  else {
+    std::println("Indexes not implemented yet");
+  }
+}
+void Proj_PchorASTVisitor::visit(const ChannelExpr &expr) {
+  std::println("Visiting Channel expression");
+  this->currentChannelName = expr.getBaseParticipant()->getName();
+  if(expr.getIndex() == nullptr){
+    this->channelIndex = 1;
+  }
+  else {
+    expr.getIndex()->accept(*this);
+
+  }
+}
+void Proj_PchorASTVisitor::visit(const IndexExpr &expr) {
+  std::println("Visiting Index expression");
+  if(expr.isExprLiteral()) {
+    this->channelIndex = expr.getLiteral();
+  }
+  else {
+    throw std::runtime_error(std::format("Index cannot be undefined at projection step. Referential Index {} is only valid within Foreach or Recursive expressions", expr.getName()));
+  }
+}
+void Proj_PchorASTVisitor::visit(const RecExpr &expr) {
+  std::println("Not implemented yet");
+}
+void Proj_PchorASTVisitor::visit(const ConExpr &expr) {
+  std::println("Not implemented yet");
+}
+
 } // namespace PchorAST

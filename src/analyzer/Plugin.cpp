@@ -23,14 +23,17 @@ public:
         << "AST has been fully created. Hello from HandleTranslationUnit!\n";
 
     // Create the PchorASTVisitor
-    PchorAST::CAST_PchorASTVisitor visitor(Context);
+    PchorAST::CAST_PchorASTVisitor CAST_visitor(Context);
+    PchorAST::Proj_PchorASTVisitor Proj_visitor(Context);
 
     if (sTable) {
       llvm::outs()
           << "Symbol table correctly passed to ChoreographyAstConsumer\n";
       for (auto itr = sTable->begin(); itr != sTable->end(); ++itr) {
-        (*itr)->accept(visitor);
+        (*itr)->accept(CAST_visitor);
       }
+
+      (*(sTable->back()))->accept(Proj_visitor);
     }
 
     // Traverse the choreography AST (example)
