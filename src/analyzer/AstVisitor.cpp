@@ -65,6 +65,11 @@ void CAST_PchorASTVisitor::visit(const ParticipantExpr &expr) {
         ctx->getMapping<const clang::Decl *>(
             expr.getBaseParticipant()->getName()),
         this->currentDataType);
+
+    if(dataTypeUse.empty()) {
+      mappingSuccess = false;
+      throw std::runtime_error(std::format("No matching function declarations found in {} with {}", expr.getBaseParticipant()->getName(), this->currentDataType));
+    }
     ctx->addMapping(expr.getBaseParticipant()->getName() +
                         this->currentDataType,
                     dataTypeUse.back());
@@ -89,7 +94,15 @@ void CAST_PchorASTVisitor::visit(const ChannelExpr &expr) {
     } else {
       auto recieverUse = AnalyzerUtils::findMatchingMember(
           clangContext, reciever, this->currentDataType);
-      ctx->addMapping(expr.getBaseParticipant()->getName(), recieverUse);
+      if(recieverUse) {
+        ctx->addMapping(expr.getBaseParticipant()->getName(), recieverUse);
+      }
+      else {
+        mappingSuccess = false;
+        throw std::runtime_error(std::format(
+          "No matching member found for data type '{}' in sender '{}' or receiver '{}'",
+          this->currentDataType, this->senderIdentifier, this->recieverIdentifier));
+      }
     }
   } else {
     std::println("Not Implemented yet");
@@ -199,9 +212,11 @@ void Proj_PchorASTVisitor::visit(const IndexExpr &expr) {
   }
 }
 void Proj_PchorASTVisitor::visit([[maybe_unused]] const RecExpr &expr) {
+  mappingSuccess = false;
   throw std::runtime_error("Recursive Expressions not implemented");
 }
 void Proj_PchorASTVisitor::visit([[maybe_unused]] const ConExpr &expr) {
+  mappingSuccess = false;
   throw std::runtime_error("Continuation Expressions not implemented");
 }
 
