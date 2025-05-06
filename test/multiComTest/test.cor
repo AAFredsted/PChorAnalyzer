@@ -3,12 +3,12 @@ Participant Nicholas{1}
 
 Channel k{1}
 Channel j{1}
-
+Channel l{1}
 
 Message =
     Anne -> Nicholas: k<Query>.
-    Nicholas -> Anne: k<Ack>.
-    Nicholas -> Anne: k<Response>.
+    Nicholas -> Anne: j<Ack>.
+    Nicholas -> Anne: l<Response>.
     end
 
 //the above works as we have a dependency
