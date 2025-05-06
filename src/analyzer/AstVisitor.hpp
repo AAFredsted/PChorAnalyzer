@@ -39,11 +39,8 @@ class CAST_PchorASTVisitor : public AbstractPchorASTVisitor {
 public:
   CAST_PchorASTVisitor(clang::ASTContext &clangContext)
       : AbstractPchorASTVisitor(clangContext),
-        ctx(std::make_shared<CASTMapping>()),
-        currentDataType(""),
-        senderIdentifier(""),
-        recieverIdentifier(""),
-        mappingSuccess(true) {}
+        ctx(std::make_shared<CASTMapping>()), currentDataType(""),
+        senderIdentifier(""), recieverIdentifier(""), mappingSuccess(true) {}
 
   ~CAST_PchorASTVisitor() = default;
 
@@ -65,9 +62,7 @@ public:
 
   std::shared_ptr<CASTMapping> getContext() { return ctx; }
 
-  void printMappings() {
-    ctx->printMappings();
-  }
+  void printMappings() { ctx->printMappings(); }
 
 private:
   std::shared_ptr<CASTMapping> ctx;
@@ -81,8 +76,9 @@ class Proj_PchorASTVisitor : public AbstractPchorASTVisitor {
 public:
   Proj_PchorASTVisitor(clang::ASTContext &clangContext)
       : AbstractPchorASTVisitor(clangContext),
-        ctx(std::make_shared<PchorProjection>()), currentDataType(""), currentChannelName(""), channelIndex(),
-        isSender(true), mappingSuccess(true) {}
+        ctx(std::make_shared<PchorProjection>()), currentDataType(""),
+        currentChannelName(""), channelIndex(), isSender(true),
+        mappingSuccess(true) {}
 
   ~Proj_PchorASTVisitor() = default;
 
@@ -104,9 +100,7 @@ public:
 
   std::shared_ptr<PchorProjection> getContext() { return ctx; }
 
-  void printProjections() const {
-    ctx->printProjections();
-  }
+  void printProjections() const { ctx->printProjections(); }
 
 private:
   std::shared_ptr<PchorProjection> ctx;

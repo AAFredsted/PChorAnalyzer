@@ -47,10 +47,9 @@ SymbolTable::resolve(const std::string_view name) const {
   return nullptr;
 }
 
-void PchorParser::printAST() const {
-  symbolTable->print();
-}
+void PchorParser::printAST() const { symbolTable->print(); }
 void PchorParser::printTokenList() const {
+  std::println("\n\nToken List provided by PchorLexer\n--------------------------------");
   for (const Token &t : tokens) {
     std::println("{}", t.toString());
   }
@@ -230,9 +229,9 @@ void PchorParser::parseParticipantDecl(
     throw std::runtime_error("Expected '}' after Identifier, but got: " +
                              itr->toString());
   }
-  if(IdxNode == nullptr) {
-    //TODO: provide default 1-index
-    //handle this at some point
+  if (IdxNode == nullptr) {
+    // TODO: provide default 1-index
+    // handle this at some point
   }
   auto Participant =
       std::make_shared<ParticipantASTNode>(participantName, IdxNode);

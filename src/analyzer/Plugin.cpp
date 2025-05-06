@@ -19,13 +19,12 @@ public:
       std::shared_ptr<PchorAST::SymbolTable> sTable, bool debug)
       : sTable(std::move(sTable)), debug(debug) {}
   void HandleTranslationUnit(ASTContext &Context) override {
-    llvm::outs()
-        << "AST has been fully created. CASTMapping and Choreopgrahy Projection Commencing!\n";
+    llvm::outs() << "\n\nAST has been fully created. CASTMapping and Choreopgrahy "
+                    "Projection Commencing!\n";
 
     PchorAST::CAST_PchorASTVisitor CAST_visitor(Context);
     PchorAST::Proj_PchorASTVisitor Proj_visitor(Context);
-    try
-    {
+    try {
       // Create the PchorASTVisitor
       if (sTable) {
         llvm::outs()
@@ -35,21 +34,22 @@ public:
         }
         llvm::outs() << "CAST mapping created\n";
         auto globalTypePtr = sTable->back();
-        if((*globalTypePtr)->getDeclType() != PchorAST::Decl::Global_Type_Decl){
-          throw std::runtime_error("Final Expression is required to be a Global type expression.");
+        if ((*globalTypePtr)->getDeclType() !=
+            PchorAST::Decl::Global_Type_Decl) {
+          throw std::runtime_error(
+              "Final Expression is required to be a Global type expression.");
         }
         (*globalTypePtr)->accept(Proj_visitor);
         llvm::outs() << "Projection created\n";
       }
 
-      if(debug) {
+      if (debug) {
         CAST_visitor.printMappings();
         Proj_visitor.printProjections();
-      }    
-    }
-    catch(const std::exception& e)
-    {
-      llvm::errs() << "Error in CAST Mapping or Choreography Projection: \n" << e.what() << "\n";
+      }
+    } catch (const std::exception &e) {
+      llvm::errs() << "Error in CAST Mapping or Choreography Projection: \n"
+                   << e.what() << "\n";
     }
 
     // Traverse the choreography AST (example)
@@ -79,12 +79,12 @@ protected:
     debug = false;
     for (const auto &arg : args) {
       if (arg.find("--cor=") != std::string::npos) {
-          corFilePath = arg.substr(arg.find("--cor=") + 6);
-          llvm::outs() << "Recieved .cor file path: " << corFilePath << "\n";
+        corFilePath = arg.substr(arg.find("--cor=") + 6);
+        llvm::outs() << "Recieved .cor file path: " << corFilePath << "\n";
       }
       if (arg.find("--debug") != std::string::npos) {
-          debug = true;
-          llvm::outs() << "Debug flag found. Debug Output will be printed\n";
+        debug = true;
+        llvm::outs() << "Debug flag found. Debug Output will be printed\n";
       }
     }
 
@@ -98,7 +98,7 @@ protected:
       PchorAST::PchorParser parser{corFilePath};
       parser.parse();
 
-      if(debug) {
+      if (debug) {
         parser.printTokenList();
         parser.printAST();
       }
@@ -121,5 +121,6 @@ protected:
 } // namespace
 // Register the plugin with Clang
 static FrontendPluginRegistry::Add<ChoreographyValidatorFrontendAction>
-    X("PchorAnalyzer",
-      "A Plugin that validates your c++ code against a choreography written in a Domain-Specific Parametrized Multiparty Asynchronous Session Type Language");
+    X("PchorAnalyzer", "A Plugin that validates your c++ code against a "
+                       "choreography written in a Domain-Specific Parametrized "
+                       "Multiparty Asynchronous Session Type Language");

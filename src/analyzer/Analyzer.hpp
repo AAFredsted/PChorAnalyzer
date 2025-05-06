@@ -9,15 +9,15 @@
 #include <llvm/Support/raw_ostream.h>
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <variant>
 #include <vector>
-#include <memory>
 
 template <typename NodeType>
 class MatchCallback : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  explicit MatchCallback(const NodeType* &result, const std::string &bindName)
+  explicit MatchCallback(const NodeType *&result, const std::string &bindName)
       : result(result), bindName(bindName) {}
 
   void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult)
@@ -56,6 +56,38 @@ namespace PchorAST {
 // class only providing static functions
 class AnalyzerUtils {
 public:
+  static void analyzeDecl(const clang::Decl *decl) {
+    if (!decl) {
+        llvm::outs() << "Decl not found\n";
+        return;
+    }
+
+    // Check if the declaration is a class
+    llvm::outs() << "Decl of type " << decl->getDeclKindName() << "\n";
+
+    if (const auto *classDecl = llvm::dyn_cast<clang::CXXRecordDecl>(decl)) {
+        llvm::outs() << "Class Decl: " << classDecl->getNameAsString() << "\n";
+    }
+    // Check if the declaration is a field
+    else if (const auto *fieldDecl = llvm::dyn_cast<clang::FieldDecl>(decl)) {
+        llvm::outs() << "Field Decl: " << fieldDecl->getNameAsString() << "\n";
+    }
+    // Check if the declaration is a function
+    else if (const auto *funcDecl = llvm::dyn_cast<clang::FunctionDecl>(decl)) {
+        // Skip constructors and destructors
+        if (llvm::isa<clang::CXXConstructorDecl>(funcDecl)) {
+            llvm::outs() << "Constructor Decl: " << funcDecl->getNameAsString() << "\n";
+        } else if (llvm::isa<clang::CXXDestructorDecl>(funcDecl)) {
+            llvm::outs() << "Destructor Decl: " << funcDecl->getNameAsString() << "\n";
+        } else {
+            llvm::outs() << "Function Decl: " << funcDecl->getNameAsString() << "\n";
+        }
+    }
+    // Handle other types of declarations
+    else {
+        llvm::outs() << "Other Decl Type: " << decl->getDeclKindName() << "\n";
+    }
+  }
   static void analyzeDeclChildren(const clang::Decl *decl) {
     if (decl) {
       llvm::outs() << "Mapped Node is: " << decl->getDeclKindName() << "\n";
@@ -82,13 +114,13 @@ public:
   static const clang::Decl *findDecl(clang::ASTContext &context,
                                      const std::string &name) {
 
-    auto matcher =
-        clang::ast_matchers::namedDecl(clang::ast_matchers::hasName(name))
-            .bind("namedDecl");
+    auto matcher = clang::ast_matchers::cxxRecordDecl(
+        clang::ast_matchers::hasName(name))
+        .bind("classDecl");
+                 
+    const clang::CXXRecordDecl *result = nullptr;
 
-    const clang::NamedDecl *result = nullptr;
-
-    MatchCallback<clang::NamedDecl> callback(result, "namedDecl");
+    MatchCallback<clang::CXXRecordDecl> callback(result, "classDecl");
     clang::ast_matchers::MatchFinder finder;
     finder.addMatcher(matcher, &callback);
     finder.matchAST(context);
@@ -166,40 +198,33 @@ public:
     return results;
   }
 
-  static const clang::FieldDecl* findMatchingMember(clang::ASTContext &context, const clang::Decl *decl, const std::string &typeName) {
+  static const clang::FieldDecl *
+  findMatchingMember(clang::ASTContext &context, const clang::Decl *decl,
+                     const std::string &typeName) {
 
-    auto memberMatcher = clang::ast_matchers::fieldDecl(
-      clang::ast_matchers::hasType(
-        clang::ast_matchers::qualType(
-          clang::ast_matchers::anyOf(
-            clang::ast_matchers::hasDeclaration(
-              clang::ast_matchers::namedDecl(clang::ast_matchers::hasName(typeName))            
-            ),
-            clang::ast_matchers::pointerType(
-              clang::ast_matchers::pointee(
-                clang::ast_matchers::hasDeclaration(
-                  clang::ast_matchers::namedDecl(clang::ast_matchers::hasName(typeName))            
-                )
-              )
-            ),
-            clang::ast_matchers::templateSpecializationType(
-              clang::ast_matchers::hasAnyTemplateArgument(
-                clang::ast_matchers::templateArgument(
-                  clang::ast_matchers::refersToType(
-                    clang::ast_matchers::qualType(
-                      clang::ast_matchers::hasDeclaration(
-                        clang::ast_matchers::namedDecl(clang::ast_matchers::hasName(typeName))            
-                      )
-                    )
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-    ).bind("fieldDecl");
-    const clang::FieldDecl* field = nullptr;
+    auto memberMatcher =
+        clang::ast_matchers::fieldDecl(
+            clang::ast_matchers::hasType(
+                clang::ast_matchers::qualType(clang::ast_matchers::anyOf(
+                    clang::ast_matchers::hasDeclaration(
+                        clang::ast_matchers::namedDecl(
+                            clang::ast_matchers::hasName(typeName))),
+                    clang::ast_matchers::pointerType(
+                        clang::ast_matchers::pointee(
+                            clang::ast_matchers::hasDeclaration(
+                                clang::ast_matchers::namedDecl(
+                                    clang::ast_matchers::hasName(typeName))))),
+                    clang::ast_matchers::templateSpecializationType(
+                        clang::ast_matchers::hasAnyTemplateArgument(
+                            clang::ast_matchers::templateArgument(
+                                clang::ast_matchers::refersToType(
+                                    clang::ast_matchers::qualType(
+                                        clang::ast_matchers::hasDeclaration(
+                                            clang::ast_matchers::namedDecl(
+                                                clang::ast_matchers::hasName(
+                                                    typeName))))))))))))
+            .bind("fieldDecl");
+    const clang::FieldDecl *field = nullptr;
 
     auto ctx = decl->getDeclContext();
 
@@ -207,9 +232,9 @@ public:
     MatchCallback<clang::FieldDecl> callback(field, "fieldDecl");
     finder.addMatcher(memberMatcher, &callback);
 
-    for(const auto childDecl: ctx->decls()){
+    for (const auto childDecl : ctx->decls()) {
       finder.match(*childDecl, context);
-      if(field != nullptr) {
+      if (field != nullptr) {
         break;
       }
     }
@@ -289,9 +314,10 @@ public:
     return nullptr;
   }
   void printMappings() const {
-    for(const auto& [key, value]: map) {
+    std::println("\n\nPChorAST CAST Mappings\n------------------");
+    for (const auto &[key, value] : map) {
       std::println("Mapping for {}", key);
-      AnalyzerUtils::analyzeDeclChildren(value.getDecl());
+      AnalyzerUtils::analyzeDecl(value.getDecl());
     }
   }
 
@@ -301,42 +327,50 @@ private:
 
 class PchorProjection {
 public:
-  PchorProjection(): projectionMap() {}
+  PchorProjection() : projectionMap() {}
 
-  PchorProjection(const PchorProjection& other) = delete;
-  PchorProjection& operator=(const PchorProjection& other) = delete;
+  PchorProjection(const PchorProjection &other) = delete;
+  PchorProjection &operator=(const PchorProjection &other) = delete;
 
-  PchorProjection(PchorProjection&& other) noexcept : projectionMap(std::move(other.projectionMap)) {
+  PchorProjection(PchorProjection &&other) noexcept
+      : projectionMap(std::move(other.projectionMap)) {
     other.projectionMap.clear();
   }
-  PchorProjection& operator=(PchorProjection&& other) noexcept {
+  PchorProjection &operator=(PchorProjection &&other) noexcept {
     if (this != &other) {
       projectionMap = std::move(other.projectionMap);
       other.projectionMap.clear();
     }
     return *this;
   }
-  void addParticipant(const std::string& participantName) {
-    projectionMap.emplace(participantName, std::vector<std::unique_ptr<PchorAST::AbstractProjection>>());
+  void addParticipant(const std::string &participantName) {
+    projectionMap.emplace(
+        participantName,
+        std::vector<std::unique_ptr<PchorAST::AbstractProjection>>());
   }
 
-  void addProjection(const std::string& participantName, std::unique_ptr<PchorAST::AbstractProjection> proj) {
+  void addProjection(const std::string &participantName,
+                     std::unique_ptr<PchorAST::AbstractProjection> proj) {
     projectionMap[participantName].emplace_back(std::move(proj));
   }
-  bool hasProjection(const std::string& participantName) const {
+  bool hasProjection(const std::string &participantName) const {
     return projectionMap.contains(participantName);
   }
   void printProjections() const {
-    for( const auto& [elem, value] : projectionMap){
+    std::println("\n\nPchorAST Participant projections:\n-------------------------------");
+    for (const auto &[elem, value] : projectionMap) {
       std::print("Projection for participant {}", elem);
-      for(const auto& projection: value){
+      for (const auto &projection : value) {
         projection->print();
       }
       std::println(" ");
     }
   }
+
 private:
-  std::unordered_map<std::string, std::vector<std::unique_ptr<PchorAST::AbstractProjection>>> projectionMap;
+  std::unordered_map<std::string,
+                     std::vector<std::unique_ptr<PchorAST::AbstractProjection>>>
+      projectionMap;
 };
 
 } // namespace PchorAST

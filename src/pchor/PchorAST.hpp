@@ -216,9 +216,7 @@ public:
   }
   std::string getName() const { return baseIndex->getName(); }
   bool isExprLiteral() const { return isLiteral; }
-  size_t getLiteral() const {
-    return literal;
-  }
+  size_t getLiteral() const { return literal; }
 
 protected:
   std::shared_ptr<IndexASTNode> baseIndex;

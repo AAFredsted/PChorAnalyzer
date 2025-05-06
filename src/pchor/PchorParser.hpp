@@ -16,7 +16,7 @@ public:
   std::shared_ptr<DeclPchorASTNode> resolve(const std::string_view name) const;
 
   void print() const {
-    std::println("Print of AST Declarations\n----------------");
+    std::println("\n\nPrint of AST Declarations\n----------------");
     size_t i = 0;
     for (auto it = begin(); it != end(); ++it) {
       i++;
@@ -60,11 +60,12 @@ public:
   STIterator begin() const { return STIterator(*this, keys.begin()); }
 
   STIterator end() const { return STIterator(*this, keys.end()); }
-  STIterator back() const { 
-    if(keys.empty()){
-      throw std::runtime_error("Symboltable is empty: choreography File must contain at least one global type declaration");
+  STIterator back() const {
+    if (keys.empty()) {
+      throw std::runtime_error("Symboltable is empty: choreography File must "
+                               "contain at least one global type declaration");
     }
-    return STIterator(*this, std::prev(keys.end())); 
+    return STIterator(*this, std::prev(keys.end()));
   }
 
 private:

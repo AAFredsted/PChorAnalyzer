@@ -11,13 +11,13 @@ void CAST_PchorASTVisitor::visit(const ParticipantASTNode &node) {
   auto *decl = AnalyzerUtils::findDecl(clangContext, node.getName());
   if (decl == nullptr) {
     mappingSuccess = false;
-    throw std::runtime_error(std::format("Declaration for {} not found\n", node.getName()));
+    throw std::runtime_error(
+        std::format("Declaration for {} not found\n", node.getName()));
   }
   ctx->addMapping(node.getName(), decl);
 }
 
-void CAST_PchorASTVisitor::visit([[maybe_unused]] const ChannelASTNode &node) {
-}
+void CAST_PchorASTVisitor::visit([[maybe_unused]] const ChannelASTNode &node) {}
 void CAST_PchorASTVisitor::visit([[maybe_unused]] const LabelASTNode &node) {
   std::println("Not Implemented Yet");
 }
@@ -33,7 +33,8 @@ void CAST_PchorASTVisitor::visit(const CommunicationExpr &expr) {
 
   if (dataTypeDecl == nullptr) {
     mappingSuccess = false;
-    throw std::runtime_error(std::format("Declaration for {} not found\n",  expr.getDataType()));
+    throw std::runtime_error(
+        std::format("Declaration for {} not found\n", expr.getDataType()));
   }
   ctx->addMapping(expr.getDataType(), dataTypeDecl);
   this->currentDataType = expr.getDataType();
@@ -41,7 +42,7 @@ void CAST_PchorASTVisitor::visit(const CommunicationExpr &expr) {
   // visit participants and channel {figure out who owns the collective state}
   auto sender = expr.getSender();
   auto reciever = expr.getReciever();
-  
+
   this->senderIdentifier = sender->getBaseParticipant()->getName();
   this->recieverIdentifier = reciever->getBaseParticipant()->getName();
   // sender
@@ -73,27 +74,21 @@ void CAST_PchorASTVisitor::visit(const ParticipantExpr &expr) {
 }
 void CAST_PchorASTVisitor::visit(const ChannelExpr &expr) {
   if (expr.getIndex() == nullptr) {
-    auto sender = ctx->getMapping<const clang::Decl*>(this->senderIdentifier);
-    auto reciever = ctx->getMapping<const clang::Decl*>(this->recieverIdentifier);
+    auto sender = ctx->getMapping<const clang::Decl *>(this->senderIdentifier);
+    auto reciever =
+        ctx->getMapping<const clang::Decl *>(this->recieverIdentifier);
 
-    //Try Find Reciever Member
-    //Try Find Sender Member
+    // Try Find Reciever Member
+    // Try Find Sender Member
 
-    auto senderUse = AnalyzerUtils::findMatchingMember(
-      clangContext,
-      sender,
-      this->currentDataType
-    );
+    auto senderUse = AnalyzerUtils::findMatchingMember(clangContext, sender,
+                                                       this->currentDataType);
 
-    if(senderUse){
+    if (senderUse) {
       ctx->addMapping(expr.getBaseParticipant()->getName(), senderUse);
-    }
-    else {
+    } else {
       auto recieverUse = AnalyzerUtils::findMatchingMember(
-        clangContext,
-        reciever,
-        this->currentDataType
-      );
+          clangContext, reciever, this->currentDataType);
       ctx->addMapping(expr.getBaseParticipant()->getName(), recieverUse);
     }
   } else {
@@ -110,98 +105,103 @@ void CAST_PchorASTVisitor::visit([[maybe_unused]] const ConExpr &expr) {
   std::println("Not Implemented yet");
 }
 
-//visitor functions for ProjectionVisitor
-// Visiting Declarations
-void Proj_PchorASTVisitor::visit( [[maybe_unused]] const ParticipantASTNode &node) {
-  std::println("No visit Required: projection only performed on final global type declaration");
+// visitor functions for ProjectionVisitor
+//  Visiting Declarations
+void Proj_PchorASTVisitor::visit(
+    [[maybe_unused]] const ParticipantASTNode &node) {
+  std::println("No visit Required: projection only performed on final global "
+               "type declaration");
 }
-void Proj_PchorASTVisitor::visit( [[maybe_unused]] const ChannelASTNode &node) {
-  std::println("No visit Required: projection only performed on final global type declaration");
-
+void Proj_PchorASTVisitor::visit([[maybe_unused]] const ChannelASTNode &node) {
+  std::println("No visit Required: projection only performed on final global "
+               "type declaration");
 }
-void Proj_PchorASTVisitor::visit( [[maybe_unused]] const LabelASTNode &node) {
-  std::println("No visit Required: projection only performed on final global type declaration");
-
+void Proj_PchorASTVisitor::visit([[maybe_unused]] const LabelASTNode &node) {
+  std::println("No visit Required: projection only performed on final global "
+               "type declaration");
 }
 void Proj_PchorASTVisitor::visit(const GlobalTypeASTNode &node) {
-    node.getExprList()->accept(*this);
+  node.getExprList()->accept(*this);
 }
 
-void Proj_PchorASTVisitor::visit( [[maybe_unused]] const IndexASTNode &node) {
-  std::println("No visit Required: projection only performed on final global type declaration");
-
+void Proj_PchorASTVisitor::visit([[maybe_unused]] const IndexASTNode &node) {
+  std::println("No visit Required: projection only performed on final global "
+               "type declaration");
 }
 
 // Visiting Expressions
 void Proj_PchorASTVisitor::visit(const CommunicationExpr &expr) {
 
-  //store datatype for projection generation
+  // store datatype for projection generation
   this->currentDataType = expr.getDataType();
 
-  //set currentChannelName through this ! 
+  // set currentChannelName through this !
   expr.getChannel()->accept(*this);
 
   this->isSender = true;
-  //project sender
+  // project sender
   expr.getSender()->accept(*this);
-    //check if sender exists
-    //check if index is defined, otherwise, throw error
+  // check if sender exists
+  // check if index is defined, otherwise, throw error
 
   this->isSender = false;
-  //project reciever
-    //check if reciever exists
+  // project reciever
+  // check if reciever exists
   expr.getReciever()->accept(*this);
-    //check if index is defined, otherwise throw error
+  // check if index is defined, otherwise throw error
 
-  //done
-
+  // done
 }
 void Proj_PchorASTVisitor::visit(const ExprList &expr) {
-  //visit each com expression
+  // visit each com expression
   for (auto it = expr.begin(); it != expr.end(); ++it) {
     (*it)->accept(*this); // Read-only access
   }
 }
 void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
   std::string name = expr.getBaseParticipant()->getName();
-  if(expr.getIndex() == nullptr) {
-    if(!this->ctx->hasProjection(name)) {
+  if (expr.getIndex() == nullptr) {
+    if (!this->ctx->hasProjection(name)) {
       this->ctx->addParticipant(name);
     }
-    if(this->isSender){
-      this->ctx->addProjection(name, std::make_unique<Psend>(this->currentChannelName, this->currentDataType,  this->channelIndex));
+    if (this->isSender) {
+      this->ctx->addProjection(name,
+                               std::make_unique<Psend>(this->currentChannelName,
+                                                       this->currentDataType,
+                                                       this->channelIndex));
+    } else {
+      this->ctx->addProjection(
+          name, std::make_unique<Precieve>(this->currentChannelName,
+                                           this->currentDataType,
+                                           this->channelIndex));
     }
-    else{
-      this->ctx->addProjection(name, std::make_unique<Precieve>(this->currentChannelName, this->currentDataType,  this->channelIndex));
-    }
-  }
-  else {
+  } else {
     std::println("Indexes not implemented yet");
   }
 }
 void Proj_PchorASTVisitor::visit(const ChannelExpr &expr) {
   this->currentChannelName = expr.getBaseParticipant()->getName();
-  if(expr.getIndex() == nullptr){
+  if (expr.getIndex() == nullptr) {
     this->channelIndex = 1;
-  }
-  else {
+  } else {
     expr.getIndex()->accept(*this);
-
   }
 }
 void Proj_PchorASTVisitor::visit(const IndexExpr &expr) {
-  if(expr.isExprLiteral()) {
+  if (expr.isExprLiteral()) {
     this->channelIndex = expr.getLiteral();
-  }
-  else {
+  } else {
     this->mappingSuccess = false;
-    throw std::runtime_error(std::format("Index cannot be undefined at projection step. Referential Index {} is only valid within Foreach or Recursive expressions", expr.getName()));
+    throw std::runtime_error(std::format(
+        "Index cannot be undefined at projection step. Referential Index {} is "
+        "only valid within Foreach or Recursive expressions",
+        expr.getName()));
   }
 }
-void Proj_PchorASTVisitor::visit( [[ maybe_unused ]] const RecExpr &expr) {
+void Proj_PchorASTVisitor::visit([[maybe_unused]] const RecExpr &expr) {
   throw std::runtime_error("Recursive Expressions not implemented");
 }
-void Proj_PchorASTVisitor::visit( [[ maybe_unused ]] const ConExpr &expr) {
+void Proj_PchorASTVisitor::visit([[maybe_unused]] const ConExpr &expr) {
   throw std::runtime_error("Continuation Expressions not implemented");
 }
 
