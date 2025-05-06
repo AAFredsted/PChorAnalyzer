@@ -33,9 +33,14 @@ public:
         (*itr)->accept(CAST_visitor);
       }
 
-      (*(sTable->back()))->accept(Proj_visitor);
+      auto globalTypePtr = sTable->back();
+      if((*globalTypePtr)->getDeclType() != PchorAST::Decl::Global_Type_Decl){
+        throw std::runtime_error("Final Expression is required to be a Global type expression.");
+      }
+      (*globalTypePtr)->accept(Proj_visitor);
+      
     }
-
+    Proj_visitor.printProjections();
     // Traverse the choreography AST (example)
   }
 

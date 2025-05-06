@@ -78,7 +78,7 @@ public:
   Proj_PchorASTVisitor(clang::ASTContext &clangContext)
       : AbstractPchorASTVisitor(clangContext),
         ctx(std::make_shared<PchorProjection>()), currentDataType(""), currentChannelName(""), channelIndex(),
-        mappingSuccess(true) {}
+        isSender(true), mappingSuccess(true) {}
 
   ~Proj_PchorASTVisitor() = default;
 
@@ -100,11 +100,16 @@ public:
 
   std::shared_ptr<PchorProjection> getContext() { return ctx; }
 
+  void printProjections() const {
+    ctx->printProjections();
+  }
+
 private:
   std::shared_ptr<PchorProjection> ctx;
   std::string currentDataType;
   std::string currentChannelName;
   size_t channelIndex;
+  bool isSender;
   bool mappingSuccess;
 };
 

@@ -337,7 +337,13 @@ public:
     return projectionMap.contains(participantName);
   }
   void printProjections() const {
-
+    for( const auto& [elem, value] : projectionMap){
+      std::print("Projection for participant {}", elem);
+      for(const auto& projection: value){
+        projection->print();
+      }
+      std::println(" ");
+    }
   }
 private:
   std::unordered_map<std::string, std::vector<std::unique_ptr<PchorAST::AbstractProjection>>> projectionMap;

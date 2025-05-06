@@ -154,11 +154,13 @@ void Proj_PchorASTVisitor::visit(const CommunicationExpr &expr) {
   //set currentChannelName through this ! 
   expr.getChannel()->accept(*this);
 
+  this->isSender = true;
   //project sender
   expr.getSender()->accept(*this);
     //check if sender exists
     //check if index is defined, otherwise, throw error
 
+  this->isSender = false;
   //project reciever
     //check if reciever exists
   expr.getReciever()->accept(*this);
@@ -181,7 +183,12 @@ void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
     if(!this->ctx->hasProjection(name)) {
       this->ctx->addParticipant(name);
     }
-    this->ctx->addProjection(name, std::make_unique<Psend>(this->currentChannelName, this->currentDataType,  this->channelIndex));
+    if(this->isSender){
+      this->ctx->addProjection(name, std::make_unique<Psend>(this->currentChannelName, this->currentDataType,  this->channelIndex));
+    }
+    else{
+      this->ctx->addProjection(name, std::make_unique<Precieve>(this->currentChannelName, this->currentDataType,  this->channelIndex));
+    }
   }
   else {
     std::println("Indexes not implemented yet");
@@ -204,13 +211,14 @@ void Proj_PchorASTVisitor::visit(const IndexExpr &expr) {
     this->channelIndex = expr.getLiteral();
   }
   else {
+    this->mappingSuccess = false;
     throw std::runtime_error(std::format("Index cannot be undefined at projection step. Referential Index {} is only valid within Foreach or Recursive expressions", expr.getName()));
   }
 }
-void Proj_PchorASTVisitor::visit(const RecExpr &expr) {
+void Proj_PchorASTVisitor::visit( [[ maybe_unused ]] const RecExpr &expr) {
   std::println("Not implemented yet");
 }
-void Proj_PchorASTVisitor::visit(const ConExpr &expr) {
+void Proj_PchorASTVisitor::visit( [[ maybe_unused ]] const ConExpr &expr) {
   std::println("Not implemented yet");
 }
 
