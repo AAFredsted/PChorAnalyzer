@@ -47,15 +47,18 @@ SymbolTable::resolve(const std::string_view name) const {
   return nullptr;
 }
 
+void PchorParser::printAST() const {
+  symbolTable->print();
+}
+void PchorParser::printTokenList() const {
+  for (const Token &t : tokens) {
+    std::println("{}", t.toString());
+  }
+}
 void PchorParser::parse() {
   tokens = lexer->genTokens();
   auto itr = tokens.begin();
   const auto end = tokens.end();
-
-  for (const Token &t : tokens) {
-    std::println("{}", t.toString());
-  }
-
   /*
       Parsing of outer expressions, where expressions are limited to
      declarations of Indeces, Participants, Channels and Global Types
@@ -87,8 +90,7 @@ void PchorParser::parse() {
     }
     ++itr;
   }
-  std::println("succesfully parsed file");
-  symbolTable->print();
+  std::println("Succesfully parsed file");
 }
 
 void PchorParser::parseIndexDecl(std::vector<Token>::iterator &itr,
@@ -211,7 +213,6 @@ void PchorParser::parseParticipantDecl(
     IdxNode = std::dynamic_pointer_cast<IndexASTNode>(ASTNode);
     break;
   case TokenType::Literal:
-    std::println("IdxNode is nullptr");
     if (itr->value.at(0) != '1') {
       throw std::runtime_error(
           "Only unary Participants can be declared with literal Type");
@@ -229,14 +230,13 @@ void PchorParser::parseParticipantDecl(
     throw std::runtime_error("Expected '}' after Identifier, but got: " +
                              itr->toString());
   }
-  if (IdxNode == nullptr) {
-    std::println("it is nullptr");
+  if(IdxNode == nullptr) {
+    //TODO: provide default 1-index
+    //handle this at some point
   }
-
   auto Participant =
       std::make_shared<ParticipantASTNode>(participantName, IdxNode);
   symbolTable->addDeclaration(participantName, Participant);
-  Participant->print();
 }
 
 void PchorParser::parseChannelDecl(std::vector<Token>::iterator &itr,

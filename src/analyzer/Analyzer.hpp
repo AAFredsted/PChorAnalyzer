@@ -23,7 +23,6 @@ public:
   void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult)
       override {
     if (const auto *node = matchResult.Nodes.getNodeAs<NodeType>(bindName)) {
-      llvm::outs() << "Found node: " << bindName << "\n";
       result = node;
     }
   }
@@ -44,7 +43,6 @@ public:
   void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult)
       override {
     if (const auto *node = matchResult.Nodes.getNodeAs<NodeType>(bindName)) {
-      llvm::outs() << "Found Node: " << bindName << "\n";
       results.push_back(node); // Add the matched node to the results vector
     }
   }
@@ -60,6 +58,7 @@ class AnalyzerUtils {
 public:
   static void analyzeDeclChildren(const clang::Decl *decl) {
     if (decl) {
+      llvm::outs() << "Mapped Node is: " << decl->getDeclKindName() << "\n";
       if (auto ctx = decl->getDeclContext()) {
         for (const auto childDecl : ctx->decls()) {
 
@@ -164,21 +163,6 @@ public:
       finder.match(*childDecl, context);
     }
     // Collect results
-
-    // Print results
-    if (!results.empty()) {
-      llvm::outs() << "Found " << results.size()
-                   << " member functions using type " << typeName << ":\n";
-      for (const auto *result : results) {
-        if (const auto *method = llvm::dyn_cast<clang::CXXMethodDecl>(result)) {
-          llvm::outs() << "  Member Function: " << method->getNameAsString()
-                       << "\n";
-        }
-      }
-    } else {
-      llvm::outs() << "No member functions using type " << typeName
-                   << " found.\n";
-    }
     return results;
   }
 
@@ -303,6 +287,12 @@ public:
       }
     }
     return nullptr;
+  }
+  void printMappings() const {
+    for(const auto& [key, value]: map) {
+      std::println("Mapping for {}", key);
+      AnalyzerUtils::analyzeDeclChildren(value.getDecl());
+    }
   }
 
 private:

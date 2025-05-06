@@ -65,6 +65,10 @@ public:
 
   std::shared_ptr<CASTMapping> getContext() { return ctx; }
 
+  void printMappings() {
+    ctx->printMappings();
+  }
+
 private:
   std::shared_ptr<CASTMapping> ctx;
   std::string currentDataType;

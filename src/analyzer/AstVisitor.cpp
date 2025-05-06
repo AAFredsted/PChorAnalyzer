@@ -7,34 +7,24 @@ namespace PchorAST {
 // Visit Declaration Nodes
 
 void CAST_PchorASTVisitor::visit(const ParticipantASTNode &node) {
-  llvm::outs() << "Visiting ParticipantASTNode: " << node.getName() << "\n";
-
   // Simulate finding a declaration in the C++ AST
   auto *decl = AnalyzerUtils::findDecl(clangContext, node.getName());
   if (decl == nullptr) {
-    llvm::outs() << "Declaration for " << node.getName() << " not found.\n";
     mappingSuccess = false;
-  } else {
-    llvm::outs() << "Found declaration for " << node.getName() << ": "
-                 << decl->getDeclKindName() << "\n";
+    throw std::runtime_error(std::format("Declaration for {} not found\n", node.getName()));
   }
-  AnalyzerUtils::analyzeDeclChildren(decl);
   ctx->addMapping(node.getName(), decl);
 }
 
 void CAST_PchorASTVisitor::visit([[maybe_unused]] const ChannelASTNode &node) {
-  std::println("No Visit Required");
 }
 void CAST_PchorASTVisitor::visit([[maybe_unused]] const LabelASTNode &node) {
   std::println("Not Implemented Yet");
 }
 void CAST_PchorASTVisitor::visit(const GlobalTypeASTNode &node) {
-  llvm::outs() << "Visiting GlobalASTVisitor" << node.getName() << "\n";
   node.getExprList()->accept(*this);
 }
-void CAST_PchorASTVisitor::visit([[maybe_unused]] const IndexASTNode &node) {
-  std::println("Not Implemented Yet");
-}
+void CAST_PchorASTVisitor::visit([[maybe_unused]] const IndexASTNode &node) {}
 // Visit Expression Nodes
 void CAST_PchorASTVisitor::visit(const CommunicationExpr &expr) {
 
@@ -42,11 +32,8 @@ void CAST_PchorASTVisitor::visit(const CommunicationExpr &expr) {
       AnalyzerUtils::findDecl(clangContext, expr.getDataType());
 
   if (dataTypeDecl == nullptr) {
-    llvm::outs() << "Declaration for " << expr.getDataType() << " not found.\n";
     mappingSuccess = false;
-  } else {
-    llvm::outs() << "Found declaration for " << expr.getDataType() << ": "
-                 << dataTypeDecl->getDeclKindName() << "\n";
+    throw std::runtime_error(std::format("Declaration for {} not found\n",  expr.getDataType()));
   }
   ctx->addMapping(expr.getDataType(), dataTypeDecl);
   this->currentDataType = expr.getDataType();
@@ -137,9 +124,9 @@ void Proj_PchorASTVisitor::visit( [[maybe_unused]] const LabelASTNode &node) {
 
 }
 void Proj_PchorASTVisitor::visit(const GlobalTypeASTNode &node) {
-    llvm::outs() << "Visiting GlobalASTVisitor" << node.getName() << "\n";
     node.getExprList()->accept(*this);
 }
+
 void Proj_PchorASTVisitor::visit( [[maybe_unused]] const IndexASTNode &node) {
   std::println("No visit Required: projection only performed on final global type declaration");
 
@@ -171,13 +158,11 @@ void Proj_PchorASTVisitor::visit(const CommunicationExpr &expr) {
 }
 void Proj_PchorASTVisitor::visit(const ExprList &expr) {
   //visit each com expression
-  std::println("Visiting expressionlist");
   for (auto it = expr.begin(); it != expr.end(); ++it) {
     (*it)->accept(*this); // Read-only access
   }
 }
 void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
-  std::println("Visiting participant expression");
   std::string name = expr.getBaseParticipant()->getName();
   if(expr.getIndex() == nullptr) {
     if(!this->ctx->hasProjection(name)) {
@@ -195,7 +180,6 @@ void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
   }
 }
 void Proj_PchorASTVisitor::visit(const ChannelExpr &expr) {
-  std::println("Visiting Channel expression");
   this->currentChannelName = expr.getBaseParticipant()->getName();
   if(expr.getIndex() == nullptr){
     this->channelIndex = 1;
@@ -206,7 +190,6 @@ void Proj_PchorASTVisitor::visit(const ChannelExpr &expr) {
   }
 }
 void Proj_PchorASTVisitor::visit(const IndexExpr &expr) {
-  std::println("Visiting Index expression");
   if(expr.isExprLiteral()) {
     this->channelIndex = expr.getLiteral();
   }
@@ -216,10 +199,10 @@ void Proj_PchorASTVisitor::visit(const IndexExpr &expr) {
   }
 }
 void Proj_PchorASTVisitor::visit( [[ maybe_unused ]] const RecExpr &expr) {
-  std::println("Not implemented yet");
+  throw std::runtime_error("Recursive Expressions not implemented");
 }
 void Proj_PchorASTVisitor::visit( [[ maybe_unused ]] const ConExpr &expr) {
-  std::println("Not implemented yet");
+  throw std::runtime_error("Continuation Expressions not implemented");
 }
 
 } // namespace PchorAST

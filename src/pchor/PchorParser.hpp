@@ -16,10 +16,11 @@ public:
   std::shared_ptr<DeclPchorASTNode> resolve(const std::string_view name) const;
 
   void print() const {
+    std::println("Print of AST Declarations\n----------------");
     size_t i = 0;
     for (auto it = begin(); it != end(); ++it) {
       i++;
-      std::println("We print ASTElement {}", i);
+      std::println("ASTElement {}\n------------", i);
       (*it)->print();
     }
   }
@@ -80,6 +81,9 @@ public:
         symbolTable(std::make_shared<SymbolTable>()), tokens() {}
 
   void parse();
+
+  void printTokenList() const;
+  void printAST() const;
 
   std::shared_ptr<SymbolTable> getChorAST() { return std::move(symbolTable); }
 
