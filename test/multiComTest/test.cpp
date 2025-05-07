@@ -19,96 +19,113 @@ struct Response {
 
 class Anne {
 public:
-    Anne() : ack(nullptr), resp(nullptr) {}
+    Anne() : ack(Ack(false)), resp(Response("")), nicholasQuery(nullptr) {}
 
-    void receiveAck(Ack* ackPtr) {
-        ack = ackPtr;
+    void setNicholasQuery(Query* query) {
+        nicholasQuery = query;
     }
 
-    void receiveResponse(Response* respPtr) {
-        resp = respPtr;
+    void recieveAck(const Ack& acknowledgement) {
+        ack = acknowledgement;
     }
 
-    void sendQuery(Query q, Query* nicholasQueue) {
+    void recieveResp(const Response& response) {
+        resp = response;
+    }
+
+    void run() {
+        thread = std::thread([this]() {
+            sendQuery("Request from Anne");
+        });
+    }
+
+    void join() {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
+
+    void sendQuery(const std::string& endpoint) {
         // Send the query to Nicholas
-        *nicholasQueue = q;
-        std::print("Anne: Sent Query -> {}\n", q.endpoint);
+        *nicholasQuery = Query{endpoint};
+        std::print("Anne: Sent Query -> {}\n", nicholasQuery->endpoint);
 
         // Wait for Ack
-        while (ack == nullptr) {
+        while (!ack.valid) {
             std::print("Anne: Waiting for Ack...\n");
         }
-        std::print("Anne: Received Ack -> {}\n", ack->valid ? "Valid" : "Invalid");
+        std::print("Anne: Received Ack -> {}\n", ack.valid ? "Valid" : "Invalid");
 
         // Wait for Response
-        while (resp == nullptr) {
+        while (resp.data.empty()) {
             std::print("Anne: Waiting for Response...\n");
         }
-        std::print("Anne: Received Response -> {}\n", resp->data);
+        std::print("Anne: Received Response -> {}\n", resp.data);
     }
 
 private:
-    Ack* ack;
-    Response* resp;
+    Ack ack;
+    Response resp;
+    Query* nicholasQuery;
+    std::thread thread;
 };
 
 class Nicholas {
 public:
     Nicholas() : query(nullptr) {}
 
-    void waitForQuery() {
-        while (query == nullptr) {
+    void setQuery(Query* queryPtr) {
+        query = queryPtr;
+    }
+
+    void run(Anne* anne) {
+        thread = std::thread([this, anne]() {
+            respondToQuery(anne);
+        });
+    }
+
+    void join() {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
+
+    void respondToQuery(Anne* anne) {
+        while (!query || query->endpoint.empty()) {
             std::print("Nicholas: Waiting for Query...\n");
         }
         std::print("Nicholas: Received Query -> {}\n", query->endpoint);
-    }
 
-    void sendAck(Ack* ackPtr, Anne* anne) {
-        *ackPtr = Ack(true);
-        anne->receiveAck(ackPtr);
+        anne->recieveAck(Ack(true));
         std::print("Nicholas: Sent Ack -> Valid\n");
-    }
 
-    void sendResponse(Response* respPtr, Anne* anne) {
-        *respPtr = Response("Response from Nicholas");
-        anne->receiveResponse(respPtr);
-        std::print("Nicholas: Sent Response -> {}\n", respPtr->data);
-    }
-
-    void receiveQuery(Query* queryPtr) {
-        query = queryPtr;
+        Response resp = Response("Response from Nicholas");
+        anne->recieveResp(resp);
+        std::print("Nicholas: Sent Response -> {}\n", resp.data);
     }
 
 private:
     Query* query;
+    std::thread thread;
 };
 
 int main() {
     Anne anne;
     Nicholas nicholas;
 
-    Query query("Request from Anne");
-    Query nicholasQueue("");
+    Query sharedQuery("");
 
-    Ack ack(false);
-    Response response("");
+    // Set up shared query pointer
+    anne.setNicholasQuery(&sharedQuery);
+    nicholas.setQuery(&sharedQuery);
 
-    // Simulate Anne sending a query
-    std::thread anneThread([&]() {
-        anne.sendQuery(query, &nicholasQueue);
-    });
-
-    // Simulate Nicholas receiving the query and responding
-    std::thread nicholasThread([&]() {
-        nicholas.receiveQuery(&nicholasQueue);
-        nicholas.waitForQuery();
-        nicholas.sendAck(&ack, &anne);
-        nicholas.sendResponse(&response, &anne);
-    });
+    // Run threads
+    anne.run();
+    nicholas.run(&anne);
 
     // Join threads
-    anneThread.join();
-    nicholasThread.join();
+    anne.join();
+    nicholas.join();
 
     return 0;
 }
