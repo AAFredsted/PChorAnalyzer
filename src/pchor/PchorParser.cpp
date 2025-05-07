@@ -54,8 +54,11 @@ void PchorParser::printTokenList() const {
     std::println("{}", t.toString());
   }
 }
-void PchorParser::parse() {
+
+void PchorParser::genTokens() {
   tokens = lexer->genTokens();
+}
+void PchorParser::parse() {
   auto itr = tokens.begin();
   const auto end = tokens.end();
   /*
@@ -214,7 +217,7 @@ void PchorParser::parseParticipantDecl(
   case TokenType::Literal:
     if (itr->value.at(0) != '1') {
       throw std::runtime_error(
-          "Only unary Participants can be declared with literal Type");
+          std::format("Only  literal allowed in participant declaration is '1'. Found {}", itr->toString()));
     }
     IdxNode = nullptr;
     break;

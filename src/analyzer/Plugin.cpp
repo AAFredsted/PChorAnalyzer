@@ -50,6 +50,10 @@ public:
     } catch (const std::exception &e) {
       llvm::errs() << "Error in CAST Mapping or Choreography Projection: \n"
                    << e.what() << "\n";
+      if(debug) {
+        CAST_visitor.printMappings();
+        Proj_visitor.printProjections();
+      }
     }
 
     // Traverse the choreography AST (example)
@@ -96,10 +100,13 @@ protected:
 
     try {
       PchorAST::PchorParser parser{corFilePath};
+      parser.genTokens();
+      if(debug) {
+        parser.printTokenList();
+      }
       parser.parse();
 
       if (debug) {
-        parser.printTokenList();
         parser.printAST();
       }
 

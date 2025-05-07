@@ -1,6 +1,6 @@
 Participant Seller{1}
 Participant Buyer1{1}
-Participant Buyer2{2}
+Participant Buyer2{1}
 
 Channel s1{1} //channel from Seller to Buyer1
 Channel s2{1} //channel from Seller to Buyer2
@@ -17,7 +17,7 @@ TwoBuyer =
     Buyer1 -> Buyer2: b<Quote>.
     Buyer2 -> Seller: s2<Address>.
     Seller -> Buyer2: s2<Date>.
-    end.
+    end
 
 
     

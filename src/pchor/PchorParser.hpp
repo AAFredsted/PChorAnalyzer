@@ -82,6 +82,7 @@ public:
         symbolTable(std::make_shared<SymbolTable>()), tokens() {}
 
   void parse();
+  void genTokens();
 
   void printTokenList() const;
   void printAST() const;
