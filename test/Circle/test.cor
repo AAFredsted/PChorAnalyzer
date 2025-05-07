@@ -1,0 +1,10 @@
+Index A{1..3}
+
+Participant Sender{A}
+Channel a{A}
+
+Circle = 
+    Sender[1] -> Sender[2]: a[2]<Message>.
+    Sender[2] -> Sender[3]: a[3]<Message>.
+    Sender[3] -> Sender[1]: a[1]<Message>.
+    end.

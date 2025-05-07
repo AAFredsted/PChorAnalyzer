@@ -1,0 +1,21 @@
+Participant Seller{1}
+Participant Buyer1{1}
+Participant Buyer2{2}
+
+Channel s1{1} //channel from Seller to Buyer1
+Channel s2{1} //channel from Seller to Buyer2
+Channel b{1} //channel for buyers
+
+TwoBuyer = 
+    Seller -> Buyer1: s1<Buyer2>.
+    Seller -> Buyer2: s2<Buyer1>.
+    Buyer1 -> Seller: s1<Title>.
+    Seller -> Buyer1: s1<Quote>.
+    Seller -> Buyer2: s2<Quote>.
+    Buyer1 -> Buyer2: b<Quote>.
+    Buyer2 -> Seller: s2<Address>.
+    Seller -> Buyer2: s2<Date>.
+    end.
+
+
+    

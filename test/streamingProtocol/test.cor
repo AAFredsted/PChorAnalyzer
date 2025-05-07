@@ -1,0 +1,15 @@
+Participant Kernel{1}
+Participant DataProducer{1}
+Participant KeyProducer{1}
+Participant Consumer{1}
+
+Channel d{1}
+Channel k{1}
+Channel c{1}
+
+Stream = 
+    DataProducer -> Kernel: d<Data>.
+    KeyProducer -> Kernel: d<Key>.
+    Kernel -> Consumer: c<Data>.
+    end
+

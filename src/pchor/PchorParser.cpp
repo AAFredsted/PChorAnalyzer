@@ -595,7 +595,7 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
   if (itr->type == TokenType::Symbol && itr->value == "[") {
     auto endofIndex = itr;
 
-    while (endofIndex != end && endofIndex->type != TokenType::Symbol &&
+    while (endofIndex != end &&
            endofIndex->value != "]") {
       endofIndex++;
     }
