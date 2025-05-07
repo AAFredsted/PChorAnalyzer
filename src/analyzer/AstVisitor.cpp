@@ -59,7 +59,7 @@ void CAST_PchorASTVisitor::visit(const ExprList &expr) {
   }
 }
 void CAST_PchorASTVisitor::visit(const ParticipantExpr &expr) {
-  if (expr.getIndex() == nullptr) {
+  if (expr.getIndex()->isExprLiteral()) {
     auto dataTypeUse = AnalyzerUtils::findDataTypeInClass(
         clangContext,
         ctx->getMapping<const clang::Decl *>(
@@ -74,11 +74,11 @@ void CAST_PchorASTVisitor::visit(const ParticipantExpr &expr) {
                         this->currentDataType,
                     dataTypeUse.back());
   } else {
-    std::println("indexed expressions not supported yet :(");
+    std::println("Non-literal indexes not defined yet");
   }
 }
 void CAST_PchorASTVisitor::visit(const ChannelExpr &expr) {
-  if (expr.getIndex() == nullptr) {
+  if (expr.getIndex()->isExprLiteral()) {
     auto sender = ctx->getMapping<const clang::Decl *>(this->senderIdentifier);
     auto reciever =
         ctx->getMapping<const clang::Decl *>(this->recieverIdentifier);
@@ -105,7 +105,7 @@ void CAST_PchorASTVisitor::visit(const ChannelExpr &expr) {
       }
     }
   } else {
-    std::println("Not Implemented yet");
+    std::println("non-literal Indexes not implemented yet");
   }
 }
 void CAST_PchorASTVisitor::visit([[maybe_unused]] const IndexExpr &expr) {
@@ -172,8 +172,9 @@ void Proj_PchorASTVisitor::visit(const ExprList &expr) {
   }
 }
 void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
-  std::string name = expr.getBaseParticipant()->getName();
-  if (expr.getIndex() == nullptr) {
+  std::string name = std::format("{}[{}]", expr.getBaseParticipant()->getName(), expr.getIndex()->getLiteral());
+  
+  if (expr.getIndex()->isExprLiteral()) {
     if (!this->ctx->hasProjection(name)) {
       this->ctx->addParticipant(name);
     }
@@ -189,17 +190,14 @@ void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
                                            this->channelIndex));
     }
   } else {
-    std::println("Indexes not implemented yet");
+    std::println("Undefined Index Implementation here");
   }
 }
 void Proj_PchorASTVisitor::visit(const ChannelExpr &expr) {
   this->currentChannelName = expr.getBaseParticipant()->getName();
-  if (expr.getIndex() == nullptr) {
-    this->channelIndex = 1;
-  } else {
-    expr.getIndex()->accept(*this);
-  }
+  expr.getIndex()->accept(*this);
 }
+
 void Proj_PchorASTVisitor::visit(const IndexExpr &expr) {
   if (expr.isExprLiteral()) {
     this->channelIndex = expr.getLiteral();

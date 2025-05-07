@@ -93,6 +93,10 @@ public:
       : DeclPchorASTNode(Decl::Index_Decl, std::move(name)),
         lower(parseLiteral(lower_token.value)),
         upper(parseLiteral(upper_token.value)) {}
+        
+  explicit IndexASTNode(const std::string& name, size_t lower, size_t upper):
+    DeclPchorASTNode(Decl::Index_Decl, std::move(name)), lower(lower), upper(upper) {}
+
   size_t getLower() const { return lower; }
   size_t getUpper() const { return upper; }
 
@@ -135,11 +139,7 @@ public:
   void accept(AbstractPchorASTVisitor &visitor) const override;
 
   void print() const override {
-    if (index == nullptr) {
-      std::println("Participant {} indexed with 1", name);
-    } else {
-      std::println("Participant {} indexed with {}", name, index->getName());
-    }
+    std::println("Participant {} indexed with {}", name, index->getName()); 
   }
 
 protected:
@@ -157,8 +157,7 @@ public:
   void accept(AbstractPchorASTVisitor &visitor) const override;
 
   void print() const override {
-    std::println("Channel {} indexed with {}", name,
-                 index ? index->getName() : "1");
+    std::println("Channel {} indexed with {}", name, index->getName());
   }
 
 protected:
@@ -240,11 +239,7 @@ public:
 
   void print() const override {
     std::print("Participant {} indexed with: ", baseParticipant->getName());
-    if (index) {
-      index->print();
-    } else {
-      std::println("1");
-    }
+    index->print();
   }
 
 protected:
@@ -267,11 +262,7 @@ public:
 
   void print() const override {
     std::print("Channel {} indexed with: ", baseParticipant->getName());
-    if (index) {
-      index->print();
-    } else {
-      std::println("1");
-    }
+    index->print();
   }
 
 protected:

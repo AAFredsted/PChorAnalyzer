@@ -59,6 +59,10 @@ void PchorParser::genTokens() {
   tokens = lexer->genTokens();
 }
 void PchorParser::parse() {
+
+  //create default index for literal 1
+  symbolTable->addDeclaration("PchorUnaryIndex", std::make_shared<IndexASTNode>("PchorUnaryIndex", 1, 1));
+
   auto itr = tokens.begin();
   const auto end = tokens.end();
   /*
@@ -219,7 +223,8 @@ void PchorParser::parseParticipantDecl(
       throw std::runtime_error(
           std::format("Only  literal allowed in participant declaration is '1'. Found {}", itr->toString()));
     }
-    IdxNode = nullptr;
+    ASTNode = symbolTable->resolve(std::string("PchorUnaryIndex"));
+    IdxNode = std::dynamic_pointer_cast<IndexASTNode>(ASTNode);
     break;
   default:
     throw std::runtime_error(
@@ -231,10 +236,6 @@ void PchorParser::parseParticipantDecl(
   if (itr == end || itr->type != TokenType::Symbol || itr->value != "}") {
     throw std::runtime_error("Expected '}' after Identifier, but got: " +
                              itr->toString());
-  }
-  if (IdxNode == nullptr) {
-    // TODO: provide default 1-index
-    // handle this at some point
   }
   auto Participant =
       std::make_shared<ParticipantASTNode>(participantName, IdxNode);
@@ -292,7 +293,8 @@ void PchorParser::parseChannelDecl(std::vector<Token>::iterator &itr,
       throw std::runtime_error(
           "Only unary Channels can be declared with literal Type");
     }
-    IdxNode = nullptr;
+    ASTNode = symbolTable->resolve(std::string("PchorUnaryIndex"));
+    IdxNode = std::dynamic_pointer_cast<IndexASTNode>(ASTNode);
     break;
   default:
     throw std::runtime_error(
@@ -522,7 +524,7 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
   if (itr->type == TokenType::Symbol && itr->value == "[") {
     auto endofIndex = itr;
 
-    while (endofIndex != end && endofIndex->type != TokenType::Symbol &&
+    while (endofIndex != end &&
            endofIndex->value != "]") {
       endofIndex++;
     }
@@ -532,6 +534,10 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
     }
 
     senderIndex = parseIndexExpr(senderAST->getIndex(), itr, endofIndex);
+    itr++;
+  }
+  else{
+    senderIndex = std::make_shared<IndexExpr>(std::dynamic_pointer_cast<IndexASTNode>(symbolTable->resolve(std::string("PchorUnaryIndex"))), 1);
   }
 
   std::shared_ptr<ParticipantExpr> senderexpr =
@@ -560,7 +566,7 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
   if (itr->type == TokenType::Symbol && itr->value == "[") {
     auto endofIndex = itr;
 
-    while (endofIndex != end && endofIndex->type != TokenType::Symbol &&
+    while (endofIndex != end&&
            endofIndex->value != "]") {
       endofIndex++;
     }
@@ -570,6 +576,10 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
     }
     recieverIndex = parseIndexExpr(recieverAST->getIndex(), itr, endofIndex);
     itr++;
+  }
+  else {
+    recieverIndex = std::make_shared<IndexExpr>(std::dynamic_pointer_cast<IndexASTNode>(symbolTable->resolve(std::string("PchorUnaryIndex"))), 1);
+
   }
 
   std::shared_ptr<ParticipantExpr> recieverexpr =
@@ -608,6 +618,10 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
     }
     channelIndex = parseIndexExpr(channelAST->getIndex(), itr, endofIndex);
     itr++;
+  }
+  else {
+    channelIndex = std::make_shared<IndexExpr>(std::dynamic_pointer_cast<IndexASTNode>(symbolTable->resolve(std::string("PchorUnaryIndex"))), 1);
+
   }
 
   std::shared_ptr<ChannelExpr> channelexpr =
