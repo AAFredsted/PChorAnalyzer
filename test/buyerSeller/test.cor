@@ -7,6 +7,8 @@ Channel s2{1} //channel from Seller to Buyer2
 Channel b{1} //channel for buyers
 
 TwoBuyer = 
+    Seller -> Buyer1: s1<Seller>.
+    Seller -> Buyer2: s2<Seller>.
     Seller -> Buyer1: s1<Buyer2>.
     Seller -> Buyer2: s2<Buyer1>.
     Buyer1 -> Seller: s1<Title>.
