@@ -1,10 +1,13 @@
 #pragma once
-#include "../pchor/PchorAST.hpp"
-#include "Analyzer.hpp"
-#include <clang/AST/ASTContext.h>
-#include <clang/AST/Decl.h>
-#include <clang/AST/Stmt.h>
+
 #include <memory>
+#include <cstdint>
+#include <print>
+
+#include "../../pchor/ast/PchorAST.hpp"
+#include "../utils/ContextManager.hpp"
+#include "../utils/CASTAnalyzerUtils.hpp"
+#include "../../pchor/ast/PchorProjection.hpp"
 
 namespace PchorAST {
 
@@ -39,7 +42,7 @@ class CAST_PchorASTVisitor : public AbstractPchorASTVisitor {
 public:
   CAST_PchorASTVisitor(clang::ASTContext &clangContext)
       : AbstractPchorASTVisitor(clangContext),
-        ctx(std::make_shared<CASTMapping>()), currentDataType(""),
+        ctx(std::make_shared<PchorAST::CASTMapping>()), currentDataType(""),
         senderIdentifier(""), recieverIdentifier(""), mappingSuccess(true) {}
 
   ~CAST_PchorASTVisitor() = default;
@@ -60,12 +63,12 @@ public:
   void visit(const RecExpr &expr) override;
   void visit(const ConExpr &expr) override;
 
-  std::shared_ptr<CASTMapping> getContext() { return ctx; }
+  std::shared_ptr<PchorAST::CASTMapping> getContext() { return ctx; }
 
   void printMappings() { ctx->printMappings(); }
 
 private:
-  std::shared_ptr<CASTMapping> ctx;
+  std::shared_ptr<PchorAST::CASTMapping> ctx;
   std::string currentDataType;
   std::string senderIdentifier;
   std::string recieverIdentifier;

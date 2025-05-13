@@ -1,6 +1,4 @@
 #include "AstVisitor.hpp"
-#include <memory>
-#include <print>
 
 namespace PchorAST {
 
@@ -172,20 +170,20 @@ void Proj_PchorASTVisitor::visit(const ExprList &expr) {
   }
 }
 void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
-  std::string name = std::format("{}[{}]", expr.getBaseParticipant()->getName(), expr.getIndex()->getLiteral());
-  
+  ParticipantKey key{expr.getBaseParticipant()->getName(), expr.getIndex()->getLiteral()};
+
   if (expr.getIndex()->isExprLiteral()) {
-    if (!this->ctx->hasProjection(name)) {
-      this->ctx->addParticipant(name);
+    if (!this->ctx->hasProjection(key)) {
+      this->ctx->addParticipant(key);
     }
     if (this->isSender) {
-      this->ctx->addProjection(name,
+      this->ctx->addProjection(key,
                                std::make_unique<Psend>(this->currentChannelName,
                                                        this->currentDataType,
                                                        this->channelIndex));
     } else {
       this->ctx->addProjection(
-          name, std::make_unique<Precieve>(this->currentChannelName,
+          key, std::make_unique<Precieve>(this->currentChannelName,
                                            this->currentDataType,
                                            this->channelIndex));
     }

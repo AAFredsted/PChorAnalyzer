@@ -1,5 +1,5 @@
 #pragma once
-#include "PchorAST.hpp"
+#include "../ast/PchorAST.hpp"
 #include "PchorFileWrapper.hpp"
 
 #include <memory> // For std::unique_ptr

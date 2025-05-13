@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "PchorTokenizer.hpp"
+#include "../parser/PchorTokenizer.hpp"
 
 // ASTParser using visitor pattern
 namespace PchorAST {

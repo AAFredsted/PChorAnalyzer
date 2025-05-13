@@ -3,8 +3,10 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "../pchor/PchorParser.hpp"
-#include "AstVisitor.hpp"
+#include "../pchor/parser/PchorParser.hpp"
+#include "./visitors/AstVisitor.hpp"
+#include "./visitors/CASTValidator.hpp"
+#include "./utils/ContextManager.hpp"
 
 #include <memory>
 #include <string>
@@ -42,6 +44,10 @@ public:
         (*globalTypePtr)->accept(Proj_visitor);
         llvm::outs() << "Projection created\n";
       }
+      auto CASTMapping = CAST_visitor.getContext();
+      auto Projections = Proj_visitor.getContext();
+      
+      PchorAST::CASTValidator::validateProjection(CASTMapping, Projections);
 
       if (debug) {
         CAST_visitor.printMappings();

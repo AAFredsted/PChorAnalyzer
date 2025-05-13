@@ -1,5 +1,5 @@
 #include "PchorAST.hpp"
-#include "../analyzer/AstVisitor.hpp"
+#include "../../analyzer/visitors/AstVisitor.hpp"
 
 namespace PchorAST {
 void IndexASTNode::accept(AbstractPchorASTVisitor &visitor) const {

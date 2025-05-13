@@ -19,10 +19,10 @@ endif()
 
 # Add PchorCore library
 add_library(PchorCore SHARED
-    ./src/pchor/PchorAST.cpp
-    ./src/pchor/PchorParser.cpp
-    ./src/pchor/PchorTokenizer.cpp
-    ./src/pchor/PchorProjection.cpp
+    ./src/pchor/ast/PchorAST.cpp
+    ./src/pchor/ast/PchorProjection.cpp
+    ./src/pchor/parser/PchorParser.cpp
+    ./src/pchor/parser/PchorTokenizer.cpp
 )
 
 target_compile_options(PchorCore PRIVATE
@@ -36,8 +36,10 @@ target_compile_options(PchorCore PRIVATE -Wall -Wextra -O2)
 
 # Add PchorAnalyzerPlugin library
 add_library(PchorAnalyzerPlugin SHARED
-    ./src/analyzer/AstVisitor.cpp
-    ./src/analyzer/Analyzer.cpp
+    ./src/analyzer/visitors/AstVisitor.cpp
+    ./src/analyzer/visitors/CASTValidator.cpp
+    ./src/analyzer/utils/CASTAnalyzerUtils.cpp
+    ./src/analyzer/utils/ContextManager.cpp
     ./src/utils/Utils.cpp
     ./src/analyzer/Plugin.cpp
 )

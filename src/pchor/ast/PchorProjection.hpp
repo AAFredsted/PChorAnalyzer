@@ -1,9 +1,17 @@
+#pragma once
+
 #include <cstdint>
 #include <format>
 #include <print>
 #include <string>
 
+#include <clang/AST/Stmt.h>
+#include <clang/AST/StmtIterator.h> 
+
+
 namespace PchorAST {
+
+class CASTMapping;
 
 enum class ProjectionType : uint8_t { Send, Recieve };
 
@@ -12,8 +20,14 @@ public:
   AbstractProjection(ProjectionType type) : type(type) {}
   virtual ~AbstractProjection() = default;
   virtual void print() const = 0;
+  virtual bool isComProjection() const = 0;
+  virtual std::string getTypeName() const = 0;
+  virtual std::string getChannelName() const = 0;
+  virtual size_t getChannelIndex() const = 0;
 
   ProjectionType getType() { return type; }
+
+  virtual void validateFunctionDecl(std::shared_ptr<PchorAST::CASTMapping>& CASTmap, clang::Stmt::const_child_iterator& itr, clang::Stmt::const_child_iterator& end) = 0;
 
 protected:
   ProjectionType type;
@@ -26,10 +40,16 @@ public:
       : AbstractProjection(type), channelName(channelName), typeName(typeName),
         channelIndex(channelIndex) {}
 
-  const std::string getChannelName() const {
+  bool isComProjection() const override {
+    return true;
+  }
+  const std::string getChannelString() const {
     return std::format("{}[{}]", channelName, channelIndex);
   }
-  const std::string getTypeName() const { return typeName; }
+  std::string getTypeName() const override { return typeName; }
+  std::string getChannelName() const override { return channelName; }
+  size_t getChannelIndex() const override { return channelIndex; }
+  virtual void validateFunctionDecl(std::shared_ptr<PchorAST::CASTMapping>& CASTmap, clang::Stmt::const_child_iterator& itr, clang::Stmt::const_child_iterator& end) override = 0;
 
 protected:
   std::string channelName;
@@ -49,6 +69,8 @@ public:
                this->typeName);
   }
 
+  void validateFunctionDecl(std::shared_ptr<PchorAST::CASTMapping>& CASTmap, clang::Stmt::const_child_iterator& itr, clang::Stmt::const_child_iterator& end) override;
+
 private:
 };
 
@@ -64,6 +86,11 @@ public:
     std::print("?{}[{}]<{}>.", this->channelName, this->channelIndex,
                this->typeName);
   }
+
+  void validateFunctionDecl(std::shared_ptr<PchorAST::CASTMapping>& CASTmap, clang::Stmt::const_child_iterator& itr, clang::Stmt::const_child_iterator& end) override {
+
+  };
+
 
 private:
 };
