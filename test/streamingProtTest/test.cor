@@ -9,7 +9,7 @@ Channel c{1}
 
 Stream = 
     DataProducer -> Kernel: d<Data>.
-    KeyProducer -> Kernel: d<Key>.
+    KeyProducer -> Kernel: k<Key>.
     Kernel -> Consumer: c<Data>.
     end
 

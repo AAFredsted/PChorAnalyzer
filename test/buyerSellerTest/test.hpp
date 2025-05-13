@@ -31,10 +31,10 @@ public:
     Seller(): title(nullptr), address(nullptr), done(false) {}
     void addTitle(Title& t);
     void addAddress(Address& a);
-    void InitiateSale(Buyer1* b1, Buyer2* b2);
     bool isdone() {
         return done;
     }
+    void InitiateSale(Buyer1* b1, Buyer2* b2);
 private:
     Title* title;
     Address* address;
@@ -47,10 +47,11 @@ public:
     void addB2(Buyer2& b2);
     void addSeller(Seller& s);
     void addQ(Quote& q);
-    void sale1();
+
     bool isdone() {
         return done;
     }
+    void sale1();
 
 private:
     Buyer2* b2;
@@ -67,10 +68,12 @@ public:
     void addQ1(Quote& q);
     void addQ2(Quote& q);
     void addDate(Date& d);
-    void sale2();
+
     bool isdone() {
-        return done;
+    return done;
     }
+
+    void sale2();
 
 private:
     Buyer1* b1;

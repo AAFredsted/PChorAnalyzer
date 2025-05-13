@@ -86,16 +86,16 @@ void CAST_PchorASTVisitor::visit(const ChannelExpr &expr) {
     // Try Find Reciever Member
     // Try Find Sender Member
 
-    auto senderUse = AnalyzerUtils::findMatchingMember(clangContext, sender,
-                                                       this->currentDataType);
 
-    if (senderUse) {
-      ctx->addMapping(expr.getBaseParticipant()->getName(), senderUse);
+    auto recieverUse = AnalyzerUtils::findMatchingMember(
+        clangContext, reciever, this->currentDataType);
+    if (recieverUse) {
+      ctx->addMapping(expr.getBaseParticipant()->getName(), recieverUse);
     } else {
-      auto recieverUse = AnalyzerUtils::findMatchingMember(
-          clangContext, reciever, this->currentDataType);
-      if(recieverUse) {
-        ctx->addMapping(expr.getBaseParticipant()->getName(), recieverUse);
+      auto senderUse = AnalyzerUtils::findMatchingMember(clangContext, sender,
+                                                  this->currentDataType);
+      if(senderUse) {
+        ctx->addMapping(expr.getBaseParticipant()->getName(), senderUse);
       }
       else {
         mappingSuccess = false;

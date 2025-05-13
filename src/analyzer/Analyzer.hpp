@@ -56,39 +56,59 @@ namespace PchorAST {
 // class only providing static functions
 class AnalyzerUtils {
 public:
-  static void analyzeDecl(const clang::Decl *decl) {
+  static void printRecordFields(const clang::Decl *decl) {
+    if (decl) {
+      llvm::outs() << "Mapped Node is: " << decl->getDeclKindName() << "\n";
+      if (auto ctx = decl->getDeclContext()) {
+        for (const auto childDecl : ctx->decls()) {
+          if (childDecl->getDeclKindName() == std::string("Field")) {
+            printDecl(childDecl);
+            printDeclChildren(childDecl);
+          }
+        }
+      } else {
+        llvm::outs() << "Decl has no children\n";
+      }
+    } else {
+      llvm::outs() << "Decl not found\n";
+    }
+  }
+  static void printDecl(const clang::Decl *decl) {
     if (!decl) {
-        llvm::outs() << "Decl not found\n";
-        return;
+      llvm::outs() << "Decl not found\n";
+      return;
     }
 
     // Check if the declaration is a class
     llvm::outs() << "Decl of type " << decl->getDeclKindName() << "\n";
 
     if (const auto *classDecl = llvm::dyn_cast<clang::CXXRecordDecl>(decl)) {
-        llvm::outs() << "Class Decl: " << classDecl->getNameAsString() << "\n";
+      llvm::outs() << "Class Decl: " << classDecl->getNameAsString() << "\n";
     }
     // Check if the declaration is a field
     else if (const auto *fieldDecl = llvm::dyn_cast<clang::FieldDecl>(decl)) {
-        llvm::outs() << "Field Decl: " << fieldDecl->getNameAsString() << "\n";
+      llvm::outs() << "Field Decl: " << fieldDecl->getNameAsString() << "\n";
     }
     // Check if the declaration is a function
     else if (const auto *funcDecl = llvm::dyn_cast<clang::FunctionDecl>(decl)) {
-        // Skip constructors and destructors
-        if (llvm::isa<clang::CXXConstructorDecl>(funcDecl)) {
-            llvm::outs() << "Constructor Decl: " << funcDecl->getNameAsString() << "\n";
-        } else if (llvm::isa<clang::CXXDestructorDecl>(funcDecl)) {
-            llvm::outs() << "Destructor Decl: " << funcDecl->getNameAsString() << "\n";
-        } else {
-            llvm::outs() << "Function Decl: " << funcDecl->getNameAsString() << "\n";
-        }
+      // Skip constructors and destructors
+      if (llvm::isa<clang::CXXConstructorDecl>(funcDecl)) {
+        llvm::outs() << "Constructor Decl: " << funcDecl->getNameAsString()
+                     << "\n";
+      } else if (llvm::isa<clang::CXXDestructorDecl>(funcDecl)) {
+        llvm::outs() << "Destructor Decl: " << funcDecl->getNameAsString()
+                     << "\n";
+      } else {
+        llvm::outs() << "Function Decl: " << funcDecl->getNameAsString()
+                     << "\n";
+      }
     }
     // Handle other types of declarations
     else {
-        llvm::outs() << "Other Decl Type: " << decl->getDeclKindName() << "\n";
+      llvm::outs() << "Other Decl Type: " << decl->getDeclKindName() << "\n";
     }
   }
-  static void analyzeDeclChildren(const clang::Decl *decl) {
+  static void printDeclChildren(const clang::Decl *decl) {
     if (decl) {
       llvm::outs() << "Mapped Node is: " << decl->getDeclKindName() << "\n";
       if (auto ctx = decl->getDeclContext()) {
@@ -114,10 +134,10 @@ public:
   static const clang::Decl *findDecl(clang::ASTContext &context,
                                      const std::string &name) {
 
-    auto matcher = clang::ast_matchers::cxxRecordDecl(
-        clang::ast_matchers::hasName(name))
-        .bind("classDecl");
-                 
+    auto matcher =
+        clang::ast_matchers::cxxRecordDecl(clang::ast_matchers::hasName(name))
+            .bind("classDecl");
+
     const clang::CXXRecordDecl *result = nullptr;
 
     MatchCallback<clang::CXXRecordDecl> callback(result, "classDecl");
@@ -138,7 +158,27 @@ public:
   findDataTypeInClass(clang::ASTContext &context, const clang::Decl *decl,
                       const std::string &typeName) {
 
-    // Define the matcher to validate individual child declarations
+    // Define a reusable matcher for the type
+    auto declMatcher = clang::ast_matchers::qualType(
+        clang::ast_matchers::anyOf(
+            // Match the type directly
+            clang::ast_matchers::hasDeclaration(
+                clang::ast_matchers::namedDecl(
+                    clang::ast_matchers::hasName(typeName))),
+            // Match pointer types with the specified pointee type
+            clang::ast_matchers::pointerType(
+                clang::ast_matchers::pointee(
+                    clang::ast_matchers::hasDeclaration(
+                        clang::ast_matchers::namedDecl(
+                            clang::ast_matchers::hasName(typeName))))),
+            // Match reference types with the specified pointee type
+            clang::ast_matchers::referenceType(
+                clang::ast_matchers::pointee(
+                    clang::ast_matchers::hasDeclaration(
+                        clang::ast_matchers::namedDecl(
+                            clang::ast_matchers::hasName(typeName)))))));
+
+        // Define the matcher to validate individual child declarations
     auto methodMatcher =
         clang::ast_matchers::cxxMethodDecl(
             clang::ast_matchers::unless(
@@ -146,41 +186,19 @@ public:
             clang::ast_matchers::anyOf(
                 // Match methods with a parameter of the specified type
                 clang::ast_matchers::hasAnyParameter(
-                    clang::ast_matchers::hasType(clang::ast_matchers::qualType(
-                        clang::ast_matchers::hasDeclaration(
-                            clang::ast_matchers::namedDecl(
-                                clang::ast_matchers::hasName(typeName)))))),
-                // Match methods that use a variable of the specified type in
-                // their body
-                clang::ast_matchers::hasDescendant(clang::ast_matchers::varDecl(
-                    clang::ast_matchers::hasType(clang::ast_matchers::qualType(
-                        clang::ast_matchers::hasDeclaration(
-                            clang::ast_matchers::namedDecl(
-                                clang::ast_matchers::hasName(typeName))))))),
-                // Match methods that use an object of the specified type in
-                // their body
-                clang::ast_matchers::hasDescendant(clang::ast_matchers::expr(
-                    clang::ast_matchers::hasType(clang::ast_matchers::qualType(
-                        clang::ast_matchers::anyOf(
-                            // Match the type directly
-                            clang::ast_matchers::hasDeclaration(
-                                clang::ast_matchers::namedDecl(
-                                    clang::ast_matchers::hasName(typeName))),
-                            // Match pointer types with the specified pointee
-                            // type
-                            clang::ast_matchers::pointerType(
-                                clang::ast_matchers::pointee(
-                                    clang::ast_matchers::hasDeclaration(
-                                        clang::ast_matchers::namedDecl(
-                                            clang::ast_matchers::hasName(
-                                                typeName)))))))))),
+                    clang::ast_matchers::hasType(declMatcher)),
+                // Match methods that use a variable of the specified type in their body
+                clang::ast_matchers::hasDescendant(
+                    clang::ast_matchers::varDecl(
+                        clang::ast_matchers::hasType(declMatcher))),
+                // Match methods that use an object of the specified type in their body
+                clang::ast_matchers::hasDescendant(
+                    clang::ast_matchers::expr(
+                        clang::ast_matchers::hasType(declMatcher))),
                 // Match methods that return the specified type
-                clang::ast_matchers::returns(clang::ast_matchers::qualType(
-                    clang::ast_matchers::hasDeclaration(
-                        clang::ast_matchers::namedDecl(
-                            clang::ast_matchers::hasName(typeName)))))))
-            .bind("methodDecl");
-
+                clang::ast_matchers::returns(declMatcher)))
+        .bind("methodDecl");
+        
     std::vector<const clang::FunctionDecl *> results;
 
     auto ctx = decl->getDeclContext();
@@ -201,28 +219,31 @@ public:
   static const clang::FieldDecl *
   findMatchingMember(clang::ASTContext &context, const clang::Decl *decl,
                      const std::string &typeName) {
-
     auto memberMatcher =
         clang::ast_matchers::fieldDecl(
             clang::ast_matchers::hasType(
                 clang::ast_matchers::qualType(clang::ast_matchers::anyOf(
+                    // Match fields of the specified type
                     clang::ast_matchers::hasDeclaration(
                         clang::ast_matchers::namedDecl(
                             clang::ast_matchers::hasName(typeName))),
+                    // Match fields with a pointer to the specified type
                     clang::ast_matchers::pointerType(
                         clang::ast_matchers::pointee(
                             clang::ast_matchers::hasDeclaration(
                                 clang::ast_matchers::namedDecl(
                                     clang::ast_matchers::hasName(typeName))))),
-                    clang::ast_matchers::templateSpecializationType(
-                        clang::ast_matchers::hasAnyTemplateArgument(
-                            clang::ast_matchers::templateArgument(
-                                clang::ast_matchers::refersToType(
-                                    clang::ast_matchers::qualType(
-                                        clang::ast_matchers::hasDeclaration(
-                                            clang::ast_matchers::namedDecl(
-                                                clang::ast_matchers::hasName(
-                                                    typeName))))))))))))
+                    // Match fields with a template specialization of the specified type
+                    clang::ast_matchers::hasDeclaration(
+                        clang::ast_matchers::classTemplateSpecializationDecl(
+                            clang::ast_matchers::hasTemplateArgument(
+                                0, // Check the first template argument
+                                clang::ast_matchers::templateArgument(
+                                    clang::ast_matchers::refersToType(
+                                        clang::ast_matchers::qualType(
+                                            clang::ast_matchers::hasDeclaration(
+                                                clang::ast_matchers::namedDecl(
+                                                    clang::ast_matchers::hasName(typeName)))))))))))))
             .bind("fieldDecl");
     const clang::FieldDecl *field = nullptr;
 
@@ -317,7 +338,7 @@ public:
     std::println("\n\nPChorAST CAST Mappings\n------------------");
     for (const auto &[key, value] : map) {
       std::println("Mapping for {}", key);
-      AnalyzerUtils::analyzeDecl(value.getDecl());
+      AnalyzerUtils::printDecl(value.getDecl());
     }
   }
 
@@ -357,7 +378,8 @@ public:
     return projectionMap.contains(participantName);
   }
   void printProjections() const {
-    std::println("\n\nPchorAST Participant projections:\n-------------------------------");
+    std::println("\n\nPchorAST Participant "
+                 "projections:\n-------------------------------");
     for (const auto &[elem, value] : projectionMap) {
       std::print("Projection for participant {}", elem);
       for (const auto &projection : value) {
