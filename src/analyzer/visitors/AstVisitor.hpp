@@ -1,13 +1,13 @@
 #pragma once
 
-#include <memory>
 #include <cstdint>
+#include <memory>
 #include <print>
 
 #include "../../pchor/ast/PchorAST.hpp"
-#include "../utils/ContextManager.hpp"
-#include "../utils/CASTAnalyzerUtils.hpp"
 #include "../../pchor/ast/PchorProjection.hpp"
+#include "../utils/CASTAnalyzerUtils.hpp"
+#include "../utils/ContextManager.hpp"
 
 namespace PchorAST {
 

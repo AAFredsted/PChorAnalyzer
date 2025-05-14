@@ -1,16 +1,16 @@
 #pragma once
 
-#include <variant>
 #include <memory>
-#include <unordered_map>
-#include <vector>
 #include <string>
+#include <unordered_map>
+#include <variant>
+#include <vector>
 
 #include <clang/AST/Decl.h>
 #include <clang/AST/Stmt.h>
 
-#include "CASTAnalyzerUtils.hpp"
 #include "../../pchor/ast/PchorProjection.hpp"
+#include "CASTAnalyzerUtils.hpp"
 
 namespace PchorAST {
 enum class ContextType { Decl, Stmt };
@@ -23,14 +23,14 @@ struct Context {
   Context() = delete;
 
   // Delete copy constructor and copy assignment operator
-  Context(const Context &other): type(other.type), value(other.value) {}
+  Context(const Context &other) : type(other.type), value(other.value) {}
   Context &operator=(const Context &other) {
-    if(this != &other) {
-      type=other.type;
-      value=other.value;
+    if (this != &other) {
+      type = other.type;
+      value = other.value;
     }
     return *this;
-  } 
+  }
 
   // Move constructor
   Context(Context &&other) noexcept
@@ -60,35 +60,32 @@ struct Context {
 
   // Get the Decl
   const clang::Decl *getDecl() const {
-    return std::get<const clang::Decl*>(value);
+    return std::get<const clang::Decl *>(value);
   }
 
   // Get the Stmt
   const clang::Stmt *getStmt() const {
-    return std::get<const clang::Stmt*>(value);
+    return std::get<const clang::Stmt *>(value);
   }
 };
 
 class CASTMapping {
 public:
   CASTMapping() : map() {}
-  
-  CASTMapping(const CASTMapping& other) {
-    this->map = other.map;
-  }
-  CASTMapping& operator=(const CASTMapping& other) {
-    if(this != &other){
+
+  CASTMapping(const CASTMapping &other) { this->map = other.map; }
+  CASTMapping &operator=(const CASTMapping &other) {
+    if (this != &other) {
       this->map = other.map;
     }
     return *this;
-
   }
-  CASTMapping(CASTMapping&& other) noexcept {
+  CASTMapping(CASTMapping &&other) noexcept {
     this->map = std::move(other.map);
     other.map.clear();
   }
-  CASTMapping& operator=(CASTMapping&& other) noexcept {
-    if(this != &other) {
+  CASTMapping &operator=(CASTMapping &&other) noexcept {
+    if (this != &other) {
       this->map = std::move(other.map);
       other.map.clear();
     }
@@ -125,38 +122,34 @@ private:
   std::unordered_map<std::string, Context> map;
 };
 
-
-
 struct ParticipantKey {
   std::string name;
   size_t index;
 
-  ParticipantKey(const std::string& name, size_t index) : name(name), index(index) {}
+  ParticipantKey(const std::string &name, size_t index)
+      : name(name), index(index) {}
 
-  ParticipantKey(const ParticipantKey& other) {
+  ParticipantKey(const ParticipantKey &other) {
     this->name = other.name;
     this->index = other.index;
   }
-  ParticipantKey& operator=(const ParticipantKey& other) {
-    if(this != &other) {
+  ParticipantKey &operator=(const ParticipantKey &other) {
+    if (this != &other) {
       this->name = other.name;
       this->index = other.index;
     }
     return *this;
   }
 
-  std::string toString() const {
-    return std::format("{}[{}]: ", name, index);
-  }
-  ParticipantKey(ParticipantKey&& other) = delete;
-  ParticipantKey& operator=(ParticipantKey&& other) = delete;
+  std::string toString() const { return std::format("{}[{}]: ", name, index); }
+  ParticipantKey(ParticipantKey &&other) = delete;
+  ParticipantKey &operator=(ParticipantKey &&other) = delete;
 
   ~ParticipantKey() = default;
 
   bool operator==(const ParticipantKey &other) const {
     return name == other.name && index == other.index;
   }
-
 };
 
 struct ParticipantKeyHash {
@@ -192,11 +185,11 @@ public:
         std::vector<std::unique_ptr<PchorAST::AbstractProjection>>());
   }
 
-  void addProjection(const ParticipantKey& key,
+  void addProjection(const ParticipantKey &key,
                      std::unique_ptr<PchorAST::AbstractProjection> proj) {
     projectionMap[key].emplace_back(std::move(proj));
   }
-  bool hasProjection(const ParticipantKey& key) const {
+  bool hasProjection(const ParticipantKey &key) const {
     return projectionMap.contains(key);
   }
   void printProjections() const {
@@ -213,14 +206,14 @@ public:
 
   auto begin() { return projectionMap.begin(); }
   auto end() { return projectionMap.end(); }
-  auto begin() const  { return projectionMap.begin(); }
+  auto begin() const { return projectionMap.begin(); }
   auto end() const { return projectionMap.end(); }
+
 private:
   std::unordered_map<ParticipantKey,
-                     std::vector<std::unique_ptr<PchorAST::AbstractProjection>>, ParticipantKeyHash>
+                     std::vector<std::unique_ptr<PchorAST::AbstractProjection>>,
+                     ParticipantKeyHash>
       projectionMap;
 };
 
-
-
-} //namespace PchorAST
+} // namespace PchorAST

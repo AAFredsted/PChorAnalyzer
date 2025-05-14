@@ -64,9 +64,11 @@ void CAST_PchorASTVisitor::visit(const ParticipantExpr &expr) {
             expr.getBaseParticipant()->getName()),
         this->currentDataType);
 
-    if(dataTypeUse.empty()) {
+    if (dataTypeUse.empty()) {
       mappingSuccess = false;
-      throw std::runtime_error(std::format("No matching function declarations found in {} with {}", expr.getBaseParticipant()->getName(), this->currentDataType));
+      throw std::runtime_error(std::format(
+          "No matching function declarations found in {} with {}",
+          expr.getBaseParticipant()->getName(), this->currentDataType));
     }
     ctx->addMapping(expr.getBaseParticipant()->getName() +
                         this->currentDataType,
@@ -84,22 +86,22 @@ void CAST_PchorASTVisitor::visit(const ChannelExpr &expr) {
     // Try Find Reciever Member
     // Try Find Sender Member
 
-
-    auto recieverUse = AnalyzerUtils::findMatchingMember(
-        clangContext, reciever, this->currentDataType);
+    auto recieverUse = AnalyzerUtils::findMatchingMember(clangContext, reciever,
+                                                         this->currentDataType);
     if (recieverUse) {
       ctx->addMapping(expr.getBaseParticipant()->getName(), recieverUse);
     } else {
       auto senderUse = AnalyzerUtils::findMatchingMember(clangContext, sender,
-                                                  this->currentDataType);
-      if(senderUse) {
+                                                         this->currentDataType);
+      if (senderUse) {
         ctx->addMapping(expr.getBaseParticipant()->getName(), senderUse);
-      }
-      else {
+      } else {
         mappingSuccess = false;
-        throw std::runtime_error(std::format(
-          "No matching member found for data type '{}' in sender '{}' or receiver '{}'",
-          this->currentDataType, this->senderIdentifier, this->recieverIdentifier));
+        throw std::runtime_error(
+            std::format("No matching member found for data type '{}' in sender "
+                        "'{}' or receiver '{}'",
+                        this->currentDataType, this->senderIdentifier,
+                        this->recieverIdentifier));
       }
     }
   } else {
@@ -170,7 +172,8 @@ void Proj_PchorASTVisitor::visit(const ExprList &expr) {
   }
 }
 void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
-  ParticipantKey key{expr.getBaseParticipant()->getName(), expr.getIndex()->getLiteral()};
+  ParticipantKey key{expr.getBaseParticipant()->getName(),
+                     expr.getIndex()->getLiteral()};
 
   if (expr.getIndex()->isExprLiteral()) {
     if (!this->ctx->hasProjection(key)) {
@@ -184,8 +187,8 @@ void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
     } else {
       this->ctx->addProjection(
           key, std::make_unique<Precieve>(this->currentChannelName,
-                                           this->currentDataType,
-                                           this->channelIndex));
+                                          this->currentDataType,
+                                          this->channelIndex));
     }
   } else {
     std::println("Undefined Index Implementation here");

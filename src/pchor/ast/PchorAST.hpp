@@ -93,9 +93,10 @@ public:
       : DeclPchorASTNode(Decl::Index_Decl, std::move(name)),
         lower(parseLiteral(lower_token.value)),
         upper(parseLiteral(upper_token.value)) {}
-        
-  explicit IndexASTNode(const std::string& name, size_t lower, size_t upper):
-    DeclPchorASTNode(Decl::Index_Decl, std::move(name)), lower(lower), upper(upper) {}
+
+  explicit IndexASTNode(const std::string &name, size_t lower, size_t upper)
+      : DeclPchorASTNode(Decl::Index_Decl, std::move(name)), lower(lower),
+        upper(upper) {}
 
   size_t getLower() const { return lower; }
   size_t getUpper() const { return upper; }
@@ -139,7 +140,7 @@ public:
   void accept(AbstractPchorASTVisitor &visitor) const override;
 
   void print() const override {
-    std::println("Participant {} indexed with {}", name, index->getName()); 
+    std::println("Participant {} indexed with {}", name, index->getName());
   }
 
 protected:

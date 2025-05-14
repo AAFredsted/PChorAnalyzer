@@ -1,22 +1,23 @@
 #pragma once
 
-#include <clang/AST/Decl.h>
+#include "../../pchor/ast/PchorProjection.hpp"
 #include "../utils/CASTAnalyzerUtils.hpp"
 #include "../utils/ContextManager.hpp"
-#include "../../pchor/ast/PchorProjection.hpp"
-
+#include <clang/AST/Decl.h>
 
 namespace PchorAST {
 
 class CASTValidator {
 public:
-  static clang::FunctionDecl* validateFuncDecl(
+  static clang::FunctionDecl *validateFuncDecl(
       std::shared_ptr<CASTMapping> CASTMap,
-      const std::vector<std::unique_ptr<PchorAST::AbstractProjection>>& projections,
-      const ParticipantKey& participantName);
+      const std::vector<std::unique_ptr<PchorAST::AbstractProjection>>
+          &projections,
+      const ParticipantKey &participantName);
 
-  static bool validateProjection(std::shared_ptr<CASTMapping>& CASTmap,
-                                 std::shared_ptr<PchorProjection>& projectionMap);
-                                 
+  static bool
+  validateProjection(clang::ASTContext &Context,
+                     std::shared_ptr<CASTMapping> &CASTmap,
+                     std::shared_ptr<PchorProjection> &projectionMap);
 };
 } // namespace PchorAST

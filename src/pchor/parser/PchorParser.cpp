@@ -49,19 +49,19 @@ SymbolTable::resolve(const std::string_view name) const {
 
 void PchorParser::printAST() const { symbolTable->print(); }
 void PchorParser::printTokenList() const {
-  std::println("\n\nToken List provided by PchorLexer\n--------------------------------");
+  std::println("\n\nToken List provided by "
+               "PchorLexer\n--------------------------------");
   for (const Token &t : tokens) {
     std::println("{}", t.toString());
   }
 }
 
-void PchorParser::genTokens() {
-  tokens = lexer->genTokens();
-}
+void PchorParser::genTokens() { tokens = lexer->genTokens(); }
 void PchorParser::parse() {
 
-  //create default index for literal 1
-  symbolTable->addDeclaration("PchorUnaryIndex", std::make_shared<IndexASTNode>("PchorUnaryIndex", 1, 1));
+  // create default index for literal 1
+  symbolTable->addDeclaration("PchorUnaryIndex", std::make_shared<IndexASTNode>(
+                                                     "PchorUnaryIndex", 1, 1));
 
   auto itr = tokens.begin();
   const auto end = tokens.end();
@@ -220,8 +220,9 @@ void PchorParser::parseParticipantDecl(
     break;
   case TokenType::Literal:
     if (itr->value.at(0) != '1') {
-      throw std::runtime_error(
-          std::format("Only  literal allowed in participant declaration is '1'. Found {}", itr->toString()));
+      throw std::runtime_error(std::format(
+          "Only  literal allowed in participant declaration is '1'. Found {}",
+          itr->toString()));
     }
     ASTNode = symbolTable->resolve(std::string("PchorUnaryIndex"));
     IdxNode = std::dynamic_pointer_cast<IndexASTNode>(ASTNode);
@@ -524,8 +525,7 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
   if (itr->type == TokenType::Symbol && itr->value == "[") {
     auto endofIndex = itr;
 
-    while (endofIndex != end &&
-           endofIndex->value != "]") {
+    while (endofIndex != end && endofIndex->value != "]") {
       endofIndex++;
     }
     if (endofIndex == end || endofIndex->value != "]") {
@@ -535,9 +535,11 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
 
     senderIndex = parseIndexExpr(senderAST->getIndex(), itr, endofIndex);
     itr++;
-  }
-  else{
-    senderIndex = std::make_shared<IndexExpr>(std::dynamic_pointer_cast<IndexASTNode>(symbolTable->resolve(std::string("PchorUnaryIndex"))), 1);
+  } else {
+    senderIndex = std::make_shared<IndexExpr>(
+        std::dynamic_pointer_cast<IndexASTNode>(
+            symbolTable->resolve(std::string("PchorUnaryIndex"))),
+        1);
   }
 
   std::shared_ptr<ParticipantExpr> senderexpr =
@@ -566,8 +568,7 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
   if (itr->type == TokenType::Symbol && itr->value == "[") {
     auto endofIndex = itr;
 
-    while (endofIndex != end&&
-           endofIndex->value != "]") {
+    while (endofIndex != end && endofIndex->value != "]") {
       endofIndex++;
     }
     if (endofIndex == end || endofIndex->value != "]") {
@@ -576,10 +577,11 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
     }
     recieverIndex = parseIndexExpr(recieverAST->getIndex(), itr, endofIndex);
     itr++;
-  }
-  else {
-    recieverIndex = std::make_shared<IndexExpr>(std::dynamic_pointer_cast<IndexASTNode>(symbolTable->resolve(std::string("PchorUnaryIndex"))), 1);
-
+  } else {
+    recieverIndex = std::make_shared<IndexExpr>(
+        std::dynamic_pointer_cast<IndexASTNode>(
+            symbolTable->resolve(std::string("PchorUnaryIndex"))),
+        1);
   }
 
   std::shared_ptr<ParticipantExpr> recieverexpr =
@@ -608,8 +610,7 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
   if (itr->type == TokenType::Symbol && itr->value == "[") {
     auto endofIndex = itr;
 
-    while (endofIndex != end &&
-           endofIndex->value != "]") {
+    while (endofIndex != end && endofIndex->value != "]") {
       endofIndex++;
     }
     if (endofIndex == end || endofIndex->value != "]") {
@@ -618,10 +619,11 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
     }
     channelIndex = parseIndexExpr(channelAST->getIndex(), itr, endofIndex);
     itr++;
-  }
-  else {
-    channelIndex = std::make_shared<IndexExpr>(std::dynamic_pointer_cast<IndexASTNode>(symbolTable->resolve(std::string("PchorUnaryIndex"))), 1);
-
+  } else {
+    channelIndex = std::make_shared<IndexExpr>(
+        std::dynamic_pointer_cast<IndexASTNode>(
+            symbolTable->resolve(std::string("PchorUnaryIndex"))),
+        1);
   }
 
   std::shared_ptr<ChannelExpr> channelexpr =

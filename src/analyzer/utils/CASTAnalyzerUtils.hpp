@@ -1,17 +1,16 @@
 #pragma once
 
 #include <clang/AST/ASTContext.h>
-#include <clang/ASTMatchers/ASTMatchers.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
+#include <clang/ASTMatchers/ASTMatchers.h>
 #include <clang/Frontend/FrontendPluginRegistry.h>
 #include <llvm/Support/raw_ostream.h>
 
 #include <string>
 #include <vector>
 
-
 namespace PchorAST {
-//matcher templates to match for array of NodeType of one element of NodeType
+// matcher templates to match for array of NodeType of one element of NodeType
 template <typename NodeType>
 class MatchCallback : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
@@ -50,15 +49,35 @@ private:
   std::string bindName;
 };
 
+template <typename NodeType>
+class DebugStoreMatchCallback : public clang::ast_matchers::MatchFinder::MatchCallback {
+public:
+    DebugStoreMatchCallback(const std::string &bindName, const NodeType *&result)
+        : bindName(bindName), result(result) {}
+
+    void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult) override {
+        llvm::outs() << "[DebugStoreMatchCallback] Running for: " << bindName << "\n";
+        if (const auto *node = matchResult.Nodes.getNodeAs<NodeType>(bindName)) {
+            result = node;
+            llvm::outs() << "Matched Node (" << bindName << "):\n";
+            node->dump();
+        } else {
+            llvm::outs() << "No match for bind name: " << bindName << "\n";
+        }
+    }
+private:
+    std::string bindName;
+    const NodeType *&result;
+};
 
 class AnalyzerUtils {
 public:
-  //print functions for debugging
+  // print functions for debugging
   static void printDecl(const clang::Decl *decl);
   static void printRecordFields(const clang::Decl *decl);
   static void printDeclChildren(const clang::Decl *decl);
 
-  //matcher functions for different types of AST-types
+  // matcher functions for different types of AST-types
   static const clang::Decl *findDecl(clang::ASTContext &context,
                                      const std::string &name);
 
@@ -70,7 +89,18 @@ public:
   findMatchingMember(clang::ASTContext &context, const clang::Decl *decl,
                      const std::string &typeName);
 
+  // Validation Functions
+  static bool
+  validateSendExpression(const clang::Stmt *opCallExpr,
+                         const clang::Decl *channelDecl,
+                         const clang::Decl *typeDecl,
+                         clang::ASTContext &context);
+  // Validation Functions
+  static bool
+  validateRecieveExpression(const clang::Stmt *opCallExpr,
+                         const clang::Decl *channelDecl,
+                         const clang::Decl *typeDecl,
+                         clang::ASTContext &context);
 };
-
 
 } // namespace PchorAST

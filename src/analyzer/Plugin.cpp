@@ -47,7 +47,7 @@ public:
       auto CASTMapping = CAST_visitor.getContext();
       auto Projections = Proj_visitor.getContext();
       
-      PchorAST::CASTValidator::validateProjection(CASTMapping, Projections);
+      PchorAST::CASTValidator::validateProjection(Context, CASTMapping, Projections);
 
       if (debug) {
         CAST_visitor.printMappings();

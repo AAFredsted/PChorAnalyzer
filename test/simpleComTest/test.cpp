@@ -9,26 +9,12 @@ struct Message {
     bool isRead;
 };
 
-class Anne {
-public:
-    explicit Anne(Message* NicholasMsg) : NicholasMsg(NicholasMsg) {}
-
-    void sendMessage(const std::string& content) {
-        Message msg(content);
-        *NicholasMsg = msg;
-        std::println("Anne: Sent Message -> {}", msg.str);
-    }
-
-private:
-    Message* NicholasMsg;
-};
-
 class Nicholas {
 public:
     explicit Nicholas() : msg(Message{}) {}
 
-    Message* getMessagePointer() {
-        return &msg;
+    Message& getMessage() {
+        return msg;
     }
 
     void receiveMessage() {
@@ -38,17 +24,26 @@ public:
         std::println("Nicholas: Received Message -> {}", msg.str);
         msg.isRead = true;
     }
-private:
+
     Message msg;
 };
 
-int main() {
-    // Shared message object
-    Message sharedMessage;
 
+class Anne {
+public:
+    explicit Anne(Nicholas* nicholas) : nicholas(nicholas) {}
+
+    void sendMessage(const std::string& content) {
+        nicholas->msg = Message{content};// Explicitly update msg in Nicholas
+    }
+
+    Nicholas* nicholas; 
+};
+
+int main() {
     // Create participants
     Nicholas nicholas;
-    Anne anne(nicholas.getMessagePointer());
+    Anne anne(&nicholas); // Pass a pointer to Nicholas
 
     // Simulate the choreography
     std::thread anneThread([&]() {

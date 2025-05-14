@@ -4,9 +4,12 @@
 #include <format>
 #include <print>
 #include <string>
+#include <unordered_set>
 
+#include <clang/AST/ASTContext.h>
 #include <clang/AST/Stmt.h>
-#include <clang/AST/StmtIterator.h> 
+#include <clang/AST/StmtIterator.h>
+
 
 
 namespace PchorAST {
@@ -27,7 +30,11 @@ public:
 
   ProjectionType getType() { return type; }
 
-  virtual void validateFunctionDecl(std::shared_ptr<PchorAST::CASTMapping>& CASTmap, clang::Stmt::const_child_iterator& itr, clang::Stmt::const_child_iterator& end) = 0;
+  virtual void
+  validateFunctionDecl(clang::ASTContext &context,
+                       std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
+                       clang::Stmt::const_child_iterator &itr,
+                       clang::Stmt::const_child_iterator &end) = 0;
 
 protected:
   ProjectionType type;
@@ -40,16 +47,18 @@ public:
       : AbstractProjection(type), channelName(channelName), typeName(typeName),
         channelIndex(channelIndex) {}
 
-  bool isComProjection() const override {
-    return true;
-  }
+  bool isComProjection() const override { return true; }
   const std::string getChannelString() const {
     return std::format("{}[{}]", channelName, channelIndex);
   }
   std::string getTypeName() const override { return typeName; }
   std::string getChannelName() const override { return channelName; }
   size_t getChannelIndex() const override { return channelIndex; }
-  virtual void validateFunctionDecl(std::shared_ptr<PchorAST::CASTMapping>& CASTmap, clang::Stmt::const_child_iterator& itr, clang::Stmt::const_child_iterator& end) override = 0;
+  virtual void
+  validateFunctionDecl(clang::ASTContext &context,
+                       std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
+                       clang::Stmt::const_child_iterator &itr,
+                       clang::Stmt::const_child_iterator &end) override = 0;
 
 protected:
   std::string channelName;
@@ -69,7 +78,10 @@ public:
                this->typeName);
   }
 
-  void validateFunctionDecl(std::shared_ptr<PchorAST::CASTMapping>& CASTmap, clang::Stmt::const_child_iterator& itr, clang::Stmt::const_child_iterator& end) override;
+  void validateFunctionDecl(clang::ASTContext &context,
+                            std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
+                            clang::Stmt::const_child_iterator &itr,
+                            clang::Stmt::const_child_iterator &end) override;
 
 private:
 };
@@ -87,10 +99,10 @@ public:
                this->typeName);
   }
 
-  void validateFunctionDecl(std::shared_ptr<PchorAST::CASTMapping>& CASTmap, clang::Stmt::const_child_iterator& itr, clang::Stmt::const_child_iterator& end) override {
-
-  };
-
+  void validateFunctionDecl(clang::ASTContext &context,
+                            std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
+                            clang::Stmt::const_child_iterator &itr,
+                            clang::Stmt::const_child_iterator &end) override;
 
 private:
 };
