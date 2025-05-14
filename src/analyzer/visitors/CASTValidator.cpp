@@ -15,7 +15,7 @@ void CASTValidator::printValidations() {
   for(const auto& [key, values]: failedValidations){
     std::print("{}: ", key);
     for(const auto& str: values){
-      std::println("{} ", str);
+      std::print("{} ", str);
     }
     std::println("");
   }
