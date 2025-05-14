@@ -97,9 +97,9 @@ public:
                          clang::ASTContext &context);
   // Validation Functions
   static bool
-  validateRecieveExpression(const clang::Stmt *opCallExpr,
+  validateRecieveExpression(const clang::Stmt *whileStmt,
                          const clang::Decl *channelDecl,
-                         const clang::Decl *typeDecl,
+                         [[ maybe_unused ]] const clang::Decl *typeDecl,
                          clang::ASTContext &context);
 };
 

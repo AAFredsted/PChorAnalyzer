@@ -241,7 +241,6 @@ bool AnalyzerUtils::validateSendExpression(
             )
         ).bind("sendRHS")
     );
-
     auto operatorCallExprMatcher = clang::ast_matchers::cxxOperatorCallExpr(
         clang::ast_matchers::hasOverloadedOperatorName("="),
         clang::ast_matchers::hasArgument(0, clang::ast_matchers::memberExpr(
@@ -272,12 +271,38 @@ bool AnalyzerUtils::validateSendExpression(
 
     return matched != nullptr;
 }
-bool validateRecieveExpression(const clang::Stmt *opCallExpr,
-    const clang::Decl *channelDecl,
-    const clang::Decl *typeDecl,
-    clang::ASTContext &context) {
 
-        
+bool
+AnalyzerUtils::validateRecieveExpression(const clang::Stmt *whileStmt,
+                        const clang::Decl *channelDecl,
+                        [[ maybe_unused ]] const clang::Decl *typeDecl,
+                        clang::ASTContext &context) {
+    
+    if(!whileStmt || !channelDecl){
+      llvm::errs() << "Invalid input to validateSendExpression.\n";
+      return false;
+    }
 
+    auto whileMatcher = clang::ast_matchers::whileStmt(
+      clang::ast_matchers::hasCondition(
+        clang::ast_matchers::hasDescendant(
+          clang::ast_matchers::memberExpr(
+            clang::ast_matchers::member(
+              clang::ast_matchers::fieldDecl(
+                clang::ast_matchers::equalsNode(channelDecl)
+              )
+            )
+          ).bind("recvChannel")
+        )
+      )
+    ).bind("recvWhile");
+
+    const clang::WhileStmt* matched = nullptr;
+
+    clang::ast_matchers::MatchFinder finder;
+    finder.addMatcher(whileMatcher, new DebugStoreMatchCallback<clang::WhileStmt>("recvWhile", matched));
+    finder.match(*whileStmt, context);
+
+    return matched != nullptr;
 }
 } // namespace PchorAST

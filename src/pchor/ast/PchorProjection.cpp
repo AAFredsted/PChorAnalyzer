@@ -81,9 +81,21 @@ void Precieve::validateFunctionDecl(
         }
         std::string type = cpy->getStmtClassName();
         if(type == "WhileStmt"){
+            
+            std::println("We try to map whilestatement of");
+            cpy->dump();
+
+            const auto* whileStmt = *cpy;
+            
+            if(AnalyzerUtils::validateRecieveExpression(whileStmt, channelDecl, typeDecl, context)){
+                waitMatchingDone=true;
+            }
+            else {
+                std::println("Failed to map recievestatement");
+            }
+            
             waitMatchingDone=true;
         }
-
         cpy++;
     }
     while(!accessMatchingDone){
@@ -96,7 +108,7 @@ void Precieve::validateFunctionDecl(
        std::string type = cpy->getStmtClassName();
         if(type == "BinaryOperator"){
             accessMatchingDone=true;
-        }
+        }   
         cpy++;
     }
     itr = cpy;
