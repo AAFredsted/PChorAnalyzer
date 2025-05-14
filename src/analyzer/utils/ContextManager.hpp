@@ -141,7 +141,7 @@ struct ParticipantKey {
     return *this;
   }
 
-  std::string toString() const { return std::format("{}[{}]: ", name, index); }
+  std::string toString() const { return std::format("{}[{}]", name, index); }
   ParticipantKey(ParticipantKey &&other) = delete;
   ParticipantKey &operator=(ParticipantKey &&other) = delete;
 
@@ -196,7 +196,7 @@ public:
     std::println("\n\nPchorAST Participant "
                  "projections:\n-------------------------------");
     for (const auto &[elem, value] : projectionMap) {
-      std::print("Projection for participant {}", elem.toString());
+      std::print("Projection for participant {}: ", elem.toString());
       for (const auto &projection : value) {
         projection->print();
       }

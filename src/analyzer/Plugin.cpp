@@ -46,13 +46,18 @@ public:
       }
       auto CASTMapping = CAST_visitor.getContext();
       auto Projections = Proj_visitor.getContext();
+
+      PchorAST::CASTValidator validator{};
       
-      PchorAST::CASTValidator::validateProjection(Context, CASTMapping, Projections);
+      validator.validateProjection(Context, CASTMapping, Projections);
 
       if (debug) {
         CAST_visitor.printMappings();
         Proj_visitor.printProjections();
       }
+
+      validator.printValidations();
+      
     } catch (const std::exception &e) {
       llvm::errs() << "Error in CAST Mapping or Choreography Projection: \n"
                    << e.what() << "\n";

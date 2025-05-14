@@ -30,7 +30,7 @@ public:
 
   ProjectionType getType() { return type; }
 
-  virtual void
+  virtual bool
   validateFunctionDecl(clang::ASTContext &context,
                        std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                        clang::Stmt::const_child_iterator &itr,
@@ -54,7 +54,7 @@ public:
   std::string getTypeName() const override { return typeName; }
   std::string getChannelName() const override { return channelName; }
   size_t getChannelIndex() const override { return channelIndex; }
-  virtual void
+  virtual bool
   validateFunctionDecl(clang::ASTContext &context,
                        std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                        clang::Stmt::const_child_iterator &itr,
@@ -78,7 +78,7 @@ public:
                this->typeName);
   }
 
-  void validateFunctionDecl(clang::ASTContext &context,
+  bool validateFunctionDecl(clang::ASTContext &context,
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                             clang::Stmt::const_child_iterator &itr,
                             clang::Stmt::const_child_iterator &end) override;
@@ -99,7 +99,7 @@ public:
                this->typeName);
   }
 
-  void validateFunctionDecl(clang::ASTContext &context,
+  bool validateFunctionDecl(clang::ASTContext &context,
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                             clang::Stmt::const_child_iterator &itr,
                             clang::Stmt::const_child_iterator &end) override;
