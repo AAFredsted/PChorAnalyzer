@@ -161,33 +161,48 @@ const clang::FieldDecl *
 AnalyzerUtils::findMatchingMember(clang::ASTContext &context,
                                   const clang::Decl *decl,
                                   const std::string &typeName) {
-  auto memberMatcher =
-      clang::ast_matchers::fieldDecl(
-          clang::ast_matchers::hasType(
-              clang::ast_matchers::qualType(clang::ast_matchers::anyOf(
-                  // Match fields of the specified type
-                  clang::ast_matchers::hasDeclaration(
-                      clang::ast_matchers::namedDecl(
-                          clang::ast_matchers::hasName(typeName))),
-                  // Match fields with a pointer to the specified type
-                  clang::ast_matchers::pointerType(clang::ast_matchers::pointee(
-                      clang::ast_matchers::hasDeclaration(
-                          clang::ast_matchers::namedDecl(
-                              clang::ast_matchers::hasName(typeName))))),
-                  // Match fields with a template specialization of the
-                  // specified type
-                  clang::ast_matchers::hasDeclaration(
-                      clang::ast_matchers::classTemplateSpecializationDecl(
-                          clang::ast_matchers::hasTemplateArgument(
-                              0, // Check the first template argument
-                              clang::ast_matchers::templateArgument(
-                                  clang::ast_matchers::refersToType(
-                                      clang::ast_matchers::qualType(
-                                          clang::ast_matchers::hasDeclaration(
-                                              clang::ast_matchers::namedDecl(
-                                                  clang::ast_matchers::hasName(
-                                                      typeName)))))))))))))
-          .bind("fieldDecl");
+  
+
+  auto directDeclaration = clang::ast_matchers::hasDeclaration(
+    clang::ast_matchers::namedDecl(
+      clang::ast_matchers::hasName(typeName)
+    )
+  );
+  auto pointerDeclaration = clang::ast_matchers::pointerType(
+    clang::ast_matchers::pointee(
+      directDeclaration
+    )
+  );
+  auto templateDeclaration = clang::ast_matchers::hasDeclaration(
+    clang::ast_matchers::classTemplateSpecializationDecl(
+      clang::ast_matchers::hasTemplateArgument(
+        0, clang::ast_matchers::templateArgument(
+          clang::ast_matchers::refersToType(
+            clang::ast_matchers::qualType(
+              directDeclaration
+            )
+          )
+        )
+      )
+    )
+  );
+  auto templatePointerDeclaration = clang::ast_matchers::pointerType(
+    clang::ast_matchers::pointee(
+      templateDeclaration
+    )
+  );
+  auto fieldMatcher = clang::ast_matchers::fieldDecl(
+    clang::ast_matchers::hasType(
+      clang::ast_matchers::qualType(
+        clang::ast_matchers::anyOf(
+          directDeclaration,
+          pointerDeclaration,
+          templateDeclaration,
+          templatePointerDeclaration
+        )
+      )
+    )
+  ).bind("fieldDecl");
   const clang::FieldDecl *field = nullptr;
 
   const clang::CXXRecordDecl* record = llvm::dyn_cast<clang::CXXRecordDecl>(decl);
@@ -197,7 +212,7 @@ AnalyzerUtils::findMatchingMember(clang::ASTContext &context,
 
   clang::ast_matchers::MatchFinder finder;
   MatchCallback<clang::FieldDecl> callback(field, "fieldDecl");
-  finder.addMatcher(memberMatcher, &callback);
+  finder.addMatcher(fieldMatcher, &callback);
   
   for(const auto* field: record->fields()) {
     finder.match(*field, context);
