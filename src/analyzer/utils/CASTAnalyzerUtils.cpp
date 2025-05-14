@@ -227,8 +227,8 @@ AnalyzerUtils::findMatchingMember(clang::ASTContext &context,
   MatchCallback<clang::FieldDecl> callback(field, "fieldDecl");
   finder.addMatcher(fieldMatcher, &callback);
   
-  for(const auto* field: record->fields()) {
-    finder.match(*field, context);
+  for(const auto* matchField: record->fields()) {
+    finder.match(*matchField, context);
     if(field != nullptr){
       break;
     }
