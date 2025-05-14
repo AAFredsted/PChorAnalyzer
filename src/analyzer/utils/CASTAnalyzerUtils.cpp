@@ -77,7 +77,10 @@ const clang::Decl *AnalyzerUtils::findDecl(clang::ASTContext &context,
                                            const std::string &name) {
 
   auto matcher =
-      clang::ast_matchers::cxxRecordDecl(clang::ast_matchers::hasName(name))
+      clang::ast_matchers::cxxRecordDecl(
+        clang::ast_matchers::hasName(name),
+        clang::ast_matchers::has(clang::ast_matchers::cxxConstructorDecl())
+      )
           .bind("classDecl");
 
   const clang::CXXRecordDecl *result = nullptr;
@@ -86,6 +89,9 @@ const clang::Decl *AnalyzerUtils::findDecl(clang::ASTContext &context,
   clang::ast_matchers::MatchFinder finder;
   finder.addMatcher(matcher, &callback);
   finder.matchAST(context);
+
+  llvm::outs() <<"what we are interested in\n";
+  result->dump();
 
   return result;
 }
@@ -132,16 +138,20 @@ AnalyzerUtils::findDataTypeInClass(clang::ASTContext &context,
 
   std::vector<const clang::FunctionDecl *> results;
 
-  auto ctx = decl->getDeclContext();
 
   clang::ast_matchers::MatchFinder finder;
   MatchTypeUseCallback<const clang::FunctionDecl> callback(results,
                                                            "methodDecl");
   finder.addMatcher(methodMatcher, &callback);
+  
+  const clang::CXXRecordDecl* record = llvm::dyn_cast<clang::CXXRecordDecl>(decl);
 
-  for (const auto childDecl : ctx->decls()) {
-    // Match the child declaration
-    finder.match(*childDecl, context);
+  if(!record){
+    throw std::runtime_error(std::format("Recieved Declaration is not a class. Recieved {}", decl->getDeclKindName()));
+  }
+
+  for(const auto* method: record->methods()){
+    finder.match(*method, context);
   }
   // Collect results
   return results;
@@ -180,15 +190,18 @@ AnalyzerUtils::findMatchingMember(clang::ASTContext &context,
           .bind("fieldDecl");
   const clang::FieldDecl *field = nullptr;
 
-  auto ctx = decl->getDeclContext();
+  const clang::CXXRecordDecl* record = llvm::dyn_cast<clang::CXXRecordDecl>(decl);
+  if(!record){
+    throw std::runtime_error(std::format("Recieved Declaration is not a class. Recieved {}", decl->getDeclKindName()));
+  }
 
   clang::ast_matchers::MatchFinder finder;
   MatchCallback<clang::FieldDecl> callback(field, "fieldDecl");
   finder.addMatcher(memberMatcher, &callback);
-
-  for (const auto childDecl : ctx->decls()) {
-    finder.match(*childDecl, context);
-    if (field != nullptr) {
+  
+  for(const auto* field: record->fields()) {
+    finder.match(*field, context);
+    if(field != nullptr){
       break;
     }
   }
