@@ -87,6 +87,35 @@ const clang::FunctionDecl* AnalyzerUtils::getFullDecl(clang::ASTContext &context
   return fullDecl;
 }
 
+const clang::FunctionDecl* 
+AnalyzerUtils::findFunctionDefinition(const clang::Stmt* possibleFunctionCall, clang::ASTContext &context) {
+  if (!possibleFunctionCall) {
+    llvm::errs() << "Invalid input to findFunctionDefinition.\n";
+    return nullptr;
+  }
+
+  const clang::CXXMethodDecl* method = nullptr;
+  clang::ast_matchers::MatchFinder finder;
+  auto memberCallMatcher = clang::ast_matchers::anyOf(
+      clang::ast_matchers::cxxMemberCallExpr().bind("memberCall"),
+      clang::ast_matchers::hasDescendant(
+          clang::ast_matchers::cxxMemberCallExpr().bind("memberCall")
+      )
+  );
+  CrossTypeMatchCallback<clang::CXXMemberCallExpr, clang::CXXMethodDecl> callback("memberCall", method);
+  finder.addMatcher(clang::ast_matchers::stmt(memberCallMatcher), &callback);
+  finder.match(*possibleFunctionCall, context);
+
+  if (method) {
+    if (const auto* def = method->getDefinition()) {
+        return AnalyzerUtils::getFullDecl(context, def);
+    }
+    return nullptr;
+  }
+
+  llvm::errs() << "Could not find member function definition from call expression.\n";
+  return nullptr;
+}
 
 const clang::Decl *AnalyzerUtils::findDecl(clang::ASTContext &context,
                                            const std::string &name) {
@@ -244,13 +273,7 @@ bool AnalyzerUtils::validateSendExpression(
         llvm::errs() << "Invalid input to validateSendExpression.\n";
         return false;
     }
-
-    // Print channelDecl and typeDecl for debugging
-    llvm::outs() << "Channel Decl:\n";
-    channelDecl->dump();
-    llvm::outs() << "Type Decl:\n";
-    typeDecl->dump();
-
+    
     std::string typeName = "";
     if (const auto *named = llvm::dyn_cast<clang::NamedDecl>(typeDecl)) {
         typeName = named->getNameAsString();
@@ -346,4 +369,5 @@ AnalyzerUtils::validateRecieveExpression(const clang::Stmt *whileStmt,
 
     return matched != nullptr;
 }
+
 } // namespace PchorAST

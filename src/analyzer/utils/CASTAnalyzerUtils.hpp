@@ -60,7 +60,7 @@ public:
         if (const auto *node = matchResult.Nodes.getNodeAs<NodeType>(bindName)) {
             result = node;
             llvm::outs() << "Matched Node (" << bindName << "):\n";
-            node->dump();
+            //node->dump();
         } else {
             llvm::outs() << "No match for bind name: " << bindName << "\n";
         }
@@ -69,6 +69,30 @@ private:
     std::string bindName;
     const NodeType *&result;
 };
+
+template <typename BindType, typename ResultType>
+class CrossTypeMatchCallback : public clang::ast_matchers::MatchFinder::MatchCallback {
+public:
+    CrossTypeMatchCallback(const std::string &bindName, const ResultType *&result)
+        : bindName(bindName), result(result) {}
+
+    void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult) override {
+        if (const auto *node = matchResult.Nodes.getNodeAs<BindType>(bindName)) {
+            result = extract(node);
+        }
+    }
+
+private:
+    std::string bindName;
+    const ResultType *&result;
+
+    static const ResultType* extract(const BindType* node);
+};
+
+template <>
+inline const clang::CXXMethodDecl* CrossTypeMatchCallback<clang::CXXMemberCallExpr, clang::CXXMethodDecl>::extract(const clang::CXXMemberCallExpr* node) {
+    return node->getMethodDecl();
+}
 
 class AnalyzerUtils {
 public:
@@ -103,6 +127,10 @@ public:
                          const clang::Decl *channelDecl,
                          [[ maybe_unused ]] const clang::Decl *typeDecl,
                          clang::ASTContext &context);
+
+  static const clang::FunctionDecl* 
+    findFunctionDefinition(const clang::Stmt* possibleFunctionCall,
+    clang::ASTContext &context);
 };
 
 } // namespace PchorAST

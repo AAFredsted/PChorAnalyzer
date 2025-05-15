@@ -5,7 +5,7 @@ namespace PchorAST {
 
 static std::unordered_set<std::string> sendSet{
     "CXXOperatorCallExpr", "CallExpr", "BinaryOperator",
-    "ExprWithCleanups"
+    "ExprWithCleanups", "CXXMemberCallExpr"
 };
 static std::unordered_set<std::string> recieveSet{};
 
@@ -37,13 +37,30 @@ bool Psend::validateFunctionDecl(
         throw std::runtime_error(
             std::format("Failed to Retrieve data from CASTmap"));
       }
+      //newly added section
+    
       if (AnalyzerUtils::validateSendExpression(opExpr, channelDecl, typeDecl, context)) {
         matchingdone = true;
       }
+      else if(const clang::FunctionDecl* funcDecl =  AnalyzerUtils::findFunctionDefinition(opExpr, context)){
+            const clang::Stmt *body = funcDecl->getBody();
+
+            std::println("{}", body->getStmtClassName());
+
+            auto childElm = body->children();
+            auto childItr = childElm.begin();
+            auto childEnd = childElm.end();
+
+            matchingdone = this->validateFunctionDecl(context, CASTmap, childItr, childEnd);
+      }
+
     }
     cpy++;
   }
   itr = cpy;
+  if(matchingdone){
+    std::println("matched: {}", this->toString());
+  }
   return matchingdone;
 }
 bool Precieve::validateFunctionDecl(
@@ -83,6 +100,9 @@ bool Precieve::validateFunctionDecl(
         cpy++;
     }
     itr = cpy;
+    if(waitMatchingDone){
+        std::println("matched: {}", this->toString());
+    }
     return waitMatchingDone;
 };
 

@@ -85,6 +85,7 @@ bool CASTValidator::validateProjection(
     auto end = elm.end();
 
     bool successFullMapping = true;
+    std::println("validating {} for {}", funcName, participantName.toString());
 
     for (auto &projection : projections) {
       if(!projection->validateFunctionDecl(Context, CASTmap, itr, end)){

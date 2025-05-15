@@ -23,6 +23,8 @@ public:
   AbstractProjection(ProjectionType type) : type(type) {}
   virtual ~AbstractProjection() = default;
   virtual void print() const = 0;
+  virtual std::string toString() const = 0;
+
   virtual bool isComProjection() const = 0;
   virtual std::string getTypeName() const = 0;
   virtual std::string getChannelName() const = 0;
@@ -72,6 +74,10 @@ public:
       : AbstractComProjection(ProjectionType::Send, channelName, typeName,
                               channelIndex) {}
   ~Psend() = default;
+  virtual std::string toString() const override  {
+    return std::format("!{}[{}]<{}>.", this->channelName, this->channelIndex,
+               this->typeName);
+  }
 
   virtual void print() const override {
     std::print("!{}[{}]<{}>.", this->channelName, this->channelIndex,
@@ -94,10 +100,16 @@ public:
                               channelIndex) {}
   ~Precieve() = default;
 
+  virtual std::string toString() const override  {
+    return std::format("?{}[{}]<{}>.", this->channelName, this->channelIndex,
+               this->typeName);
+  }
+
   virtual void print() const override {
     std::print("?{}[{}]<{}>.", this->channelName, this->channelIndex,
                this->typeName);
   }
+
 
   bool validateFunctionDecl(clang::ASTContext &context,
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
