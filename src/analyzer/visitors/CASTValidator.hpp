@@ -9,24 +9,23 @@ namespace PchorAST {
 
 class CASTValidator {
 public:
+  explicit CASTValidator() : successfullValidations(), failedValidations() {}
 
-    explicit CASTValidator(): successfullValidations(), failedValidations() {}
+  void printValidations();
 
-    void printValidations();
+  clang::FunctionDecl *validateFuncDecl(
+      std::shared_ptr<CASTMapping> CASTMap,
+      const std::vector<std::unique_ptr<PchorAST::AbstractProjection>>
+          &projections,
+      const ParticipantKey &participantName);
 
-    clang::FunctionDecl *validateFuncDecl(
-        std::shared_ptr<CASTMapping> CASTMap,
-        const std::vector<std::unique_ptr<PchorAST::AbstractProjection>>
-            &projections,
-        const ParticipantKey &participantName);
+  bool validateProjection(clang::ASTContext &Context,
+                          std::shared_ptr<CASTMapping> &CASTmap,
+                          std::shared_ptr<PchorProjection> &projectionMap);
 
-    bool
-    validateProjection(clang::ASTContext &Context,
-                        std::shared_ptr<CASTMapping> &CASTmap,
-                        std::shared_ptr<PchorProjection> &projectionMap);
 private:
-    std::unordered_map<std::string, std::vector<std::string>> successfullValidations;
-    std::unordered_map<std::string, std::vector<std::string>> failedValidations;
-
+  std::unordered_map<std::string, std::vector<std::string>>
+      successfullValidations;
+  std::unordered_map<std::string, std::vector<std::string>> failedValidations;
 };
 } // namespace PchorAST

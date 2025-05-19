@@ -3,21 +3,32 @@ Participant Buyer1{1}
 Participant Buyer2{1}
 
 Channel s1{1} //channel from Seller to Buyer1
+Channel b1{1} //channel from buyer1 to 2
 Channel s2{1} //channel from Seller to Buyer2
+Channel b2{1} //channel from buyer2 to 1
+
+Channel t1{1} //channel for titel
+
+Channel q1{1} // channel for quote for buyer1
+Channel q2{1} // channel for quote for buyer2
+Channel q3{1} //recieving partialQuote
+
 Channel b{1} //channel for buyers
+Channel a{1} //recieving address
+Channel d{1} //recieving Date
+
+
+//we need to make this adheer to the constraints of the c++ mapping
 
 TwoBuyer = 
     Seller -> Buyer1: s1<Seller>.
     Seller -> Buyer2: s2<Seller>.
-    Seller -> Buyer1: s1<Buyer2>.
-    Seller -> Buyer2: s2<Buyer1>.
-    Buyer1 -> Seller: s1<Title>.
-    Seller -> Buyer1: s1<Quote>.
-    Seller -> Buyer2: s2<Quote>.
-    Buyer1 -> Buyer2: b<Quote>.
-    Buyer2 -> Seller: s2<Address>.
-    Seller -> Buyer2: s2<Date>.
+    Seller -> Buyer1: b1<Buyer2>.
+    Seller -> Buyer2: b2<Buyer1>.
+    Buyer1 -> Seller: t1<Title>.
+    Seller -> Buyer1: q1<Quote>.
+    Seller -> Buyer2: q2<Quote>.
+    Buyer1 -> Buyer2: q3<PartialQuote>.
+    Buyer2 -> Seller: a<Address>.
+    Seller -> Buyer2: d<Date>.
     end
-
-
-    

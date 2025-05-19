@@ -106,12 +106,14 @@ void Nicholas::respondToQuery(Anne* anne) {
     }
     std::print("Nicholas: Received Query -> {}\n", query.endpoint);
 
-    anne->recieveAck(Ack(true));
-    std::print("Nicholas: Sent Ack -> Valid\n");
-
     Response resp = Response("Response from Nicholas");
     anne->recieveResp(resp);
     std::print("Nicholas: Sent Response -> {}\n", resp.data);
+    
+    anne->recieveAck(Ack(true));
+    std::print("Nicholas: Sent Ack -> Valid\n");
+
+   
 }
 
 int main() {

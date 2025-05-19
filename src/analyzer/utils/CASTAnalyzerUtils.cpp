@@ -73,47 +73,51 @@ void AnalyzerUtils::printDeclChildren(const clang::Decl *decl) {
   }
 }
 
-const clang::FunctionDecl* AnalyzerUtils::getFullDecl(clang::ASTContext &context, const clang::FunctionDecl* funcDecl) {
-  const clang::FunctionDecl* fullDecl = nullptr;
-  if(funcDecl->isThisDeclarationADefinition()){
+const clang::FunctionDecl *
+AnalyzerUtils::getFullDecl(clang::ASTContext &context,
+                           const clang::FunctionDecl *funcDecl) {
+  const clang::FunctionDecl *fullDecl = nullptr;
+  if (funcDecl->isThisDeclarationADefinition()) {
     fullDecl = funcDecl;
-  }
-  else {
+  } else {
     fullDecl = funcDecl->getDefinition();
   }
-  if(!fullDecl){
-    throw std::runtime_error(std::format("Definition for declared function {} not found.\n", funcDecl->getNameAsString()));
+  if (!fullDecl) {
+    throw std::runtime_error(
+        std::format("Definition for declared function {} not found.\n",
+                    funcDecl->getNameAsString()));
   }
   return fullDecl;
 }
 
-const clang::FunctionDecl* 
-AnalyzerUtils::findFunctionDefinition(const clang::Stmt* possibleFunctionCall, clang::ASTContext &context) {
+const clang::FunctionDecl *
+AnalyzerUtils::findFunctionDefinition(const clang::Stmt *possibleFunctionCall,
+                                      clang::ASTContext &context) {
   if (!possibleFunctionCall) {
     llvm::errs() << "Invalid input to findFunctionDefinition.\n";
     return nullptr;
   }
 
-  const clang::CXXMethodDecl* method = nullptr;
+  const clang::CXXMethodDecl *method = nullptr;
   clang::ast_matchers::MatchFinder finder;
   auto memberCallMatcher = clang::ast_matchers::anyOf(
       clang::ast_matchers::cxxMemberCallExpr().bind("memberCall"),
       clang::ast_matchers::hasDescendant(
-          clang::ast_matchers::cxxMemberCallExpr().bind("memberCall")
-      )
-  );
-  CrossTypeMatchCallback<clang::CXXMemberCallExpr, clang::CXXMethodDecl> callback("memberCall", method);
+          clang::ast_matchers::cxxMemberCallExpr().bind("memberCall")));
+  CrossTypeMatchCallback<clang::CXXMemberCallExpr, clang::CXXMethodDecl>
+      callback("memberCall", method);
   finder.addMatcher(clang::ast_matchers::stmt(memberCallMatcher), &callback);
   finder.match(*possibleFunctionCall, context);
 
   if (method) {
-    if (const auto* def = method->getDefinition()) {
-        return AnalyzerUtils::getFullDecl(context, def);
+    if (const auto *def = method->getDefinition()) {
+      return AnalyzerUtils::getFullDecl(context, def);
     }
     return nullptr;
   }
 
-  llvm::errs() << "Could not find member function definition from call expression.\n";
+  llvm::errs()
+      << "Could not find member function definition from call expression.\n";
   return nullptr;
 }
 
@@ -122,9 +126,8 @@ const clang::Decl *AnalyzerUtils::findDecl(clang::ASTContext &context,
 
   auto matcher =
       clang::ast_matchers::cxxRecordDecl(
-        clang::ast_matchers::hasName(name),
-        clang::ast_matchers::has(clang::ast_matchers::cxxConstructorDecl())
-      )
+          clang::ast_matchers::hasName(name),
+          clang::ast_matchers::has(clang::ast_matchers::cxxConstructorDecl()))
           .bind("classDecl");
 
   const clang::CXXRecordDecl *result = nullptr;
@@ -179,20 +182,22 @@ AnalyzerUtils::findDataTypeInClass(clang::ASTContext &context,
 
   std::vector<const clang::FunctionDecl *> results;
 
-
   clang::ast_matchers::MatchFinder finder;
   MatchTypeUseCallback<const clang::FunctionDecl> callback(results,
                                                            "methodDecl");
   finder.addMatcher(methodMatcher, &callback);
-  
-  const clang::CXXRecordDecl* record = llvm::dyn_cast<clang::CXXRecordDecl>(decl);
 
-  if(!record){
-    throw std::runtime_error(std::format("Recieved Declaration is not a class. Recieved {}", decl->getDeclKindName()));
+  const clang::CXXRecordDecl *record =
+      llvm::dyn_cast<clang::CXXRecordDecl>(decl);
+
+  if (!record) {
+    throw std::runtime_error(
+        std::format("Recieved Declaration is not a class. Recieved {}",
+                    decl->getDeclKindName()));
   }
 
-  for(const auto* method: record->methods()){
-    const clang::FunctionDecl* fullDecl = getFullDecl(context, method);
+  for (const auto *method : record->methods()) {
+    const clang::FunctionDecl *fullDecl = getFullDecl(context, method);
     finder.match(*fullDecl, context);
   }
   // Collect results
@@ -203,171 +208,154 @@ const clang::FieldDecl *
 AnalyzerUtils::findMatchingMember(clang::ASTContext &context,
                                   const clang::Decl *decl,
                                   const std::string &typeName) {
-  
 
   auto directDeclaration = clang::ast_matchers::hasDeclaration(
-    clang::ast_matchers::namedDecl(
-      clang::ast_matchers::hasName(typeName)
-    )
-  );
+      clang::ast_matchers::namedDecl(clang::ast_matchers::hasName(typeName)));
   auto pointerDeclaration = clang::ast_matchers::pointerType(
-    clang::ast_matchers::pointee(
-      directDeclaration
-    )
-  );
+      clang::ast_matchers::pointee(directDeclaration));
   auto templateDeclaration = clang::ast_matchers::hasDeclaration(
-    clang::ast_matchers::classTemplateSpecializationDecl(
-      clang::ast_matchers::hasTemplateArgument(
-        0, clang::ast_matchers::templateArgument(
-          clang::ast_matchers::refersToType(
-            clang::ast_matchers::qualType(
-              directDeclaration
-            )
-          )
-        )
-      )
-    )
-  );
+      clang::ast_matchers::classTemplateSpecializationDecl(
+          clang::ast_matchers::hasTemplateArgument(
+              0, clang::ast_matchers::templateArgument(
+                     clang::ast_matchers::refersToType(
+                         clang::ast_matchers::qualType(directDeclaration))))));
   auto templatePointerDeclaration = clang::ast_matchers::pointerType(
-    clang::ast_matchers::pointee(
-      templateDeclaration
-    )
-  );
-  auto fieldMatcher = clang::ast_matchers::fieldDecl(
-    clang::ast_matchers::hasType(
-      clang::ast_matchers::qualType(
-        clang::ast_matchers::anyOf(
-          directDeclaration,
-          pointerDeclaration,
-          templateDeclaration,
-          templatePointerDeclaration
-        )
-      )
-    )
-  ).bind("fieldDecl");
+      clang::ast_matchers::pointee(templateDeclaration));
+  auto fieldMatcher =
+      clang::ast_matchers::fieldDecl(
+          clang::ast_matchers::hasType(clang::ast_matchers::qualType(
+              clang::ast_matchers::anyOf(directDeclaration, pointerDeclaration,
+                                         templateDeclaration,
+                                         templatePointerDeclaration))))
+          .bind("fieldDecl");
   const clang::FieldDecl *field = nullptr;
 
-  const clang::CXXRecordDecl* record = llvm::dyn_cast<clang::CXXRecordDecl>(decl);
-  if(!record){
-    throw std::runtime_error(std::format("Recieved Declaration is not a class. Recieved {}", decl->getDeclKindName()));
+  const clang::CXXRecordDecl *record =
+      llvm::dyn_cast<clang::CXXRecordDecl>(decl);
+  if (!record) {
+    throw std::runtime_error(
+        std::format("Recieved Declaration is not a class. Recieved {}",
+                    decl->getDeclKindName()));
   }
 
   clang::ast_matchers::MatchFinder finder;
   MatchCallback<clang::FieldDecl> callback(field, "fieldDecl");
   finder.addMatcher(fieldMatcher, &callback);
-  
-  for(const auto* matchField: record->fields()) {
+
+  for (const auto *matchField : record->fields()) {
     finder.match(*matchField, context);
-    if(field != nullptr){
+    if (field != nullptr) {
       break;
     }
   }
   return field;
 }
 
-bool AnalyzerUtils::validateSendExpression(
-    const clang::Stmt *opCallExpr,
-    const clang::Decl *channelDecl, const clang::Decl *typeDecl,
-    clang::ASTContext &context) {
-    if (!opCallExpr || !channelDecl || !typeDecl) {
-        llvm::errs() << "Invalid input to validateSendExpression.\n";
-        return false;
-    }
-    
-    std::string typeName = "";
-    if (const auto *named = llvm::dyn_cast<clang::NamedDecl>(typeDecl)) {
-        typeName = named->getNameAsString();
-    } else {
-       llvm::errs() << "Failed to get name of TypeDecl. This should not happen\n";
-    }
+bool AnalyzerUtils::validateSendExpression(const clang::Stmt *opCallExpr,
+                                           const clang::Decl *channelDecl,
+                                           const clang::Decl *typeDecl,
+                                           clang::ASTContext &context) {
+  if (!opCallExpr || !channelDecl || !typeDecl) {
+    llvm::errs() << "Invalid input to validateSendExpression.\n";
+    return false;
+  }
+  llvm::outs() << "we try to run validateSendExpr\n";
 
+  std::string typeName = "";
+  if (const auto *named = llvm::dyn_cast<clang::NamedDecl>(typeDecl)) {
+    typeName = named->getNameAsString();
+  } else {
+    llvm::errs() << "Failed to get name of TypeDecl. This should not happen\n";
+  }
 
-    auto rhsTypeMatcher = clang::ast_matchers::anyOf(
-        clang::ast_matchers::cxxConstructExpr(
-            clang::ast_matchers::hasType(
-                clang::ast_matchers::recordDecl(
-                    clang::ast_matchers::hasName(typeName)
-                )
-            )
-        ).bind("sendRHS"),
-        clang::ast_matchers::cxxTemporaryObjectExpr(
-            clang::ast_matchers::hasType(
-                clang::ast_matchers::recordDecl(
-                    clang::ast_matchers::hasName(typeName)
-                )
-            )
-        ).bind("sendRHS"),
-        clang::ast_matchers::expr(
-            clang::ast_matchers::hasType(
-                clang::ast_matchers::recordDecl(
-                    clang::ast_matchers::hasName(typeName)
-                )
-            )
-        ).bind("sendRHS")
-    );
-    auto operatorCallExprMatcher = clang::ast_matchers::cxxOperatorCallExpr(
-        clang::ast_matchers::hasOverloadedOperatorName("="),
-        clang::ast_matchers::hasArgument(0, clang::ast_matchers::memberExpr(
-            clang::ast_matchers::member(clang::ast_matchers::fieldDecl(clang::ast_matchers::equalsNode(channelDecl)))
-        ).bind("sendLHS")),
-        clang::ast_matchers::hasArgument(1,
-            clang::ast_matchers::ignoringImplicit(
-                clang::ast_matchers::ignoringParenImpCasts(
-                    rhsTypeMatcher
-                )
-            )
-        )
-    ).bind("sendAssignment");
-  auto expressionMatcher = clang::ast_matchers::expr(
-      clang::ast_matchers::anyOf(
-          clang::ast_matchers::hasDescendant(operatorCallExprMatcher),
-          operatorCallExprMatcher
-      )
-  );
+  auto rhsTypeMatcher = clang::ast_matchers::anyOf(
+      clang::ast_matchers::cxxConstructExpr(
+          clang::ast_matchers::hasType(clang::ast_matchers::recordDecl(
+              clang::ast_matchers::hasName(typeName))))
+          .bind("sendRHS"),
+      clang::ast_matchers::cxxTemporaryObjectExpr(
+          clang::ast_matchers::hasType(clang::ast_matchers::recordDecl(
+              clang::ast_matchers::hasName(typeName))))
+          .bind("sendRHS"),
+      clang::ast_matchers::expr(
+          clang::ast_matchers::hasType(clang::ast_matchers::recordDecl(
+              clang::ast_matchers::hasName(typeName))))
+          .bind("sendRHS"));
 
-    // Use MatchFinder to debug the matcher
-    const clang::CXXOperatorCallExpr* matched = nullptr;
-    clang::ast_matchers::MatchFinder finder;
-    finder.addMatcher(expressionMatcher, new DebugStoreMatchCallback<clang::CXXOperatorCallExpr>("sendAssignment", matched));
+  auto directMemberExpr =
+      clang::ast_matchers::memberExpr(
+          clang::ast_matchers::member(clang::ast_matchers::fieldDecl(
+              clang::ast_matchers::equalsNode(channelDecl))))
+          .bind("sendLHS");
 
-    // Run the matcher on the AST node
-    finder.match(*opCallExpr, context);
+  auto nestedMemberExpr = clang::ast_matchers::hasDescendant(directMemberExpr);
 
-    return matched != nullptr;
+  auto lhsTypeMatcher =
+      clang::ast_matchers::anyOf(directMemberExpr, nestedMemberExpr);
+  auto operatorCallExprMatcher =
+      clang::ast_matchers::cxxOperatorCallExpr(
+          clang::ast_matchers::hasOverloadedOperatorName("="),
+          clang::ast_matchers::hasArgument(0, lhsTypeMatcher),
+          clang::ast_matchers::hasArgument(
+              1,
+              clang::ast_matchers::ignoringImplicit(
+                  clang::ast_matchers::ignoringParenImpCasts(rhsTypeMatcher))))
+          .bind("sendAssignment");
+  auto expressionMatcher = clang::ast_matchers::expr(clang::ast_matchers::anyOf(
+      clang::ast_matchers::hasDescendant(operatorCallExprMatcher),
+      operatorCallExprMatcher));
+
+  // Use MatchFinder to debug the matcher
+  const clang::CXXOperatorCallExpr *matched = nullptr;
+  clang::ast_matchers::MatchFinder finder;
+  finder.addMatcher(expressionMatcher,
+                    new DebugStoreMatchCallback<clang::CXXOperatorCallExpr>(
+                        "sendAssignment", matched));
+
+  // Run the matcher on the AST node
+  finder.match(*opCallExpr, context);
+  if (matched) {
+    llvm::outs() << "We matched for this: " << opCallExpr->getStmtClassName()
+                 << "\n";
+  } else {
+    llvm::outs() << "We failed to match for this: "
+                 << opCallExpr->getStmtClassName() << "\n";
+  }
+
+  return matched != nullptr;
 }
 
-bool
-AnalyzerUtils::validateRecieveExpression(const clang::Stmt *whileStmt,
-                        const clang::Decl *channelDecl,
-                        [[ maybe_unused ]] const clang::Decl *typeDecl,
-                        clang::ASTContext &context) {
-    
-    if(!whileStmt || !channelDecl){
-      llvm::errs() << "Invalid input to validateSendExpression.\n";
-      return false;
-    }
+bool AnalyzerUtils::validateRecieveExpression(
+    const clang::Stmt *whileStmt, const clang::Decl *channelDecl,
+    [[maybe_unused]] const clang::Decl *typeDecl, clang::ASTContext &context) {
 
-    auto whileMatcher = clang::ast_matchers::whileStmt(
-      clang::ast_matchers::hasCondition(
-        clang::ast_matchers::hasDescendant(
-          clang::ast_matchers::memberExpr(
-            clang::ast_matchers::member(
-              clang::ast_matchers::fieldDecl(
-                clang::ast_matchers::equalsNode(channelDecl)
-              )
-            )
-          ).bind("recvChannel")
-        )
-      )
-    ).bind("recvWhile");
+  if (!whileStmt || !channelDecl) {
+    llvm::errs() << "Invalid input to validateSendExpression.\n";
+    return false;
+  }
 
-    const clang::WhileStmt* matched = nullptr;
+  auto whileMatcher =
+      clang::ast_matchers::whileStmt(
+          clang::ast_matchers::hasCondition(
+              clang::ast_matchers::forEachDescendant(
+                  clang::ast_matchers::memberExpr(
+                      clang::ast_matchers::member(
+                          clang::ast_matchers::fieldDecl(
+                              clang::ast_matchers::equalsNode(channelDecl))))
+                      .bind("recvChannel"))))
+          .bind("recvWhile");
 
-    clang::ast_matchers::MatchFinder finder;
-    finder.addMatcher(whileMatcher, new DebugStoreMatchCallback<clang::WhileStmt>("recvWhile", matched));
-    finder.match(*whileStmt, context);
+  const clang::WhileStmt *matched = nullptr;
 
-    return matched != nullptr;
+  clang::ast_matchers::MatchFinder finder;
+  finder.addMatcher(whileMatcher, new DebugStoreMatchCallback<clang::WhileStmt>(
+                                      "recvWhile", matched));
+  finder.match(*whileStmt, context);
+  if (matched) {
+    llvm::outs() << matched->getStmtClassName() << "\n";
+  }
+
+  return matched != nullptr;
 }
 
 } // namespace PchorAST

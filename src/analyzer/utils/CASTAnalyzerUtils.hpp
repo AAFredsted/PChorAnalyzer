@@ -50,48 +50,56 @@ private:
 };
 
 template <typename NodeType>
-class DebugStoreMatchCallback : public clang::ast_matchers::MatchFinder::MatchCallback {
+class DebugStoreMatchCallback
+    : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-    DebugStoreMatchCallback(const std::string &bindName, const NodeType *&result)
-        : bindName(bindName), result(result) {}
+  DebugStoreMatchCallback(const std::string &bindName, const NodeType *&result)
+      : bindName(bindName), result(result) {}
 
-    void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult) override {
-        llvm::outs() << "[DebugStoreMatchCallback] Running for: " << bindName << "\n";
-        if (const auto *node = matchResult.Nodes.getNodeAs<NodeType>(bindName)) {
-            result = node;
-            llvm::outs() << "Matched Node (" << bindName << "):\n";
-            //node->dump();
-        } else {
-            llvm::outs() << "No match for bind name: " << bindName << "\n";
-        }
+  void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult)
+      override {
+    llvm::outs() << "[DebugStoreMatchCallback] Running for: " << bindName
+                 << "\n";
+    if (const auto *node = matchResult.Nodes.getNodeAs<NodeType>(bindName)) {
+      result = node;
+      llvm::outs() << "Matched Node (" << bindName << "):\n";
+      // node->dump();
+    } else {
+      llvm::outs() << "No match for bind name: " << bindName << "\n";
     }
+  }
+
 private:
-    std::string bindName;
-    const NodeType *&result;
+  std::string bindName;
+  const NodeType *&result;
 };
 
 template <typename BindType, typename ResultType>
-class CrossTypeMatchCallback : public clang::ast_matchers::MatchFinder::MatchCallback {
+class CrossTypeMatchCallback
+    : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-    CrossTypeMatchCallback(const std::string &bindName, const ResultType *&result)
-        : bindName(bindName), result(result) {}
+  CrossTypeMatchCallback(const std::string &bindName, const ResultType *&result)
+      : bindName(bindName), result(result) {}
 
-    void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult) override {
-        if (const auto *node = matchResult.Nodes.getNodeAs<BindType>(bindName)) {
-            result = extract(node);
-        }
+  void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult)
+      override {
+    if (const auto *node = matchResult.Nodes.getNodeAs<BindType>(bindName)) {
+      result = extract(node);
     }
+  }
 
 private:
-    std::string bindName;
-    const ResultType *&result;
+  std::string bindName;
+  const ResultType *&result;
 
-    static const ResultType* extract(const BindType* node);
+  static const ResultType *extract(const BindType *node);
 };
 
 template <>
-inline const clang::CXXMethodDecl* CrossTypeMatchCallback<clang::CXXMemberCallExpr, clang::CXXMethodDecl>::extract(const clang::CXXMemberCallExpr* node) {
-    return node->getMethodDecl();
+inline const clang::CXXMethodDecl *
+CrossTypeMatchCallback<clang::CXXMemberCallExpr, clang::CXXMethodDecl>::extract(
+    const clang::CXXMemberCallExpr *node) {
+  return node->getMethodDecl();
 }
 
 class AnalyzerUtils {
@@ -105,7 +113,8 @@ public:
   static const clang::Decl *findDecl(clang::ASTContext &context,
                                      const std::string &name);
 
-  static const clang::FunctionDecl* getFullDecl(clang::ASTContext &context, const clang::FunctionDecl* funcDecl);
+  static const clang::FunctionDecl *
+  getFullDecl(clang::ASTContext &context, const clang::FunctionDecl *funcDecl);
 
   static std::vector<const clang::FunctionDecl *>
   findDataTypeInClass(clang::ASTContext &context, const clang::Decl *decl,
@@ -116,21 +125,18 @@ public:
                      const std::string &typeName);
 
   // Validation Functions
-  static bool
-  validateSendExpression(const clang::Stmt *opCallExpr,
-                         const clang::Decl *channelDecl,
-                         const clang::Decl *typeDecl,
-                         clang::ASTContext &context);
+  static bool validateSendExpression(const clang::Stmt *opCallExpr,
+                                     const clang::Decl *channelDecl,
+                                     const clang::Decl *typeDecl,
+                                     clang::ASTContext &context);
   // Validation Functions
-  static bool
-  validateRecieveExpression(const clang::Stmt *whileStmt,
-                         const clang::Decl *channelDecl,
-                         [[ maybe_unused ]] const clang::Decl *typeDecl,
-                         clang::ASTContext &context);
+  static bool validateRecieveExpression(
+      const clang::Stmt *whileStmt, const clang::Decl *channelDecl,
+      [[maybe_unused]] const clang::Decl *typeDecl, clang::ASTContext &context);
 
-  static const clang::FunctionDecl* 
-    findFunctionDefinition(const clang::Stmt* possibleFunctionCall,
-    clang::ASTContext &context);
+  static const clang::FunctionDecl *
+  findFunctionDefinition(const clang::Stmt *possibleFunctionCall,
+                         clang::ASTContext &context);
 };
 
 } // namespace PchorAST

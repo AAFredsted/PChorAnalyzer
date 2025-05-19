@@ -4,17 +4,17 @@ namespace PchorAST {
 
 void CASTValidator::printValidations() {
   std::println("\n\nSuccessfull Validations:\n-------------------");
-  for(const auto& [key, values]: successfullValidations){
+  for (const auto &[key, values] : successfullValidations) {
     std::print("{}: ", key);
-    for(const auto& str: values){
+    for (const auto &str : values) {
       std::print("{} ", str);
     }
     std::println("");
   }
   std::println("\n\nFailed Validations:\n-------------------");
-  for(const auto& [key, values]: failedValidations){
+  for (const auto &[key, values] : failedValidations) {
     std::print("{}: ", key);
-    for(const auto& str: values){
+    for (const auto &str : values) {
       std::print("{} ", str);
     }
     std::println("");
@@ -67,11 +67,12 @@ bool CASTValidator::validateProjection(
     std::string funcName = funcDecl->getNameAsString();
 
     if (!funcDecl->hasBody()) {
-      throw std::runtime_error(std::format("Function {} has no body\n",
-                                           funcName));
+      throw std::runtime_error(
+          std::format("Function {} has no body\n", funcName));
     }
 
-    if(!failedValidations.contains(funcName) && !successfullValidations.contains(funcName)) {
+    if (!failedValidations.contains(funcName) &&
+        !successfullValidations.contains(funcName)) {
       failedValidations[funcName] = std::vector<std::string>{};
       successfullValidations[funcName] = std::vector<std::string>{};
     }
@@ -88,22 +89,21 @@ bool CASTValidator::validateProjection(
     std::println("validating {} for {}", funcName, participantName.toString());
 
     for (auto &projection : projections) {
-      if(!projection->validateFunctionDecl(Context, CASTmap, itr, end)){
+      if (!projection->validateFunctionDecl(Context, CASTmap, itr, end)) {
         successFullMapping = false;
       }
     }
 
-    if(successFullMapping) {
+    if (successFullMapping) {
       successfullValidations[funcName].push_back(participantName.toString());
-    }
-    else {
+    } else {
       failedValidations[funcName].push_back(participantName.toString());
     }
 
     if (itr != end) {
-      llvm::errs() << std::format(
-          "Warning: Not all statements in {} consumed by projections. Stopped at: {}",
-          funcName, itr->getStmtClassName());
+      llvm::errs() << std::format("Warning: Not all statements in {} consumed "
+                                  "by projections. Stopped at: {}",
+                                  funcName, itr->getStmtClassName());
     }
   }
 

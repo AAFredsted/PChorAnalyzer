@@ -10,8 +10,6 @@
 #include <clang/AST/Stmt.h>
 #include <clang/AST/StmtIterator.h>
 
-
-
 namespace PchorAST {
 
 class CASTMapping;
@@ -74,9 +72,9 @@ public:
       : AbstractComProjection(ProjectionType::Send, channelName, typeName,
                               channelIndex) {}
   ~Psend() = default;
-  virtual std::string toString() const override  {
+  virtual std::string toString() const override {
     return std::format("!{}[{}]<{}>.", this->channelName, this->channelIndex,
-               this->typeName);
+                       this->typeName);
   }
 
   virtual void print() const override {
@@ -100,16 +98,15 @@ public:
                               channelIndex) {}
   ~Precieve() = default;
 
-  virtual std::string toString() const override  {
+  virtual std::string toString() const override {
     return std::format("?{}[{}]<{}>.", this->channelName, this->channelIndex,
-               this->typeName);
+                       this->typeName);
   }
 
   virtual void print() const override {
     std::print("?{}[{}]<{}>.", this->channelName, this->channelIndex,
                this->typeName);
   }
-
 
   bool validateFunctionDecl(clang::ASTContext &context,
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,

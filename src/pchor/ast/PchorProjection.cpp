@@ -4,10 +4,10 @@
 namespace PchorAST {
 
 static std::unordered_set<std::string> sendSet{
-    "CXXOperatorCallExpr", "CallExpr", "BinaryOperator",
-    "ExprWithCleanups", "CXXMemberCallExpr"
-};
-static std::unordered_set<std::string> recieveSet{};
+    "CXXOperatorCallExpr", "CallExpr", "BinaryOperator", "ExprWithCleanups",
+    "CXXMemberCallExpr"};
+static std::unordered_set<std::string> recieveSet{
+    "WhileStmt", "ExprWithCleanups", "CXXMemberCallExpr"};
 
 bool Psend::validateFunctionDecl(
     clang::ASTContext &context, std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
@@ -19,10 +19,11 @@ bool Psend::validateFunctionDecl(
 
   while (!matchingdone) {
     if (cpy == end) {
-        llvm::errs() << std::format("Reached end of function before matching projection of send "
-                      "type {} at statement: {}\n",
-                      this->getChannelString(), itr->getStmtClassName());
-        break;
+      llvm::errs() << std::format(
+          "Reached end of function before matching projection of send "
+          "type {} at statement: {}\n",
+          this->getChannelString(), itr->getStmtClassName());
+      break;
     }
     std::string type = cpy->getStmtClassName();
     if (sendSet.contains(type)) {
@@ -37,28 +38,27 @@ bool Psend::validateFunctionDecl(
         throw std::runtime_error(
             std::format("Failed to Retrieve data from CASTmap"));
       }
-      //newly added section
-    
-      if (AnalyzerUtils::validateSendExpression(opExpr, channelDecl, typeDecl, context)) {
+      // newly added section
+
+      if (AnalyzerUtils::validateSendExpression(opExpr, channelDecl, typeDecl,
+                                                context)) {
         matchingdone = true;
+      } else if (const clang::FunctionDecl *funcDecl =
+                     AnalyzerUtils::findFunctionDefinition(opExpr, context)) {
+        const clang::Stmt *body = funcDecl->getBody();
+
+        auto childElm = body->children();
+        auto childItr = childElm.begin();
+        auto childEnd = childElm.end();
+
+        matchingdone =
+            this->validateFunctionDecl(context, CASTmap, childItr, childEnd);
       }
-      else if(const clang::FunctionDecl* funcDecl =  AnalyzerUtils::findFunctionDefinition(opExpr, context)){
-            const clang::Stmt *body = funcDecl->getBody();
-
-            std::println("{}", body->getStmtClassName());
-
-            auto childElm = body->children();
-            auto childItr = childElm.begin();
-            auto childEnd = childElm.end();
-
-            matchingdone = this->validateFunctionDecl(context, CASTmap, childItr, childEnd);
-      }
-
     }
     cpy++;
   }
   itr = cpy;
-  if(matchingdone){
+  if (matchingdone) {
     std::println("matched: {}", this->toString());
   }
   return matchingdone;
@@ -67,43 +67,58 @@ bool Precieve::validateFunctionDecl(
     clang::ASTContext &context, std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
     clang::Stmt::const_child_iterator &itr,
     clang::Stmt::const_child_iterator &end) {
-    
-    auto cpy = itr;
-    bool waitMatchingDone = false;
 
-    const auto *channelDecl =
-        CASTmap->getMapping<const clang::Decl *>(this->channelName);
-    const auto *typeDecl =
-        CASTmap->getMapping<const clang::Decl *>(this->typeName);
+  auto cpy = itr;
+  bool waitMatchingDone = false;
 
-    if (!channelDecl || !typeDecl) {
-        throw std::runtime_error(
-            std::format("Failed to Retrieve data from CASTmap"));
+  const auto *channelDecl =
+      CASTmap->getMapping<const clang::Decl *>(this->channelName);
+  const auto *typeDecl =
+      CASTmap->getMapping<const clang::Decl *>(this->typeName);
+
+  if (!channelDecl || !typeDecl) {
+    throw std::runtime_error(
+        std::format("Failed to Retrieve data from CASTmap"));
+  }
+
+  while (!waitMatchingDone) {
+    if (cpy == end) {
+      llvm::outs() << std::format(
+          "Reached end of function before matching projection of "
+          "receive type {} at statement: {}\n",
+          this->getChannelString(), itr->getStmtClassName());
+      break;
     }
+    std::string type = cpy->getStmtClassName();
+    std::println("exprtype we try to match is: {}", type);
+    if (recieveSet.contains(type)) {
+      std::println("We have found expr of type {}", type);
 
-    while(!waitMatchingDone){
-        if(cpy == end){
-            llvm::outs() << std::format("Reached end of function before matching projection of "
-                            "receive type {} at statement: {}\n",
-                            this->getChannelString(), itr->getStmtClassName());
-            break;
-        }
-        std::string type = cpy->getStmtClassName();
-        if(type == "WhileStmt"){ 
+      const auto *whileStmt = *cpy;
+      if (AnalyzerUtils::validateRecieveExpression(whileStmt, channelDecl,
+                                                   typeDecl, context)) {
+        std::println("Mapping was successfull.");
+        waitMatchingDone = true;
+      } else if (const clang::FunctionDecl *funcDecl =
+                     AnalyzerUtils::findFunctionDefinition(whileStmt,
+                                                           context)) {
+        const clang::Stmt *body = funcDecl->getBody();
 
-            const auto* whileStmt = *cpy;
-            if(AnalyzerUtils::validateRecieveExpression(whileStmt, channelDecl, typeDecl, context)){
-                waitMatchingDone=true;
-            }
-            
-        }
-        cpy++;
+        auto childElm = body->children();
+        auto childItr = childElm.begin();
+        auto childEnd = childElm.end();
+
+        waitMatchingDone =
+            this->validateFunctionDecl(context, CASTmap, childItr, childEnd);
+      }
     }
-    itr = cpy;
-    if(waitMatchingDone){
-        std::println("matched: {}", this->toString());
-    }
-    return waitMatchingDone;
+    cpy++;
+  }
+  itr = cpy;
+  if (waitMatchingDone) {
+    std::println("matched: {}", this->toString());
+  }
+  return waitMatchingDone;
 };
 
 } // namespace PchorAST
