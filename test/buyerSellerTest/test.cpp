@@ -28,7 +28,7 @@ void Seller::InitiateSale(Buyer1* b1, Buyer2* b2) {
     Quote q{100};
     std::println("Seller: Sent quote -> {}", q.quote);
     b1->addQ(q);
-    b2->addQ1(q);
+    b2->addQ(q);
 
     while (!address) {
         // Spin-wait
@@ -70,9 +70,9 @@ void Buyer1::sale1() {
     }
     std::println("Buyer1: Received quote -> {}", q->quote);
 
-    Quote q2(q->quote/2);
-    std::println("Buyer1: Forwarded quote -> {}", q2.quote);
-    b2->addQ2(q2);
+    PartialQuote q2(q, q->quote/2);
+    std::println("Buyer1: Forwarded quote -> {}", q2.partialQuote);
+    b2->addPQ(q2);
     done = true;
 }
 
@@ -85,11 +85,11 @@ void Buyer2::addSeller(Seller& s) {
     this->s = &s;
 }
 
-void Buyer2::addQ1(Quote& q) {
+void Buyer2::addQ(Quote& q) {
     q1 = &q;
 }
 
-void Buyer2::addQ2(Quote& q) {
+void Buyer2::addPQ(PartialQuote& q) {
     q2 = &q;
 }
 
@@ -111,7 +111,7 @@ void Buyer2::sale2() {
     while(!q2){
         //wait for second quote
     }
-    std::println("Buyer2: recieved forwarded quote2 -> {}", q2->quote);
+    std::println("Buyer2: recieved forwarded quote2 -> {}", q2->partialQuote);
 
     Address addr{"Rue Langgads Vej 2..."};
     std::println("Buyer2: Sent address -> {}", addr.address);

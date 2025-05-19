@@ -11,6 +11,11 @@ struct Quote {
     size_t quote;
     Quote(size_t q) : quote(q) {}
 };
+struct PartialQuote {
+    Quote* quote;
+    size_t partialQuote;
+    PartialQuote(Quote* quote, size_t partialQuote): quote(quote), partialQuote(partialQuote) {}
+};
 
 struct Address {
     std::string address;
@@ -65,12 +70,12 @@ public:
     Buyer2(): b1(nullptr), s(nullptr), q1(nullptr), q2(nullptr), d(nullptr), done(false) {}
     void addB1(Buyer1& b1);
     void addSeller(Seller& s);
-    void addQ1(Quote& q);
-    void addQ2(Quote& q);
+    void addQ(Quote& q);
+    void addPQ(PartialQuote& q);
     void addDate(Date& d);
 
     bool isdone() {
-    return done;
+        return done;
     }
 
     void sale2();
@@ -79,7 +84,7 @@ private:
     Buyer1* b1;
     Seller* s;
     Quote* q1;
-    Quote* q2;
+    PartialQuote* q2;
     Date* d;
     bool done;
 };
