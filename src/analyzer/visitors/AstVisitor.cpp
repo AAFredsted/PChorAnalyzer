@@ -43,10 +43,12 @@ void CAST_PchorASTVisitor::visit(const CommunicationExpr &expr) {
 
   this->senderIdentifier = sender->getBaseParticipant()->getName();
   this->recieverIdentifier = reciever->getBaseParticipant()->getName();
+
+  //unused
   // sender
-  expr.getSender()->accept(*this);
+  //expr.getSender()->accept(*this);
   // reciever
-  expr.getReciever()->accept(*this);
+  //expr.getReciever()->accept(*this);
 
   // channel
   expr.getChannel()->accept(*this);
@@ -56,27 +58,8 @@ void CAST_PchorASTVisitor::visit(const ExprList &expr) {
     (*it)->accept(*this); // Read-only access
   }
 }
-void CAST_PchorASTVisitor::visit(const ParticipantExpr &expr) {
-  if (expr.getIndex()->isExprLiteral()) {
-    auto dataTypeUse = AnalyzerUtils::findDataTypeInClass(
-        clangContext,
-        ctx->getMapping<const clang::Decl *>(
-            expr.getBaseParticipant()->getName()),
-        this->currentDataType);
+void CAST_PchorASTVisitor::visit([[maybe_unused]] const ParticipantExpr &expr) {}
 
-    if (dataTypeUse.empty()) {
-      mappingSuccess = false;
-      throw std::runtime_error(std::format(
-          "No matching function declarations found in {} with {}",
-          expr.getBaseParticipant()->getName(), this->currentDataType));
-    }
-    ctx->addMapping(expr.getBaseParticipant()->getName() +
-                        this->currentDataType,
-                    dataTypeUse.back());
-  } else {
-    std::println("Non-literal indexes not defined yet");
-  }
-}
 void CAST_PchorASTVisitor::visit(const ChannelExpr &expr) {
   if (expr.getIndex()->isExprLiteral()) {
     auto sender = ctx->getMapping<const clang::Decl *>(this->senderIdentifier);
