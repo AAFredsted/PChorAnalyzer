@@ -182,13 +182,16 @@ public:
   void addParticipant(const ParticipantKey &participantName) {
     projectionMap.emplace(
         participantName,
-        std::vector<std::unique_ptr<PchorAST::AbstractProjection>>());
+        ProjectionList{});
   }
 
   void addProjection(const ParticipantKey &key,
                      std::unique_ptr<PchorAST::AbstractProjection> proj) {
-    projectionMap[key].emplace_back(std::move(proj));
+    projectionMap[key].appendBack(std::move(proj));
+    
   }
+
+
   bool hasProjection(const ParticipantKey &key) const {
     return projectionMap.contains(key);
   }
@@ -198,7 +201,7 @@ public:
     for (const auto &[elem, value] : projectionMap) {
       std::print("Projection for participant {}: ", elem.toString());
       for (const auto &projection : value) {
-        projection->print();
+        projection.print();
       }
       std::println(" ");
     }
@@ -211,7 +214,7 @@ public:
 
 private:
   std::unordered_map<ParticipantKey,
-                     std::vector<std::unique_ptr<PchorAST::AbstractProjection>>,
+                      ProjectionList,
                      ParticipantKeyHash>
       projectionMap;
 };

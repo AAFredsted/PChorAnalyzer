@@ -22,8 +22,7 @@ void CASTValidator::printValidations() {
 }
 clang::FunctionDecl *CASTValidator::validateFuncDecl(
     std::shared_ptr<CASTMapping> CASTMap,
-    const std::vector<std::unique_ptr<PchorAST::AbstractProjection>>
-        &projections,
+    const ProjectionList &projections,
     const ParticipantKey &participantName) {
   clang::FunctionDecl *funcDecl =
       nullptr; // To store the consistent function declaration
@@ -31,7 +30,7 @@ clang::FunctionDecl *CASTValidator::validateFuncDecl(
   for (const auto &projection : projections) {
     // Retrieve the Decl for the current projection
     const clang::Decl *currentDecl = CASTMap->getMapping<const clang::Decl *>(
-        std::format("{}{}", participantName.name, projection->getTypeName()));
+        std::format("{}{}", participantName.name, projection.getTypeName()));
 
     // Check if the Decl is a FunctionDecl
     const auto *currentFuncDecl =
@@ -89,7 +88,7 @@ bool CASTValidator::validateProjection(
     std::println("validating {} for {}", funcName, participantName.toString());
 
     for (auto &projection : projections) {
-      if (!projection->validateFunctionDecl(Context, CASTmap, itr, end)) {
+      if (!projection.validateFunctionDecl(Context, CASTmap, itr, end)) {
         successFullMapping = false;
       }
     }

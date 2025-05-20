@@ -98,7 +98,6 @@ public:
     void stopRun() {
         run = false;
     }
-
     void receiveData() {
         run = true;
         while (run) {

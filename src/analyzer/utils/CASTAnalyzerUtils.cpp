@@ -97,8 +97,9 @@ AnalyzerUtils::findFunctionDefinition(const clang::Stmt *possibleFunctionCall,
     llvm::errs() << "Invalid input to findFunctionDefinition.\n";
     return nullptr;
   }
-  llvm::outs() << "We dump what we have\n";
-  possibleFunctionCall->dump();
+  //uncomment for debug output
+  //llvm::outs() << "We dump what we have\n";
+  //possibleFunctionCall->dump();
   auto memberCallMatcher = clang::ast_matchers::stmt(
     clang::ast_matchers::anyOf(
       clang::ast_matchers::cxxMemberCallExpr().bind("memberCall"),

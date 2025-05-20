@@ -5,6 +5,8 @@
 #include <print>
 #include <string>
 #include <unordered_set>
+#include <memory>
+#include <iterator>
 
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Stmt.h>
@@ -13,6 +15,7 @@
 namespace PchorAST {
 
 class CASTMapping;
+class ProjectionList;
 
 enum class ProjectionType : uint8_t { Send, Recieve };
 
@@ -38,6 +41,9 @@ public:
 
 protected:
   ProjectionType type;
+  std::unique_ptr<AbstractProjection> next;
+
+  friend class ProjectionList;
 };
 
 class AbstractComProjection : public AbstractProjection {
@@ -116,5 +122,116 @@ public:
 private:
 };
 
+
+class ProjectionList {
+public:
+  ProjectionList(): head(nullptr), tail(nullptr) {}
+  ~ProjectionList() = default;
+  
+  ProjectionList(const ProjectionList& other) = delete;
+  ProjectionList& operator=(const ProjectionList& other) = delete;
+  
+  ProjectionList(ProjectionList&& other) noexcept
+      : head(std::move(other.head)), tail(other.tail) {
+      other.tail = nullptr;
+  }
+
+  ProjectionList& operator=(ProjectionList&& other) noexcept {
+      if (this != &other) {
+          head = std::move(other.head);
+          tail = other.tail;
+          other.tail = nullptr;
+      }
+      return *this;
+  }
+
+  class Iterator {
+  public:
+    using difference_type = std::ptrdiff_t;
+    using value_type = AbstractProjection;
+
+    Iterator() : current(nullptr) {}
+    Iterator(AbstractProjection* ptr) : current(ptr) {}
+
+    //implement copy constructiona/assignment
+
+    Iterator(const Iterator& other) : current(other.current) {}
+
+    Iterator& operator=(const Iterator& other) {
+      if(this != &other){
+        current = other.current;
+      }
+      return *this;
+    }
+    Iterator(Iterator&& other) noexcept {
+      current = std::move(other.current);
+      other.current = nullptr;
+    }
+
+    Iterator& operator=(Iterator&& other) noexcept {
+      if(this != &other){
+        current = std::move(other.current);
+        other.current = nullptr;
+      }
+      return *this;
+    }
+
+    Iterator& operator++() {
+      if(current) {
+        current = current->next.get();
+      }
+      return *this;
+    }
+    Iterator operator++(int)
+    {
+        auto tmp = *this;
+        ++*this;
+        return tmp;
+    }
+    AbstractProjection& operator*() const {
+      return *current;
+    }
+    AbstractProjection* operator->() const {
+      return current;
+    }
+
+    bool operator!=(const Iterator& other) const {
+      return current != other.current;
+    }
+    bool operator==(const Iterator& other) const {
+      return current == other.current;
+    }
+  
+  private:
+    AbstractProjection* current;
+  };
+  
+
+  void appendBack(std::unique_ptr<AbstractProjection> proj){
+      if(!head) {
+        head = std::move(proj);
+        tail = head.get();
+      }
+      else {
+        tail->next = std::move(proj);
+        tail = tail->next.get();
+      }
+  }
+
+  bool empty() const { return head == nullptr; }
+
+  Iterator begin() { return Iterator(head.get()); }
+  Iterator end() { return Iterator(nullptr); }
+  Iterator begin() const { return Iterator(head.get()); }
+  Iterator end() const { return Iterator(nullptr); }
+  AbstractProjection* front() {return head.get(); }
+  AbstractProjection* back() { return tail; }
+
+private:
+  std::unique_ptr<AbstractProjection> head;
+  AbstractProjection* tail;
+};
+
+static_assert(std::forward_iterator<ProjectionList::Iterator>);
 // expand with further constructs down the line
 } // namespace PchorAST
