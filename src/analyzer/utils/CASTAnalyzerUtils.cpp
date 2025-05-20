@@ -74,8 +74,7 @@ void AnalyzerUtils::printDeclChildren(const clang::Decl *decl) {
 }
 
 const clang::FunctionDecl *
-AnalyzerUtils::getFullDecl(clang::ASTContext &context,
-                           const clang::FunctionDecl *funcDecl) {
+AnalyzerUtils::getFullDecl(const clang::FunctionDecl *funcDecl) {
   const clang::FunctionDecl *fullDecl = nullptr;
   if (funcDecl->isThisDeclarationADefinition()) {
     fullDecl = funcDecl;
@@ -116,7 +115,7 @@ AnalyzerUtils::findFunctionDefinition(const clang::Stmt *possibleFunctionCall,
 
   if (method) {
     if (const auto *def = method->getDefinition()) {
-      return AnalyzerUtils::getFullDecl(context, def);
+      return AnalyzerUtils::getFullDecl(def);
     }
     return nullptr;
   }
@@ -202,7 +201,7 @@ AnalyzerUtils::findDataTypeInClass(clang::ASTContext &context,
   }
 
   for (const auto *method : record->methods()) {
-    const clang::FunctionDecl *fullDecl = getFullDecl(context, method);
+    const clang::FunctionDecl *fullDecl = getFullDecl(method);
     finder.match(*fullDecl, context);
   }
   // Collect results

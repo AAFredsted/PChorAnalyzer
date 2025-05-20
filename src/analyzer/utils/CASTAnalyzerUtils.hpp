@@ -114,7 +114,7 @@ public:
                                      const std::string &name);
 
   static const clang::FunctionDecl *
-  getFullDecl(clang::ASTContext &context, const clang::FunctionDecl *funcDecl);
+  getFullDecl(const clang::FunctionDecl *funcDecl);
 
   static std::vector<const clang::FunctionDecl *>
   findDataTypeInClass(clang::ASTContext &context, const clang::Decl *decl,

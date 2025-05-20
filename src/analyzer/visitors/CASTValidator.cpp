@@ -56,57 +56,70 @@ clang::FunctionDecl *CASTValidator::validateFuncDecl(
 bool CASTValidator::validateProjection(
     clang::ASTContext &Context, std::shared_ptr<CASTMapping> &CASTmap,
     std::shared_ptr<PchorProjection> &projectionMap) {
+
   for (const auto &[participantName, projections] : *projectionMap) {
 
-    clang::FunctionDecl *funcDecl =
-        validateFuncDecl(CASTmap, projections, participantName);
-    std::string funcName = funcDecl->getNameAsString();
+    const auto* record = CASTmap->getMapping<const clang::Decl*>(participantName.name);
+    const auto* castRecord = llvm::dyn_cast<clang::CXXRecordDecl>(record);
 
-    if (!funcDecl->hasBody()) {
-      throw std::runtime_error(
-          std::format("Function {} has no body\n", funcName));
+    if(!castRecord) {
+        throw std::runtime_error(
+          std::format("Participant {} did not map to a record in the CASTmapping. Instead, mapped to:  {}\n",  participantName.name, record->getDeclKindName()));
     }
 
-    if (!failedValidations.contains(funcName) &&
-        !successfullValidations.contains(funcName)) {
-      failedValidations[funcName] = std::vector<std::string>{};
-      successfullValidations[funcName] = std::vector<std::string>{};
-    }
+    auto methods = std::vector<clang::CXXMethodDecl*>{};
 
-    const clang::Stmt *body = funcDecl->getBody();
-
-    std::println("{}", body->getStmtClassName());
-
-    auto elm = body->children();
-    auto itr = elm.begin();
-    auto end = elm.end();
-
-    std::println("validating {} for {}", funcName, participantName.toString());
-
-    auto projectionNode = projections.begin();
-    AbstractProjection* nestedFunctionNext = nullptr;
-    
-    bool successFullMapping = projectionNode->validateFunctionDecl(Context, CASTmap, itr, end, nestedFunctionNext);
-
-    /*
-    for (auto &projection : projections) {
-      if (!projection.validateFunctionDecl(Context, CASTmap, itr, end)) {
-        successFullMapping = false;
-        break;
+    for(auto* method: castRecord->methods() ){
+      if(!method->isUserProvided() || llvm::isa<clang::CXXConstructorDecl>(method) || llvm::isa<clang::CXXDestructorDecl>(method) || method->isOverloadedOperator()){
+        continue;
       }
-    }
-    */
-
-    if (successFullMapping) {
-      successfullValidations[funcName].push_back(participantName.toString());
-    } else {
-      failedValidations[funcName].push_back(participantName.toString());
+      methods.push_back(method);
     }
 
-    if (itr != end) {
-      llvm::errs() << std::format("Warning: Not all statements in {} consumed "
-                                  "by projections. Stopped at: {}",
-                                  funcName, itr->getStmtClassName());
+    //reverse ordering to minimize runtime
+    for(auto ritr = methods.rbegin(); ritr != methods.rend(); ++ritr){
+      const auto* fullDecl = AnalyzerUtils::getFullDecl(*ritr);
+      std::string funcName{(*ritr)->getNameAsString()};
+
+      if(!fullDecl || !fullDecl->hasBody()){
+        throw std::runtime_error(
+            std::format("Function {} has no body\n", funcName));
+      }
+      if (!failedValidations.contains(funcName) &&
+          !successfullValidations.contains(funcName)) {
+        failedValidations[funcName] = std::vector<std::string>{};
+        successfullValidations[funcName] = std::vector<std::string>{};
+      }
+
+      const clang::Stmt *body = fullDecl->getBody();
+
+      std::println("{}", body->getStmtClassName());
+
+      auto elm = body->children();
+      auto itr = elm.begin();
+      auto end = elm.end();
+
+      std::println("validating {} for {}", funcName, participantName.toString());
+
+      auto projectionNode = projections.begin();
+      AbstractProjection* nestedFunctionNext = nullptr;
+      
+      bool successFullMapping = projectionNode->validateFunctionDecl(Context, CASTmap, itr, end, nestedFunctionNext);
+
+      if (itr != end) {
+        llvm::errs() << std::format("Warning: Not all statements in {} consumed "
+                                    "by projections. Stopped at: {}\n",
+                                    funcName, itr->getStmtClassName());
+      }
+
+      if (successFullMapping) {
+        //to begin with, we only need one sucessfull mapping for each
+        successfullValidations[funcName].push_back(participantName.toString());
+        break;
+      } else {
+        failedValidations[funcName].push_back(participantName.toString());
+      }
+
     }
   }
 
