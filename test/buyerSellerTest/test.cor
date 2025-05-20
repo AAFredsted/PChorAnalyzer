@@ -17,6 +17,7 @@ Channel b{1} //channel for buyers
 Channel a{1} //recieving address
 Channel d{1} //recieving Date
 
+//good example of how the constraints from the c++ mapping change the language constraints (i.e the need for each channel to be type-specific)
 
 //we need to make this adheer to the constraints of the c++ mapping
 

@@ -275,16 +275,36 @@ bool AnalyzerUtils::validateSendExpression(const clang::Stmt *opCallExpr,
   auto rhsTypeMatcher = clang::ast_matchers::anyOf(
       clang::ast_matchers::cxxConstructExpr(
           clang::ast_matchers::hasType(clang::ast_matchers::recordDecl(
-              clang::ast_matchers::hasName(typeName))))
+              clang::ast_matchers::hasName(typeName)
+              )
+            ))
           .bind("sendRHS"),
       clang::ast_matchers::cxxTemporaryObjectExpr(
           clang::ast_matchers::hasType(clang::ast_matchers::recordDecl(
-              clang::ast_matchers::hasName(typeName))))
+              clang::ast_matchers::hasName(typeName)
+              )
+            ))
           .bind("sendRHS"),
       clang::ast_matchers::expr(
           clang::ast_matchers::hasType(clang::ast_matchers::recordDecl(
-              clang::ast_matchers::hasName(typeName))))
-          .bind("sendRHS"));
+              clang::ast_matchers::hasName(typeName)
+              )
+            ))
+          .bind("sendRHS"),
+      //match l-value reference for pointer based assignments
+      clang::ast_matchers::unaryOperator(
+        clang::ast_matchers::hasOperatorName("&"),
+        clang::ast_matchers::hasUnaryOperand(
+          clang::ast_matchers::declRefExpr(
+            clang::ast_matchers::hasType(
+              clang::ast_matchers::recordDecl(
+                clang::ast_matchers::hasName(typeName)
+              )
+            )
+          )
+        )
+      )
+    );
 
   auto directMemberExpr =
       clang::ast_matchers::memberExpr(
@@ -296,6 +316,7 @@ bool AnalyzerUtils::validateSendExpression(const clang::Stmt *opCallExpr,
 
   auto lhsTypeMatcher =
       clang::ast_matchers::anyOf(directMemberExpr, nestedMemberExpr);
+
   auto operatorCallExprMatcher =
       clang::ast_matchers::cxxOperatorCallExpr(
           clang::ast_matchers::hasOverloadedOperatorName("="),
@@ -307,9 +328,15 @@ bool AnalyzerUtils::validateSendExpression(const clang::Stmt *opCallExpr,
 
   auto binaryOperatorCallMatcher = 
     clang::ast_matchers::binaryOperator(
-      clang::ast_matchers::hasOperatorName("=")//,
-      //clang::ast_matchers::hasLHS(lhsTypeMatcher),
-      //clang::ast_matchers::hasRHS(rhsTypeMatcher)
+      clang::ast_matchers::hasOperatorName("="),
+      clang::ast_matchers::hasLHS(lhsTypeMatcher),
+      clang::ast_matchers::hasRHS(
+        clang::ast_matchers::ignoringImplicit(
+          clang::ast_matchers::ignoringParenImpCasts(
+            rhsTypeMatcher
+          )
+        )
+      )
     );
 
   auto expressionMatcher = clang::ast_matchers::expr(
