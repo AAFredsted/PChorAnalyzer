@@ -56,8 +56,11 @@ void Buyer1::addQ(Quote& q) {
 
 void Buyer1::sale1() {
     std::println("Buyer1: thread started");
-    while (!b2 || !s) {
+    while (!s) {
         // Spin-wait
+    }
+    while(!b2) {
+        //spinwait
     }
     std::println("Buyer1: recieved reference to Buyer2 and Seller");
 
@@ -100,8 +103,12 @@ void Buyer2::addDate(Date& d) {
 void Buyer2::sale2() {
 
     std::println("Buyer2: thread started");
-    while (!b1 || !s) {
-        // Spin-wait
+    while (!s) {
+        //spin-wait
+    }
+
+    while(!b1) {
+        //spinwait
     }
     std::println("Buyer2: recieved reference to Buyer1 and Seller");
     while (!q1) {

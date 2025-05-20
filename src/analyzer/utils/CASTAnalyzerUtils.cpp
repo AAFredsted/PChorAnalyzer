@@ -97,13 +97,17 @@ AnalyzerUtils::findFunctionDefinition(const clang::Stmt *possibleFunctionCall,
     llvm::errs() << "Invalid input to findFunctionDefinition.\n";
     return nullptr;
   }
+  llvm::outs() << "We dump what we have\n";
+  possibleFunctionCall->dump();
+  auto memberCallMatcher = clang::ast_matchers::stmt(
+    clang::ast_matchers::anyOf(
+      clang::ast_matchers::cxxMemberCallExpr().bind("memberCall"),
+      clang::ast_matchers::hasDescendant(
+          clang::ast_matchers::cxxMemberCallExpr().bind("memberCall")))
+    );
 
   const clang::CXXMethodDecl *method = nullptr;
   clang::ast_matchers::MatchFinder finder;
-  auto memberCallMatcher = clang::ast_matchers::anyOf(
-      clang::ast_matchers::cxxMemberCallExpr().bind("memberCall"),
-      clang::ast_matchers::hasDescendant(
-          clang::ast_matchers::cxxMemberCallExpr().bind("memberCall")));
   CrossTypeMatchCallback<clang::CXXMemberCallExpr, clang::CXXMethodDecl>
       callback("memberCall", method);
   finder.addMatcher(clang::ast_matchers::stmt(memberCallMatcher), &callback);
@@ -299,17 +303,29 @@ bool AnalyzerUtils::validateSendExpression(const clang::Stmt *opCallExpr,
           clang::ast_matchers::hasArgument(
               1,
               clang::ast_matchers::ignoringImplicit(
-                  clang::ast_matchers::ignoringParenImpCasts(rhsTypeMatcher))))
-          .bind("sendAssignment");
-  auto expressionMatcher = clang::ast_matchers::expr(clang::ast_matchers::anyOf(
+                  clang::ast_matchers::ignoringParenImpCasts(rhsTypeMatcher))));
+
+  auto binaryOperatorCallMatcher = 
+    clang::ast_matchers::binaryOperator(
+      clang::ast_matchers::hasOperatorName("=")//,
+      //clang::ast_matchers::hasLHS(lhsTypeMatcher),
+      //clang::ast_matchers::hasRHS(rhsTypeMatcher)
+    );
+
+  auto expressionMatcher = clang::ast_matchers::expr(
+  clang::ast_matchers::anyOf(
+      operatorCallExprMatcher,
+      binaryOperatorCallMatcher,
       clang::ast_matchers::hasDescendant(operatorCallExprMatcher),
-      operatorCallExprMatcher));
+      clang::ast_matchers::hasDescendant(binaryOperatorCallMatcher)
+      )
+    ).bind("sendAssignment");
 
   // Use MatchFinder to debug the matcher
-  const clang::CXXOperatorCallExpr *matched = nullptr;
+  const clang::Expr *matched = nullptr;
   clang::ast_matchers::MatchFinder finder;
   finder.addMatcher(expressionMatcher,
-                    new DebugStoreMatchCallback<clang::CXXOperatorCallExpr>(
+                    new DebugStoreMatchCallback<clang::Expr>(
                         "sendAssignment", matched));
 
   // Run the matcher on the AST node
