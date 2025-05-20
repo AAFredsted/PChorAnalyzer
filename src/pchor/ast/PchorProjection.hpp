@@ -37,7 +37,8 @@ public:
   validateFunctionDecl(clang::ASTContext &context,
                        std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                        clang::Stmt::const_child_iterator &itr,
-                       clang::Stmt::const_child_iterator &end) = 0;
+                       clang::Stmt::const_child_iterator &end,
+                       AbstractProjection*& parentScopeProjectionPtr) = 0;
 
 protected:
   ProjectionType type;
@@ -64,7 +65,8 @@ public:
   validateFunctionDecl(clang::ASTContext &context,
                        std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                        clang::Stmt::const_child_iterator &itr,
-                       clang::Stmt::const_child_iterator &end) override = 0;
+                       clang::Stmt::const_child_iterator &end,
+                       AbstractProjection*& parentScopeProjectionPtr) override = 0;
 
 protected:
   std::string channelName;
@@ -91,7 +93,8 @@ public:
   bool validateFunctionDecl(clang::ASTContext &context,
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                             clang::Stmt::const_child_iterator &itr,
-                            clang::Stmt::const_child_iterator &end) override;
+                            clang::Stmt::const_child_iterator &end,
+                            AbstractProjection*& parentScopeProjectionPtr) override;
 
 private:
 };
@@ -117,7 +120,8 @@ public:
   bool validateFunctionDecl(clang::ASTContext &context,
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                             clang::Stmt::const_child_iterator &itr,
-                            clang::Stmt::const_child_iterator &end) override;
+                            clang::Stmt::const_child_iterator &end,
+                            AbstractProjection*& parentScopeProjectionPtr) override;
 
 private:
 };

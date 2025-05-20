@@ -25,14 +25,13 @@ clang::FunctionDecl *CASTValidator::validateFuncDecl(
     const ProjectionList &projections,
     const ParticipantKey &participantName) {
   clang::FunctionDecl *funcDecl =
-      nullptr; // To store the consistent function declaration
+      nullptr;
 
   for (const auto &projection : projections) {
-    // Retrieve the Decl for the current projection
+
     const clang::Decl *currentDecl = CASTMap->getMapping<const clang::Decl *>(
         std::format("{}{}", participantName.name, projection.getTypeName()));
 
-    // Check if the Decl is a FunctionDecl
     const auto *currentFuncDecl =
         llvm::dyn_cast<clang::FunctionDecl>(currentDecl);
     if (!currentFuncDecl) {
@@ -40,10 +39,9 @@ clang::FunctionDecl *CASTValidator::validateFuncDecl(
           "Mapping for participant '{}' does not point to a valid FunctionDecl",
           participantName.toString()));
     }
-    // Validate consistency of the FunctionDecl within this projection array
     if (funcDecl == nullptr) {
       funcDecl = const_cast<clang::FunctionDecl *>(
-          currentFuncDecl); // Set the first FunctionDecl
+          currentFuncDecl);
     } else if (funcDecl != currentFuncDecl) {
       throw std::runtime_error(std::format(
           "Projections for participant '{}' must map to the same function. "
@@ -52,7 +50,6 @@ clang::FunctionDecl *CASTValidator::validateFuncDecl(
           currentFuncDecl->getNameAsString()));
     }
   }
-  // Return the consistent FunctionDecl or nullptr if no projections exist
   return funcDecl;
 }
 
@@ -84,14 +81,21 @@ bool CASTValidator::validateProjection(
     auto itr = elm.begin();
     auto end = elm.end();
 
-    bool successFullMapping = true;
     std::println("validating {} for {}", funcName, participantName.toString());
 
+    auto projectionNode = projections.begin();
+    AbstractProjection* nestedFunctionNext = nullptr;
+    
+    bool successFullMapping = projectionNode->validateFunctionDecl(Context, CASTmap, itr, end, nestedFunctionNext);
+
+    /*
     for (auto &projection : projections) {
       if (!projection.validateFunctionDecl(Context, CASTmap, itr, end)) {
         successFullMapping = false;
+        break;
       }
     }
+    */
 
     if (successFullMapping) {
       successfullValidations[funcName].push_back(participantName.toString());
