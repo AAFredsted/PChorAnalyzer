@@ -45,8 +45,15 @@ void RecExpr::accept(AbstractPchorASTVisitor &visitor) const {
   visitor.visit(*this);
 }
 
+void IterExpr::accept(AbstractPchorASTVisitor &visitor) const {
+  visitor.visit(*this);
+}
+void ForEachExpr::accept(AbstractPchorASTVisitor &visitor) const {
+  visitor.visit(*this);
+}
 void GlobalTypeASTNode::accept(AbstractPchorASTVisitor &visitor) const {
   visitor.visit(*this);
 }
+
 
 } // namespace PchorAST

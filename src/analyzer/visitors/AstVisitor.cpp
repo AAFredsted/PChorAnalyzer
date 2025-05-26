@@ -101,6 +101,17 @@ void CAST_PchorASTVisitor::visit([[maybe_unused]] const ConExpr &expr) {
   std::println("Not Implemented yet");
 }
 
+void CAST_PchorASTVisitor::visit([[maybe_unused]] const IterExpr &expr) {
+  std::println("Not Implemented yet");
+}
+
+void CAST_PchorASTVisitor::visit([[maybe_unused]] const ForEachExpr &expr) {
+  std::println("Not Implemented yet");
+}
+
+
+
+
 // visitor functions for ProjectionVisitor
 //  Visiting Declarations
 void Proj_PchorASTVisitor::visit(
@@ -156,7 +167,7 @@ void Proj_PchorASTVisitor::visit(const ExprList &expr) {
 }
 void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
   ParticipantKey key{expr.getBaseParticipant()->getName(),
-                     expr.getIndex()->getLiteral()};
+                     expr.getIndex()->getLiteral(this->indexIdentifierMap)};
 
   if (expr.getIndex()->isExprLiteral()) {
     if (!this->ctx->hasProjection(key)) {
@@ -184,7 +195,7 @@ void Proj_PchorASTVisitor::visit(const ChannelExpr &expr) {
 
 void Proj_PchorASTVisitor::visit(const IndexExpr &expr) {
   if (expr.isExprLiteral()) {
-    this->channelIndex = expr.getLiteral();
+    this->channelIndex = expr.getLiteral(this->indexIdentifierMap);
   } else {
     this->mappingSuccess = false;
     throw std::runtime_error(std::format(
@@ -202,4 +213,14 @@ void Proj_PchorASTVisitor::visit([[maybe_unused]] const ConExpr &expr) {
   throw std::runtime_error("Continuation Expressions not implemented");
 }
 
+void Proj_PchorASTVisitor::visit([[maybe_unused]] const IterExpr &expr) {
+  mappingSuccess = false;
+  throw std::runtime_error("Continuation Expressions not implemented");
+}
+void Proj_PchorASTVisitor::visit([[maybe_unused]] const ForEachExpr &expr) {
+  mappingSuccess = false;
+  throw std::runtime_error("Continuation Expressions not implemented");
+
+  //set index context for this iteration, then run it
+}
 } // namespace PchorAST

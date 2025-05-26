@@ -15,6 +15,7 @@ public:
 
     void addMessage(Message& msg) {
         this->msg = &msg;
+        
     }
 
     void sendThenReceive(Sender* next, Message& msg) {

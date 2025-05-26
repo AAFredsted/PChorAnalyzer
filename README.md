@@ -74,6 +74,7 @@ The Choreography DSL was inspired by the following papers:
 <value> ::= <number> | <identifier>
 
 <comment> ::= "#" <text>
+
 ```
 
 ## Usage of Plugin

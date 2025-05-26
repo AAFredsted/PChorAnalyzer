@@ -124,9 +124,25 @@ private:
   parseRecursiveExpr(std::vector<Token>::iterator &itr,
                      const std::vector<Token>::iterator &end);
 
+  std::shared_ptr<ForEachExpr>
+  parseForEachExpr(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end);
+
+  std::shared_ptr<IterExpr>
+  parseIterExpr(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end);
+
   std::vector<Token>::iterator
   findEndofScope(std::vector<Token>::iterator &itr,
                  const std::vector<Token>::iterator &end);
+
+  std::vector<Token>::iterator
+  findEndofIterScope(std::vector<Token>::iterator &itr,
+                 const std::vector<Token>::iterator &end);
+
+  size_t parseMaxExpr(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end, std::shared_ptr<IndexASTNode>& nodePtr);
+  size_t parseMinExpr(std::vector<Token>::iterator& itr, const std::vector<Token>::iterator &end, std::shared_ptr<IndexASTNode>& nodePtr);
+
+  std::unique_ptr<BaseArithmeticExpr> parseArithmeticExpr(std::shared_ptr<IndexASTNode> indexType, std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end, bool& isLiteral);
+  std::unique_ptr<BaseArithmeticExpr> parsePrimaryArithmeticExpr(std::shared_ptr<IndexASTNode> indexType, std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end, bool& isLiteral);
 };
 
 } // namespace PchorAST

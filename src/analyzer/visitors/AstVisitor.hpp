@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <print>
+#include <unordered_map>
 
 #include "../../pchor/ast/PchorAST.hpp"
 #include "../../pchor/ast/PchorProjection.hpp"
@@ -32,6 +33,8 @@ public:
   virtual void visit(const IndexExpr &expr) = 0;
   virtual void visit(const RecExpr &expr) = 0;
   virtual void visit(const ConExpr &expr) = 0;
+  virtual void visit(const IterExpr &expr) = 0;
+  virtual void visit(const ForEachExpr &expr) = 0;
 
 protected:
   clang::ASTContext &clangContext;
@@ -62,6 +65,8 @@ public:
   void visit(const IndexExpr &expr) override;
   void visit(const RecExpr &expr) override;
   void visit(const ConExpr &expr) override;
+  void visit(const IterExpr &expr) override;
+  void visit(const ForEachExpr &expr) override;
 
   std::shared_ptr<PchorAST::CASTMapping> getContext() { return ctx; }
 
@@ -79,6 +84,7 @@ class Proj_PchorASTVisitor : public AbstractPchorASTVisitor {
 public:
   Proj_PchorASTVisitor(clang::ASTContext &clangContext)
       : AbstractPchorASTVisitor(clangContext),
+        indexIdentifierMap(),
         ctx(std::make_shared<PchorProjection>()), currentDataType(""),
         currentChannelName(""), channelIndex(), isSender(true),
         mappingSuccess(true) {}
@@ -100,12 +106,15 @@ public:
   void visit(const IndexExpr &expr) override;
   void visit(const RecExpr &expr) override;
   void visit(const ConExpr &expr) override;
+  void visit(const IterExpr &expr) override;
+  void visit(const ForEachExpr &expr) override;
 
   std::shared_ptr<PchorProjection> getContext() { return ctx; }
 
   void printProjections() const { ctx->printProjections(); }
 
 private:
+  std::unordered_map<std::string, size_t> indexIdentifierMap;
   std::shared_ptr<PchorProjection> ctx;
   std::string currentDataType;
   std::string currentChannelName;
