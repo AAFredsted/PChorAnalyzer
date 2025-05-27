@@ -538,6 +538,19 @@ public:
     virtual std::string toString() const override {
       return std::format("Iteration Index with identifier {}, min {} and max {}\n", identifier, min, max);
     }
+
+    std::shared_ptr<IndexASTNode> getBaseIndex() const {
+      return baseIndex;
+    }
+    size_t getMin() const {
+      return min;
+    }
+    size_t getMax() const {
+      return max;
+    }
+    const std::string& getIdentifierRef() const {
+      return identifier;
+    }
 private:
   std::shared_ptr<IndexASTNode> baseIndex;
   size_t min;

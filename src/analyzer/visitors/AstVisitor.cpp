@@ -171,23 +171,19 @@ void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
   ParticipantKey key{expr.getBaseParticipant()->getName(),
                      expr.getIndex()->getLiteral(this->indexIdentifierMap)};
 
-  if (expr.getIndex()->isExprLiteral()) {
-    if (!this->ctx->hasProjection(key)) {
-      this->ctx->addParticipant(key);
-    }
-    if (this->isSender) {
-      this->ctx->addProjection(key,
-                               std::make_unique<Psend>(this->currentChannelName,
-                                                       this->currentDataType,
-                                                       this->channelIndex));
-    } else {
-      this->ctx->addProjection(
-          key, std::make_unique<Precieve>(this->currentChannelName,
-                                          this->currentDataType,
-                                          this->channelIndex));
-    }
+  if (!this->ctx->hasProjection(key)) {
+    this->ctx->addParticipant(key);
+  }
+  if (this->isSender) {
+    this->ctx->addProjection(key,
+                              std::make_unique<Psend>(this->currentChannelName,
+                                                      this->currentDataType,
+                                                      this->channelIndex));
   } else {
-    std::println("Undefined Index Implementation here");
+    this->ctx->addProjection(
+        key, std::make_unique<Precieve>(this->currentChannelName,
+                                        this->currentDataType,
+                                        this->channelIndex));
   }
 }
 void Proj_PchorASTVisitor::visit(const ChannelExpr &expr) {
@@ -196,15 +192,7 @@ void Proj_PchorASTVisitor::visit(const ChannelExpr &expr) {
 }
 
 void Proj_PchorASTVisitor::visit(const IndexExpr &expr) {
-  if (expr.isExprLiteral()) {
-    this->channelIndex = expr.getLiteral(this->indexIdentifierMap);
-  } else {
-    this->mappingSuccess = false;
-    throw std::runtime_error(std::format(
-        "Index cannot be undefined at projection step. Referential Index {} is "
-        "only valid within Foreach or Recursive expressions",
-        expr.getName()));
-  }
+  this->channelIndex = expr.getLiteral(this->indexIdentifierMap);
 }
 void Proj_PchorASTVisitor::visit([[maybe_unused]] const RecExpr &expr) {
   mappingSuccess = false;
@@ -219,10 +207,42 @@ void Proj_PchorASTVisitor::visit([[maybe_unused]] const IterExpr &expr) {
   mappingSuccess = false;
   throw std::runtime_error("Continuation Expressions not implemented");
 }
-void Proj_PchorASTVisitor::visit([[maybe_unused]] const ForEachExpr &expr) {
-  mappingSuccess = false;
-  throw std::runtime_error("Continuation Expressions not implemented");
+void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
 
+  /*
+    We provide code for two approaches:
+    1. iterate over indeces from min to max defined in IterExpr and set that index in visitor, then call visit on child
+    2. if end index is abstract, break expression down into equivalence classes if feasable (requires inductive proof for this property!)
+  */
+
+  const auto iterExpr = expr.getIter();
+
+  const auto baseIndex = iterExpr->getBaseIndex();
+
+
+  if(baseIndex->getUpper() == std::numeric_limits<size_t>::max()) {
+    std::println("The case for indeces with no upper bound has not been implemented");
+    mappingSuccess = false;
+  }
+  else {
+    const std::string identifier = iterExpr->getIdentifierRef();
+    size_t el = iterExpr->getMin();
+    size_t max = iterExpr->getMax();
+    //due to previous check, we know that max is not max, so we can check for one above !
+    //to stay on the safe side however, we project in the following way
+    while(true) {
+
+      this->indexIdentifierMap.insert_or_assign(identifier, el);
+      expr.getBody()->accept(*this);
+      
+      if(el == max){
+        break;
+      }
+      el++;
+    }
+    this->indexIdentifierMap.erase(identifier);
+
+  }
   //set index context for this iteration, then run it
 }
 } // namespace PchorAST
