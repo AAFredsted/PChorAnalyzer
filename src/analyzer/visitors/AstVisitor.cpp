@@ -105,11 +105,13 @@ void CAST_PchorASTVisitor::visit([[maybe_unused]] const IterExpr &expr) {
   std::println("Not Implemented yet");
 }
 
-void CAST_PchorASTVisitor::visit([[maybe_unused]] const ForEachExpr &expr) {
-  std::println("Not Implemented yet");
+void CAST_PchorASTVisitor::visit(const ForEachExpr &expr) {
+  /*
+    CAST_Mapping is independant of indeces, so we just skip it and go for the expression list contained within
+  */
+  expr.getBody()->accept(*this);
+
 }
-
-
 
 
 // visitor functions for ProjectionVisitor

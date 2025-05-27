@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <iterator>
 
 using namespace clang;
 
@@ -32,7 +33,9 @@ public:
         llvm::outs()
             << "Symbol table correctly passed to ChoreographyAstConsumer\n";
         for (auto itr = sTable->begin(); itr != sTable->end(); ++itr) {
-          (*itr)->accept(CAST_visitor);
+          if((*itr)->getDeclType() != PchorAST::Decl::Global_Type_Decl || (std::distance(itr, sTable->end()) == 1 && (*itr)->getDeclType() == PchorAST::Decl::Global_Type_Decl ) ){
+            (*itr)->accept(CAST_visitor);
+          }
         }
         llvm::outs() << "CAST mapping created\n";
         auto globalTypePtr = sTable->back();

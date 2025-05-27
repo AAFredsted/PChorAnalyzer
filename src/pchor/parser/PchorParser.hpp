@@ -26,8 +26,11 @@ public:
   }
   class STIterator {
   public:
-    using difference_type = std::ptrdiff_t;
-    using value_type = DeclPchorASTNode;
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type   = std::ptrdiff_t;
+    using value_type        = DeclPchorASTNode;
+    using pointer           = std::shared_ptr<DeclPchorASTNode>;
+    using reference         = std::shared_ptr<DeclPchorASTNode>&;
 
     STIterator(const SymbolTable &sTable,
                std::vector<std::string>::const_iterator keyIt)

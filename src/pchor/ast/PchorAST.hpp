@@ -536,7 +536,7 @@ public:
     }
 
     virtual std::string toString() const override {
-      return std::format("Iteration Index with identifier {}, min {} and max {}", identifier, min, max);
+      return std::format("Iteration Index with identifier {}, min {} and max {}\n", identifier, min, max);
     }
 private:
   std::shared_ptr<IndexASTNode> baseIndex;
@@ -559,6 +559,13 @@ public:
 
   virtual std::string toString() const override  {
     return std::format("forEach expression\n{}{}", idxExpr->toString(), body->toString());
+  }
+
+  std::shared_ptr<IterExpr> getIter() const {
+    return idxExpr;
+  }
+  std::shared_ptr<ExprList> getBody() const {
+    return body;
   }
 protected:
 //we need some min and max for the value as well as the identifier to replace with in the subexpressions
