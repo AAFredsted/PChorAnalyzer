@@ -1,0 +1,8 @@
+Index I{1..10}
+Participant Process{I}
+Channel p{I}
+
+Ring =
+    foreach(i < max(I)){
+        Process[i] -> Process[i+10]: p[i+1]<Ping>. end
+    } . Process[max(I)] -> Process[min(I)]: p[min(I)]<Ping>. end

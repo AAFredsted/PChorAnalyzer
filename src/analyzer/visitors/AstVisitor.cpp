@@ -168,6 +168,14 @@ void Proj_PchorASTVisitor::visit(const ExprList &expr) {
   }
 }
 void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
+  auto indexExpr = expr.getIndex();
+  auto baseIndex = expr.getBaseParticipant()->getIndex();
+  size_t literal = indexExpr->getLiteral(this->indexIdentifierMap);
+
+
+  if(literal < baseIndex->getLower() || literal > baseIndex->getUpper()){
+    throw std::runtime_error(std::format("Index expression {} evaluated to {}, which is not within the range of [{}, {}].", indexExpr->toString(), literal, baseIndex->getLower(), baseIndex->getUpper()));
+  }
   ParticipantKey key{expr.getBaseParticipant()->getName(),
                      expr.getIndex()->getLiteral(this->indexIdentifierMap)};
 
@@ -234,7 +242,7 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
 
       this->indexIdentifierMap.insert_or_assign(identifier, el);
       expr.getBody()->accept(*this);
-      
+
       if(el == max){
         break;
       }
