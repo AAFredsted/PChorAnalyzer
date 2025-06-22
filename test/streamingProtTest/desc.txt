@@ -1,0 +1,9 @@
+Protocol
+-------
+stream.cor describes a single exchange of a streaming protocol where a DataProducer and KeyProducer provide data and key for a Kernel to 
+use for interactions with a Consumer
+
+Cases
+------
+
+queue: tests that Pchor can validate choreographies with container-datastructures. (currently not implemented)
