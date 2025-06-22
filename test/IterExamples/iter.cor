@@ -1,0 +1,17 @@
+Index I{1..5}
+
+Participant P{I}
+Channel c{I}
+
+iterexample = foreach(i < max(I)) {
+    P[i] -> P[i+1]: c[i+1]<something>.
+    P[max(I) - i] -> P[max(I) - i + 1]: c[max(I) -i + 1]<something>.
+    P[i] -> P[i+1]: c[i]<something>.
+    P[max(I) - i] -> P[max(I) - i + 1]: c[max(I) -i]<something>.
+    P[i] -> P[max(I) - i + 1]: c[max(I) -i + 1]<something>. 
+    end
+
+} . end
+
+//The reason that it works, is that since we have 4 unique starting points, we can only have 4 unique behaviours !
+//Appending to each iteration will append to an index already found or add 

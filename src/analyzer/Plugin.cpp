@@ -19,39 +19,48 @@ namespace {
 class ChoreographyAstConsumer : public ASTConsumer {
 public:
   explicit ChoreographyAstConsumer(
-      std::shared_ptr<PchorAST::SymbolTable> sTable, bool debug)
-      : sTable(std::move(sTable)), debug(debug) {}
-  void HandleTranslationUnit(ASTContext &Context) override {
-    llvm::outs() << "\n\nAST has been fully created. CASTMapping and Choreopgrahy "
-                    "Projection Commencing!\n";
-
-    PchorAST::CAST_PchorASTVisitor CAST_visitor(Context);
-    PchorAST::Proj_PchorASTVisitor Proj_visitor(Context);
+      std::shared_ptr<PchorAST::SymbolTable> sTable, bool debug, bool onlyproj)
+      : sTable(std::move(sTable)), debug(debug), onlyproj(onlyproj) {}
+void HandleTranslationUnit(ASTContext &Context) override {
+    llvm::outs() << "\n\nAST has been fully created. CASTMapping and Choreography Projection Commencing!\n";
     try {
-      // Create the PchorASTVisitor
-      if (sTable) {
-        llvm::outs()
-            << "Symbol table correctly passed to ChoreographyAstConsumer\n";
-        for (auto itr = sTable->begin(); itr != sTable->end(); ++itr) {
-          if((*itr)->getDeclType() != PchorAST::Decl::Global_Type_Decl || (std::distance(itr, sTable->end()) == 1 && (*itr)->getDeclType() == PchorAST::Decl::Global_Type_Decl ) ){
-            (*itr)->accept(CAST_visitor);
-          }
-        }
-        llvm::outs() << "CAST mapping created\n";
-        auto globalTypePtr = sTable->back();
-        if ((*globalTypePtr)->getDeclType() !=
-            PchorAST::Decl::Global_Type_Decl) {
-          throw std::runtime_error(
-              "Final Expression is required to be a Global type expression.");
-        }
-        (*globalTypePtr)->accept(Proj_visitor);
-        llvm::outs() << "Projection created\n";
+      if (!sTable) {
+        llvm::outs() << "Error: HandleTranslationUnit received no SymbolTable. Continuing to compilation\n";
+        return;
       }
+
+      llvm::outs() << "Symbol table correctly passed to ChoreographyAstConsumer\n";
+      auto globalTypePtr = sTable->back();
+      if ((*globalTypePtr)->getDeclType() != PchorAST::Decl::Global_Type_Decl) {
+        throw std::runtime_error("Final Expression is required to be a Global type expression.");
+      }
+
+      if (onlyproj) {
+        // Only projection logic
+        PchorAST::Proj_PchorASTVisitor Proj_visitor(Context);
+        (*globalTypePtr)->accept(Proj_visitor);
+        Proj_visitor.printProjections();
+        return;
+      }
+
+      // Full pipeline
+      PchorAST::CAST_PchorASTVisitor CAST_visitor(Context);
+      PchorAST::Proj_PchorASTVisitor Proj_visitor(Context);
+
+      for (auto itr = sTable->begin(); itr != sTable->end(); ++itr) {
+        if ((*itr)->getDeclType() != PchorAST::Decl::Global_Type_Decl ||
+            (std::distance(itr, sTable->end()) == 1 && (*itr)->getDeclType() == PchorAST::Decl::Global_Type_Decl)) {
+          (*itr)->accept(CAST_visitor);
+        }
+      }
+      llvm::outs() << "CAST mapping created\n";
+      (*globalTypePtr)->accept(Proj_visitor);
+      llvm::outs() << "Projection created\n";
+
       auto CASTMapping = CAST_visitor.getContext();
       auto Projections = Proj_visitor.getContext();
 
       PchorAST::CASTValidator validator{};
-      
       validator.validateProjection(Context, CASTMapping, Projections);
 
       if (debug) {
@@ -60,41 +69,38 @@ public:
       }
 
       validator.printValidations();
-      
+
     } catch (const std::exception &e) {
       llvm::errs() << "Error in CAST Mapping or Choreography Projection: \n"
                    << e.what() << "\n";
-      if(debug) {
-        CAST_visitor.printMappings();
-        Proj_visitor.printProjections();
-      }
     }
-
-    // Traverse the choreography AST (example)
-  }
+}
 
 private:
   std::shared_ptr<PchorAST::SymbolTable> sTable;
   bool debug;
+  bool onlyproj;
 };
 
 class ChoreographyValidatorFrontendAction : public PluginASTAction {
   std::string corFilePath;
   std::shared_ptr<PchorAST::SymbolTable> sTable;
   bool debug;
+  bool onlyproj;
 
 protected:
   std::unique_ptr<ASTConsumer>
   CreateASTConsumer([[maybe_unused]] CompilerInstance &CI,
                     llvm::StringRef) override {
     // Create and return your AST consumer that prints messages.
-    return std::make_unique<ChoreographyAstConsumer>(std::move(sTable), debug);
+    return std::make_unique<ChoreographyAstConsumer>(std::move(sTable), debug, onlyproj);
   }
 
   bool ParseArgs([[maybe_unused]] const CompilerInstance &CI,
                  const std::vector<std::string> &args) override {
     // Handle plugin arguments if any.
     debug = false;
+    onlyproj = false;
     for (const auto &arg : args) {
       if (arg.find("--cor=") != std::string::npos) {
         corFilePath = arg.substr(arg.find("--cor=") + 6);
@@ -103,6 +109,10 @@ protected:
       if (arg.find("--debug") != std::string::npos) {
         debug = true;
         llvm::outs() << "Debug flag found. Debug Output will be printed\n";
+      }
+      if(arg.find("--projection") != std::string::npos) {
+        onlyproj = true;
+        llvm::outs() << "Projection flag found. Program will only generate local type projections\n";
       }
     }
 

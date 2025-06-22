@@ -176,8 +176,7 @@ void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
   if(literal < baseIndex->getLower() || literal > baseIndex->getUpper()){
     throw std::runtime_error(std::format("Index expression {} evaluated to {}, which is not within the range of [{}, {}].", indexExpr->toString(), literal, baseIndex->getLower(), baseIndex->getUpper()));
   }
-  ParticipantKey key{expr.getBaseParticipant()->getName(),
-                     expr.getIndex()->getLiteral(this->indexIdentifierMap)};
+  ParticipantKey key{expr.getBaseParticipant()->getName(), literal};
 
   if (!this->ctx->hasProjection(key)) {
     this->ctx->addParticipant(key);

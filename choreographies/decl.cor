@@ -1,6 +1,0 @@
-Index I{1..n}
-Participant Worker{I}
-Participant Subscriber{I}
-Channel w{I}
-
-
