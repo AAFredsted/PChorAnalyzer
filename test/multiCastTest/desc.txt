@@ -1,0 +1,10 @@
+Protocol
+-------
+infinite.cor and finite.cor describe a simple multicast protocol,
+where one is bounded to 5 participants and the other is unbounded.
+
+Cases
+------
+
+finite: Worker::processOrder and void BroadCaster::broadCast5 are validated
+infinite: Worker::processOrder and void BroadCaster::broadCast are validated

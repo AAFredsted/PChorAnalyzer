@@ -1,0 +1,12 @@
+Protocol
+--------
+The Protocol models a single interaction between two participants, Anne and Nicholas,
+where Anne is the sender and Nicholas is the receiver.
+
+Cases
+------
+
+correcttest: Nicolas::receiveMessage and Anne::sendMessage should be validated
+wrongchannel: Nicolas::receiveMessage is validated while Anne::sendMessage does not write to channel
+
+

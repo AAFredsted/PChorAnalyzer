@@ -1,0 +1,12 @@
+Protocol
+--------
+The protocol models a simple interaction where Anne sends a Message to Nicholas and receives a confirmation from Nicholas.
+
+This test tests that Pchor can work around forward declarations in c++.
+
+Cases
+------
+
+correct_test: Anne::sendMessage and Nicholas::receiveMessage are validated
+missing_op: Anne::sendMessage is validated, but Nicholas::receiveMessage is missing a receive operation
+

@@ -89,13 +89,12 @@ void Buyer2::addSeller(Seller& s) {
 }
 
 void Buyer2::addQ(Quote& q) {
-    b1->addQ(q);
+    b1->addQ(q); //error is here!
 }
 
 void Buyer2::addPQ(PartialQuote& q) {
     //q2 = &q;
-    q1 = q.quote;
-    
+    q1 = q.quote; //error is here
 }
 
 void Buyer2::addDate(Date& d) {

@@ -34,7 +34,6 @@ public:
 
     void sendMessage(const std::string& content) {
         thismsg = Message{content};// Explicitly update msg in Nicholas
-
     }
 
     Nicholas* nicholas; 

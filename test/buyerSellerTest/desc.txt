@@ -1,0 +1,10 @@
+Protocol
+-------
+buyerseller.cor provides a verbose buyerseller protocol, where two buyers coordinate to purchase an item from a seller.
+Test shows that Pchor can work with included .hpp files.
+
+Cases
+------
+
+correct_test: Seller::InitiateSale, Buyer1::sale1 and Buyer2::sale2 are validated
+incorrect_receive: Buyer2 receives partialquote over wrong channel from Buyer1 and Buyer2 receives quote over wrong channel from Seller. Buyer1:sale1 is validated.

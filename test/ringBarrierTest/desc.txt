@@ -1,0 +1,14 @@
+Protocol
+-------
+These testcases assess how differnt choreographic descriptions can validate the same c++ code.
+ring.cpp contains a simple rinbarrier api, where the amount of participants can be decided at runtime.
+
+Cases
+------
+
+finite: the code is validated for 10 participants and Process::sendThenReceive and Process::receiveThenSend are validated
+nested: tests that Pchor can nest global types within other global types. Process::sendThenReceive and Process::receiveThenSend are validated.
+outofbounds: tests that Pchor can validate for unbounded foreach expressions where n is runtime dependant.
+
+
+

@@ -1,0 +1,14 @@
+Protocol
+-------
+test.cor describes a simple exchange where a query is sent, acknowledged and responded to.
+
+Cases
+------
+
+correct_test: Anne::sendQuery and Nicholas::respondToQuery are validated
+wrong_order: Anne::sendQuery is validated but nicholas sends the response before the acknowledgement
+
+
+
+
+

@@ -1,0 +1,12 @@
+Protocol
+-------
+cicle.cor describes a ringbarrier with 3 participants. 
+This version makes use of indexed participants and channels but does not
+use the foreach construct.
+
+Cases
+------
+
+correct_test:  Sender::sendThenReceive and Sender::receiveThenSend are validated
+
+missing_receive: Sender::sendThenReceive is validated but Sender::receiveThenSend is empty

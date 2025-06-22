@@ -1,10 +1,10 @@
 Index I{1..n}
-Participant Anne{1}
+Participant BroadCaster{1}
 Participant Worker{I}
 
 Channel w{I}
 
 
 multiCast = foreach(i: I) {
-    Anne -> Worker[i]: w[i]<Order>
-}
+    Anne -> Worker[i]: w[i]<Order>. end
+}. end
