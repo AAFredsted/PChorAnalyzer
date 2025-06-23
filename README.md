@@ -41,7 +41,7 @@ the PchorAnalyzerPlugin uses similar design patterns to clang-tidy to implement 
 
 The following diagram illustrates the high-level architecture and workflow of PChorAnalyzer:
 
-![PChorAnalyzer Architecture](pchor_arc.png)
+![PChorAnalyzer Architecture](./images/pchor_arc.png)
 
 ---
 
