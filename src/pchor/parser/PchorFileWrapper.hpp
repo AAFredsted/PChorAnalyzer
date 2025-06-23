@@ -1,11 +1,13 @@
 #pragma once
 #include <cctype>
+#include <cerrno>
 #include <cstring>
 #include <fcntl.h>
 #include <stdexcept>
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
+
 
 namespace PchorAST {
 class PchorFileWrapper {

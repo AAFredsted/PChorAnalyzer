@@ -24,7 +24,7 @@ for dir in "$TEST_ROOT"/*/; do
                 echo "  COR: $cor"
                 echo "------------------------------"
 
-                clang++ -std=c++23 -Xclang -load -Xclang "$PLUGIN_PATH" \
+                clang++-18 -std=c++23 -Xclang -load -Xclang "$PLUGIN_PATH" \
                     -Xclang -plugin-arg-PchorAnalyzer -Xclang --cor="$cor" \
                     "$cpp" -o /dev/null
                 echo "------------------------------"

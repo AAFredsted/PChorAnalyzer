@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 # Set compiler and standard
-set(CMAKE_CXX_COMPILER clang++)
+# set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -57,16 +57,19 @@ target_include_directories(PchorAnalyzerPlugin SYSTEM PRIVATE
 target_compile_options(PchorAnalyzerPlugin PRIVATE -Wall -Wextra -O2)
 
 # Link against Clang libraries
-execute_process(COMMAND llvm-config --libdir OUTPUT_VARIABLE LLVM_LIB_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND llvm-config-18 --libdir OUTPUT_VARIABLE LLVM_LIB_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
 link_directories(${LLVM_LIB_DIR})
+
+#Include 
+link_directories(/usr/lib/llvm-18/lib)
 
 target_link_libraries(PchorAnalyzerPlugin
     PchorCore
-    clangAST
-    clangASTMatchers
-    clangBasic
-    clangFrontend
-    clangTooling
+    /usr/lib/llvm-18/lib/libclangAST.a
+    /usr/lib/llvm-18/lib/libclangASTMatchers.a
+    /usr/lib/llvm-18/lib/libclangBasic.a
+    /usr/lib/llvm-18/lib/libclangFrontend.a
+    /usr/lib/llvm-18/lib/libclangTooling.a
 )
 
 # Installation rules
