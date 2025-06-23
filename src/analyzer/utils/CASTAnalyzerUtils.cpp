@@ -120,8 +120,12 @@ AnalyzerUtils::findFunctionDefinition(const clang::Stmt *possibleFunctionCall,
     return nullptr;
   }
 
-  llvm::errs()
+  /*DEBUG
+
+    llvm::errs()
       << "Could not find member function definition from call expression.\n";
+  */
+
   return nullptr;
 }
 
@@ -263,7 +267,7 @@ bool AnalyzerUtils::validateSendExpression(const clang::Stmt *opCallExpr,
     llvm::errs() << "Invalid input to validateSendExpression.\n";
     return false;
   }
-  llvm::outs() << "we try to run validateSendExpr\n";
+  //llvm::outs() << "we try to run validateSendExpr\n";
 
   std::string typeName = "";
   if (const auto *named = llvm::dyn_cast<clang::NamedDecl>(typeDecl)) {
@@ -357,13 +361,13 @@ bool AnalyzerUtils::validateSendExpression(const clang::Stmt *opCallExpr,
 
   // Run the matcher on the AST node
   finder.match(*opCallExpr, context);
-  if (matched) {
-    llvm::outs() << "We matched for this: " << opCallExpr->getStmtClassName()
-                 << "\n";
-  } else {
+  /*DEBUG
+
+    if (!matched) {
     llvm::outs() << "We failed to match for this: "
                  << opCallExpr->getStmtClassName() << "\n";
   }
+  */
 
   return matched != nullptr;
 }
@@ -394,9 +398,12 @@ bool AnalyzerUtils::validateRecieveExpression(
   finder.addMatcher(whileMatcher, new DebugStoreMatchCallback<clang::WhileStmt>(
                                       "recvWhile", matched));
   finder.match(*whileStmt, context);
-  if (matched) {
+  /*DEBUG
+    if (matched) {
     llvm::outs() << matched->getStmtClassName() << "\n";
   }
+  */
+
 
   return matched != nullptr;
 }

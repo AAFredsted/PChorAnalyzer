@@ -8,3 +8,4 @@ Cases
 
 correct_test: Seller::InitiateSale, Buyer1::sale1 and Buyer2::sale2 are validated
 incorrect_receive: Buyer2 receives partialquote over wrong channel from Buyer1 and Buyer2 receives quote over wrong channel from Seller. Buyer1:sale1 is validated.
+

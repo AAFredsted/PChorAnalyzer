@@ -62,9 +62,12 @@ bool Psend::validateFunctionDecl(
   }
   itr = cpy;
 
-  if (matchingdone) {
-    std::println("matched: {}", this->toString());
-  }
+  /* DEBUG
+    if (matchingdone) {
+      std::println("matched: {}", this->toString());
+    } 
+  */
+
 
   if(itr != end) {
     if(childScopeProjectionPtr){
@@ -121,14 +124,14 @@ bool Precieve::validateFunctionDecl(
       break;
     }
     std::string type = cpy->getStmtClassName();
-    std::println("exprtype we try to match is: {}", type);
+    //std::println("exprtype we try to match is: {}", type);
     if (recieveSet.contains(type)) {
-      std::println("We have found expr of type {}", type);
+      //std::println("We have found expr of type {}", type);
 
       const auto *whileStmt = *cpy;
       if (AnalyzerUtils::validateRecieveExpression(whileStmt, channelDecl,
                                                    typeDecl, context)) {
-        std::println("Mapping was successfull.");
+        //std::println("Mapping was successfull.");
         waitMatchingDone = true;
       } else if (const clang::FunctionDecl *funcDecl =
                      AnalyzerUtils::findFunctionDefinition(whileStmt,
@@ -138,7 +141,6 @@ bool Precieve::validateFunctionDecl(
         auto childElm = body->children();
         auto childItr = childElm.begin();
         auto childEnd = childElm.end();
-        std::println("We we actually end here");
         //we set next state to validate...
         waitMatchingDone =
             this->validateFunctionDecl(context, CASTmap, childItr, childEnd, childScopeProjectionPtr);
@@ -147,9 +149,13 @@ bool Precieve::validateFunctionDecl(
     cpy++;
   }
   itr = cpy;
-  if (waitMatchingDone) {
+  /* DEBUG
+
+    if (waitMatchingDone) {
     std::println("matched: {}", this->toString());
   }
+  */
+
   //if next is not nullpointer, continue with either this or next
 
   if(itr != end) {

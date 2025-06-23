@@ -452,11 +452,17 @@ PchorParser::parseExpressionList(std::vector<Token>::iterator &itr,
   //  non-aggregate com expr
 
   std::shared_ptr<ExprList> expr = std::make_shared<ExprList>();
-  std::println("for expression list begin is {} and end is {}", itr->toString(), end->toString());
+  /*
+      DEBUG
+      std::println("for expression list begin is {} and end is {}", itr->toString(), end->toString());
+  */
   while (itr != end) {
-     std::println("current itr is {}", itr->toString());
+    /* DEBUG
+      std::println("current itr is {}", itr->toString());
      std::println("itr == end is {}", itr == end);
      std::println("distance from itr to end: {}", std::distance(itr, end));
+    */
+
     switch (itr->type) {
     // has to be a communication expression
     case TokenType::Identifier: {
@@ -473,12 +479,15 @@ PchorParser::parseExpressionList(std::vector<Token>::iterator &itr,
 
       switch (identified->getDeclType()) {
       case Decl::Participant_Decl:
-        std::println("we enter setup for communication expression");
-        std::println("itr is {}, end is {}", itr->toString(), end->toString());
+        /*DEBUG
+              std::println("we enter setup for communication expression");
+              std::println("itr is {}, end is {}", itr->toString(), end->toString());
+        */
+
         while (endofExpr != end && endofExpr->value != ".") {
           endofExpr++;
         }
-        std::println("itr is {}, endofExpr is {}", itr->toString(), endofExpr->toString());
+        //std::println("itr is {}, endofExpr is {}", itr->toString(), endofExpr->toString());
         expr->addExpr(parseCommunicationExpr(itr, endofExpr));
         break;
       case Decl::Global_Type_Decl:
@@ -495,15 +504,20 @@ PchorParser::parseExpressionList(std::vector<Token>::iterator &itr,
     }
     case TokenType::Keyword: {
       if (itr->value == "end") {
-        std::println("do we enter this section?");
-        std::println("distance from itr to end before ++: {}", std::distance(itr, end));
+        /*DEBUG
+            std::println("do we enter this section?");
+            std::println("distance from itr to end before ++: {}", std::distance(itr, end));
+        */
+
         itr++;
+        /*
         std::println("distance from itr to end after ++: {}", std::distance(itr, end));
+        */
         break;
       } else if (itr->value == "foreach") {
         itr++;
         expr->addExpr(parseForEachExpr(itr, end));
-        std::println("does something go wrong here?");
+        //std::println("does something go wrong here?");
         break;
       } else {
         throw std::runtime_error("expected valid keyword for body of GlobalTypeDecl. Found: " +
@@ -651,13 +665,13 @@ PchorParser::parseForEachExpr(std::vector<Token>::iterator &itr, const std::vect
     throw std::runtime_error(std::format("Body of foreach expression must end in '}}'. Instead, parser found: {}", endOfExprListScope->toString()));
   }
   itr++; //enter scope
-  std::println("we enter parseexpressionlist from foreach");
+  //std::println("we enter parseexpressionlist from foreach");
   std::shared_ptr<ExprList> exprList = parseExpressionList(itr, endOfExprListScope);
   if(itr->type != TokenType::Symbol || itr->value != "}"){
     throw std::runtime_error(std::format("Parser failed to parse body of forEach Statement. Stopped at {}", itr->toString()));
   }
   itr++;
-  std::println("do we make it past here?");
+  //std::println("do we make it past here?");
   return std::make_shared<ForEachExpr>(iterExpr, exprList);
 }
 
@@ -668,7 +682,7 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
   // parseSender
   
   auto sender = symbolTable->resolve(itr->value);
-  std::println("We have sucessfully identified sender: {}", sender->getName());
+  //std::println("We have sucessfully identified sender: {}", sender->getName());
 
   if (!sender || sender->getDeclType() != Decl::Participant_Decl) {
     throw std::runtime_error("Expected Participant Identifier, but got: " +
@@ -680,7 +694,7 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
   std::shared_ptr<IndexExpr> senderIndex = nullptr;
 
   itr++;
-  std::println("we successfully converted sender and begin to enter indexsection");
+  //std::println("we successfully converted sender and begin to enter indexsection");
   // either beginning of index expr or com operator
   if (itr->type == TokenType::Symbol && itr->value == "[") {
     auto endofIndex = itr;
@@ -693,9 +707,9 @@ PchorParser::parseCommunicationExpr(std::vector<Token>::iterator &itr,
                                endofIndex->toString());
     }
 
-    std::println("we found index and the end of the expr. Begin {}. End {}.", itr->toString(), endofIndex->toString());
+    //std::println("we found index and the end of the expr. Begin {}. End {}.", itr->toString(), endofIndex->toString());
     senderIndex = parseIndexExpr(senderAST->getIndex(), itr, endofIndex);
-    std::println("we successfully leave indexmanagement");
+    //std::println("we successfully leave indexmanagement");
   } else {
     senderIndex = std::make_shared<IndexExpr>(
         std::dynamic_pointer_cast<IndexASTNode>(
@@ -817,9 +831,9 @@ PchorParser::parseIndexExpr(std::shared_ptr<IndexASTNode> indexType,
 
   itr++;
   bool isLiteral = true;
-  std::println("we have entered parseindexexpr and try run parseArithmeticExpr");
+  //std::println("we have entered parseindexexpr and try run parseArithmeticExpr");
   std::unique_ptr<BaseArithmeticExpr> aritExpr = parseArithmeticExpr(indexType, itr, end, isLiteral);
-  std::println("we successfully left parseArithmeticExpr");
+  //std::println("we successfully left parseArithmeticExpr");
 
   std::shared_ptr<IndexExpr> expr = std::make_shared<IndexExpr>(indexType, std::move(aritExpr), isLiteral);
 
@@ -899,16 +913,16 @@ size_t PchorParser::parseMinExpr(std::vector<Token>::iterator &itr, const std::v
 //recursive descent parsing based !
 
 std::unique_ptr<BaseArithmeticExpr> PchorParser::parseArithmeticExpr(std::shared_ptr<IndexASTNode> indexType, std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end, bool& isLiteral) {
-  std::println("we now enter parseArithmeticExpr");
-  std::println("itr is {}, end is {}", itr->toString(), end->toString());
+  //std::println("we now enter parseArithmeticExpr");
+  //std::println("itr is {}, end is {}", itr->toString(), end->toString());
   auto left = parsePrimaryArithmeticExpr(indexType, itr, end, isLiteral);
-  std::println("we successfully found left {}", left->toString());
+  //std::println("we successfully found left {}", left->toString());
   //we only deal with symbols from here !
-  std::println("itr should be at end 0:: itr is:  {}, end is {}", itr->toString(), end->toString());
-  std::println("ptr dif is: {}", std::distance(itr, end));
+  //std::println("itr should be at end 0:: itr is:  {}, end is {}", itr->toString(), end->toString());
+  //std::println("ptr dif is: {}", std::distance(itr, end));
   while(itr != end && itr->type == TokenType::Symbol) {
-    std::println("itr is:  {}, end is {}", itr->toString(), end->toString());
-    std::println("ptr dif is: {}", std::distance(itr, end));
+    //std::println("itr is:  {}, end is {}", itr->toString(), end->toString());
+    //std::println("ptr dif is: {}", std::distance(itr, end));
     ArithmeticExpr type;
     if(itr->value == "+"){
       type = ArithmeticExpr::Addition;
@@ -967,7 +981,7 @@ std::unique_ptr<BaseArithmeticExpr> PchorParser::parsePrimaryArithmeticExpr(std:
       itr++;
       break;
     case TokenType::Keyword:
-      std::println("we successfully identified min or max");
+      //std::println("we successfully identified min or max");
       if(itr->value != "min" && itr->value != "max"){
         throw std::runtime_error(std::format("Only keywords'min' or 'max' allowed at expression level. Instead, found: {}", itr->toString()));
       }
@@ -983,13 +997,16 @@ std::unique_ptr<BaseArithmeticExpr> PchorParser::parsePrimaryArithmeticExpr(std:
       else {
         throw std::runtime_error(std::format("neither parsemin nor parsemax was run"));
       }
+      /* DEBUG
       std::println("we try to validate the names of the identified decls");
       std::println("do we have indexType? {}", indexType->getName());
       std::println("do we have exprIndexDecl? {}", exprIndexDecl->getName());
+      */
+
       if(indexType->getName() != exprIndexDecl->getName()){
         throw std::runtime_error(std::format("Arithmetic Expression Contains reference to Index Declaration that is unrelated to the indexed type. Base requires {}. Instead, found {}", indexType->getName(), exprIndexDecl->getName()));
       }
-      std::println("we successfully validated them");
+      //std::println("we successfully validated them");
       node = std::make_unique<LiteralExpr>(literal);
 
       break;

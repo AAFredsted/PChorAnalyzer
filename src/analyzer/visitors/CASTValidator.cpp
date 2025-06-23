@@ -93,13 +93,9 @@ bool CASTValidator::validateProjection(
 
       const clang::Stmt *body = fullDecl->getBody();
 
-      std::println("{}", body->getStmtClassName());
-
       auto elm = body->children();
       auto itr = elm.begin();
       auto end = elm.end();
-
-      std::println("validating {} for {}", funcName, participantName.toString());
 
       auto projectionNode = projections.begin();
       AbstractProjection* nestedFunctionNext = nullptr;

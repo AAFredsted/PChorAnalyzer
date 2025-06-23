@@ -58,14 +58,16 @@ public:
 
   void run(const clang::ast_matchers::MatchFinder::MatchResult &matchResult)
       override {
+    /*
     llvm::outs() << "[DebugStoreMatchCallback] Running for: " << bindName
                  << "\n";
+    */
     if (const auto *node = matchResult.Nodes.getNodeAs<NodeType>(bindName)) {
       result = node;
-      llvm::outs() << "Matched Node (" << bindName << "):\n";
+      //llvm::outs() << "Matched Node (" << bindName << "):\n";
       // node->dump();
     } else {
-      llvm::outs() << "No match for bind name: " << bindName << "\n";
+      llvm::outs() << "Warning: No match for bind name: " << bindName << "\n";
     }
   }
 

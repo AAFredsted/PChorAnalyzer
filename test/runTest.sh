@@ -21,7 +21,7 @@ for dir in "$TEST_ROOT"/*/; do
             for cor in "$dir"*.cor; do
                 echo "Running Pchor on: "
                 echo "  C++: $cpp"
-                echo "  COR: $cor"
+                echo "  COR: $cor \n"
                 echo "------------------------------"
 
                 clang++-18 -std=c++23 -Xclang -load -Xclang "$PLUGIN_PATH" \
