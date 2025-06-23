@@ -25,8 +25,8 @@
 
 PChorAnalyzer leverages Clang’s plugin infrastructure to perform static analysis of C++ source files, ensuring conformance to a choreography specified in a `.cor` file. The Pchor DSL was inspired by:
 
-- [A Comparative Study of Graph-Based and Constraint-Based Approaches for Program Analysis (arXiv:1208.6483)](https://arxiv.org/pdf/1208.6483)
-- [A Unified Static Analysis Framework Based on Universal Program Representations (DOI:10.1145/2827695)](https://dl.acm.org/doi/10.1145/2827695)
+- [PARAMETERISED MULTIPARTY SESSION TYPES](https://arxiv.org/pdf/1208.6483)
+- [Multiparty Asynchronous Session Types](https://dl.acm.org/doi/10.1145/2827695)
 
 ---
 
@@ -279,11 +279,11 @@ MIT License
 ---
 
 ## Acknowledgements
-
+- **Supervisor**: Thanks to [Marco Carbone](https://carbonem.github.io/) for the continuous support and guidance provided.
 - **Clang Community**: Thanks to the Clang documentation and community examples that provided guidance.
 - **Research References**:
-  - [A Comparative Study of Graph-Based and Constraint-Based Approaches for Program Analysis](https://arxiv.org/pdf/1208.6483)
-  - [A Unified Static Analysis Framework Based on Universal Program Representations](https://dl.acm.org/doi/10.1145/2827695)
+  - [PARAMETERISED MULTIPARTY SESSION TYPES](https://arxiv.org/pdf/1208.6483)
+  - [Multiparty Asynchronous Session Types](https://dl.acm.org/doi/10.1145/2827695)
 - Developed as part of my master’s thesis.
 
 ---
