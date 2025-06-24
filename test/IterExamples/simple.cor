@@ -1,0 +1,5 @@
+Participant P{1}
+Participant Q{1}
+Channel k{1}
+
+ex = P -> Q: k<S>. end
