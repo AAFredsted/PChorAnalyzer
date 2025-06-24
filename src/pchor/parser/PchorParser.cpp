@@ -244,6 +244,7 @@ void PchorParser::parseParticipantDecl(
           itr->toString()));
     }
     ASTNode = symbolTable->resolve(std::string("PchorUnaryIndex"));
+    //no need for check as PchorUnaryIndex is always defined
     IdxNode = std::dynamic_pointer_cast<IndexASTNode>(ASTNode);
     break;
   default:
@@ -314,6 +315,7 @@ void PchorParser::parseChannelDecl(std::vector<Token>::iterator &itr,
           "Only unary Channels can be declared with literal Type");
     }
     ASTNode = symbolTable->resolve(std::string("PchorUnaryIndex"));
+    //No need for guard as PchorUnaryIndex is always defined
     IdxNode = std::dynamic_pointer_cast<IndexASTNode>(ASTNode);
     break;
   default:
@@ -475,6 +477,9 @@ PchorParser::parseExpressionList(std::vector<Token>::iterator &itr,
       */
       // can be identifier of Participant or identifier for other global type
       auto identified = symbolTable->resolve(itr->value);
+      if(identified == nullptr){
+        throw std::runtime_error(std::format("Identifier for declared global type expected: Identifier {} not declared", itr->value));
+      }
       auto endofExpr = itr;
 
       switch (identified->getDeclType()) {
