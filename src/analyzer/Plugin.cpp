@@ -73,6 +73,7 @@ void HandleTranslationUnit(ASTContext &Context) override {
     } catch (const std::exception &e) {
       llvm::errs() << "Error in CAST Mapping or Choreography Projection: \n"
                    << e.what() << "\n";
+                   
     }
 }
 

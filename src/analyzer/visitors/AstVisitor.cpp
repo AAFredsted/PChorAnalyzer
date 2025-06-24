@@ -61,34 +61,30 @@ void CAST_PchorASTVisitor::visit(const ExprList &expr) {
 void CAST_PchorASTVisitor::visit([[maybe_unused]] const ParticipantExpr &expr) {}
 
 void CAST_PchorASTVisitor::visit(const ChannelExpr &expr) {
-  if (expr.getIndex()->isExprLiteral()) {
-    auto sender = ctx->getMapping<const clang::Decl *>(this->senderIdentifier);
-    auto reciever =
-        ctx->getMapping<const clang::Decl *>(this->recieverIdentifier);
+  auto sender = ctx->getMapping<const clang::Decl *>(this->senderIdentifier);
+  auto reciever =
+      ctx->getMapping<const clang::Decl *>(this->recieverIdentifier);
 
-    // Try Find Reciever Member
-    // Try Find Sender Member
+  // Try Find Reciever Member
+  // Try Find Sender Member
 
-    auto recieverUse = AnalyzerUtils::findMatchingMember(clangContext, reciever,
-                                                         this->currentDataType);
-    if (recieverUse) {
-      ctx->addMapping(expr.getBaseParticipant()->getName(), recieverUse);
-    } else {
-      auto senderUse = AnalyzerUtils::findMatchingMember(clangContext, sender,
-                                                         this->currentDataType);
-      if (senderUse) {
-        ctx->addMapping(expr.getBaseParticipant()->getName(), senderUse);
-      } else {
-        mappingSuccess = false;
-        throw std::runtime_error(
-            std::format("No matching member found for data type '{}' in sender "
-                        "'{}' or receiver '{}'",
-                        this->currentDataType, this->senderIdentifier,
-                        this->recieverIdentifier));
-      }
-    }
+  auto recieverUse = AnalyzerUtils::findMatchingMember(clangContext, reciever,
+                                                        this->currentDataType);
+  if (recieverUse) {
+    ctx->addMapping(expr.getBaseParticipant()->getName(), recieverUse);
   } else {
-    std::println("non-literal Indexes not implemented yet");
+    auto senderUse = AnalyzerUtils::findMatchingMember(clangContext, sender,
+                                                        this->currentDataType);
+    if (senderUse) {
+      ctx->addMapping(expr.getBaseParticipant()->getName(), senderUse);
+    } else {
+      mappingSuccess = false;
+      throw std::runtime_error(
+          std::format("No matching member found for data type '{}' in sender "
+                      "'{}' or receiver '{}'",
+                      this->currentDataType, this->senderIdentifier,
+                      this->recieverIdentifier));
+    }
   }
 }
 void CAST_PchorASTVisitor::visit([[maybe_unused]] const IndexExpr &expr) {

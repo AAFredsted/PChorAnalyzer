@@ -105,6 +105,7 @@ bool Precieve::validateFunctionDecl(
 
   const auto *channelDecl =
       CASTmap->getMapping<const clang::Decl *>(this->channelName);
+
   const auto *typeDecl =
       CASTmap->getMapping<const clang::Decl *>(this->typeName);
 

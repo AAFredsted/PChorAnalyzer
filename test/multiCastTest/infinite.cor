@@ -6,5 +6,5 @@ Channel w{I}
 
 
 multiCast = foreach(i: I) {
-    Anne -> Worker[i]: w[i]<Order>. end
+    BroadCaster -> Worker[i]: w[i]<Order>. end
 }. end

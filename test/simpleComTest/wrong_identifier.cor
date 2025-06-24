@@ -1,0 +1,8 @@
+Participant Anne{1}
+Participant Nicholas{1}
+
+Channel k{1}
+
+Message =
+    Martin -> Nicholas: k<Message>
+    .end

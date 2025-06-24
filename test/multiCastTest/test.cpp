@@ -45,16 +45,9 @@ std::thread thread;
 class BroadCaster {
 public:
 
-BroadCaster() : workerArr() {}
 
-BroadCaster(std::vector<Worker>& workerArr): workerArr(std::move(workerArr)) {}
+explicit BroadCaster(std::vector<Worker>& workerArr): workerArr(workerArr) {}
 
-void addWorker(Worker&& worker){
-    workerArr.emplace_back(worker);
-}
-void addWorker(const Worker& worker){
-    workerArr.emplace_back(std::move(worker));
-}
 
 void run(Order* order) {
     thread = std::thread([this, order]() {
@@ -78,13 +71,12 @@ void broadCast5(Order order) {
     }
 }
 
-std::vector<Worker> workerArr;
+std::vector<Worker>& workerArr;
 std::thread thread;
 };
 
 
-bool isDone(std::vector<Worker> workerArr) {
-    
+bool isDone(const std::vector<Worker>& workerArr) {
     for(const Worker& worker : workerArr){
         if(!worker.done){
             return false;
