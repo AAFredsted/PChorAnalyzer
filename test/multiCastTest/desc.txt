@@ -6,7 +6,8 @@ where one is bounded to 5 participants and the other is unbounded.
 Cases
 ------
 
-finite: Worker::processOrder and void BroadCaster::broadCast5 are validated
-infinite: Worker::processOrder and void BroadCaster::broadCast are validated
+finite: Worker::processOrder and BroadCaster::broadCast5 are validated
+infinite: Worker::processOrder and BroadCaster::broadCast are validated
+missingifhandling: Worker::processOrder is validated, but BrodCaster::BroadCast5 is not do to Pchor avoiding conditional logic
 
 

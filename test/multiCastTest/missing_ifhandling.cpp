@@ -61,15 +61,15 @@ void broadCast(Order order) {
 }
 
 void broadCast5(Order order) {
-    if(workerArr.size() < 5){
-        throw std::runtime_error("hello");
+    if(workerArr.size() >= 5){
+        workerArr[0].receiveOrder(order);
+        workerArr[1].receiveOrder(order);
+        workerArr[2].receiveOrder(order);
+        workerArr[3].receiveOrder(order);
+        workerArr[4].receiveOrder(order);
+        workerArr[5].receiveOrder(order);
     }
-    workerArr[0].receiveOrder(order);
-    workerArr[1].receiveOrder(order);
-    workerArr[2].receiveOrder(order);
-    workerArr[3].receiveOrder(order);
-    workerArr[4].receiveOrder(order);
-    workerArr[5].receiveOrder(order);
+
 }
 
 std::vector<Worker>& workerArr;

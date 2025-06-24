@@ -1,0 +1,722 @@
+==============================
+Test description for .//buyerSellerTest/:
+------------------------------
+Protocol
+-------
+buyerseller.cor provides a verbose buyerseller protocol, where two buyers coordinate to purchase an item from a seller.
+Test shows that Pchor can work with included .hpp files.
+
+Cases
+------
+
+correct_test: Seller::InitiateSale, Buyer1::sale1 and Buyer2::sale2 are validated
+incorrect_receive: Buyer2 receives partialquote over wrong channel from Buyer1 and Buyer2 receives quote over wrong channel from Seller. Buyer1:sale1 is validated.
+
+------------------------------
+Running Pchor on: 
+  C++: .//buyerSellerTest/correct_test.cpp
+  COR: .//buyerSellerTest/buyer_seller.cor \n
+------------------------------
+Recieved .cor file path: .//buyerSellerTest/buyer_seller.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+InitiateSale: Seller[1] 
+sale1: Buyer1[1] 
+sale2: Buyer2[1] 
+
+
+Failed Validations:
+-------------------
+InitiateSale: 
+sale1: 
+sale2: 
+------------------------------
+Running Pchor on: 
+  C++: .//buyerSellerTest/failValidate.cpp
+  COR: .//buyerSellerTest/buyer_seller.cor \n
+------------------------------
+Recieved .cor file path: .//buyerSellerTest/buyer_seller.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+InitiateSale: Seller[1] 
+sale1: Buyer1[1] 
+sale2: Buyer2[1] 
+
+
+Failed Validations:
+-------------------
+InitiateSale: 
+sale1: 
+sale2: 
+------------------------------
+Running Pchor on: 
+  C++: .//buyerSellerTest/incorrect_receive.cpp
+  COR: .//buyerSellerTest/buyer_seller.cor \n
+------------------------------
+Recieved .cor file path: .//buyerSellerTest/buyer_seller.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type s1[1] at statement: ReturnStmt
+Reached end of function before matching projection of receive type s1[1] at statement: BinaryOperator
+Reached end of function before matching projection of receive type s1[1] at statement: BinaryOperator
+Reached end of function before matching projection of receive type s1[1] at statement: BinaryOperator
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+InitiateSale: 
+addTitle: 
+addB2: 
+addQ: 
+addSeller: 
+isdone: 
+sale1: 
+addAddress: 
+sale2: Buyer2[1] 
+
+
+Failed Validations:
+-------------------
+InitiateSale: Seller[1] 
+addTitle: Seller[1] 
+addB2: Buyer1[1] 
+addQ: Buyer1[1] 
+addSeller: Buyer1[1] 
+isdone: Buyer1[1] Seller[1] 
+sale1: Buyer1[1] 
+addAddress: Seller[1] 
+sale2: 
+------------------------------
+==============================
+Test description for .//circleTest/:
+------------------------------
+Protocol
+-------
+cicle.cor describes a ringbarrier with 3 participants. 
+This version makes use of indexed participants and channels but does not
+use the foreach construct.
+
+Cases
+------
+
+correct_test:  Sender::sendThenReceive and Sender::receiveThenSend are validated
+
+missing_receive: Sender::sendThenReceive is validated but Sender::receiveThenSend is empty
+
+------------------------------
+Running Pchor on: 
+  C++: .//circleTest/correct_test.cpp
+  COR: .//circleTest/circle.cor \n
+------------------------------
+Recieved .cor file path: .//circleTest/circle.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type a[1] at statement: BinaryOperator
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+sendThenReceive: Sender[1] 
+receiveThenSend: Sender[3] Sender[2] 
+
+
+Failed Validations:
+-------------------
+sendThenReceive: 
+receiveThenSend: Sender[1] 
+------------------------------
+Running Pchor on: 
+  C++: .//circleTest/missing_receive.cpp
+  COR: .//circleTest/circle.cor \n
+------------------------------
+Recieved .cor file path: .//circleTest/circle.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type a[3] at statement: MaterializeTemporaryExpr
+Reached end of function before matching projection of receive type a[3] at statement: BinaryOperator
+Reached end of function before matching projection of receive type a[3] at statement: CallExpr
+Reached end of function before matching projection of receive type a[3] at statement: BinaryOperator
+Reached end of function before matching projection of receive type a[2] at statement: MaterializeTemporaryExpr
+Reached end of function before matching projection of receive type a[2] at statement: BinaryOperator
+Reached end of function before matching projection of receive type a[2] at statement: CallExpr
+Reached end of function before matching projection of receive type a[2] at statement: BinaryOperator
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+addMessage: 
+sendThenReceive: Sender[1] 
+receiveThenSend: 
+
+
+Failed Validations:
+-------------------
+addMessage: Sender[3] Sender[2] 
+sendThenReceive: Sender[3] Sender[2] 
+receiveThenSend: Sender[3] Sender[2] Sender[1] 
+------------------------------
+==============================
+Test description for .//multiCastTest/:
+------------------------------
+Protocol
+-------
+infinite.cor and finite.cor describe a simple multicast protocol,
+where one is bounded to 5 participants and the other is unbounded.
+
+Cases
+------
+
+finite: Worker::processOrder and void BroadCaster::broadCast5 are validated
+infinite: Worker::processOrder and void BroadCaster::broadCast are validated
+
+
+------------------------------
+Running Pchor on: 
+  C++: .//multiCastTest/test.cpp
+  COR: .//multiCastTest/finite.cor \n
+------------------------------
+Recieved .cor file path: .//multiCastTest/finite.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+run: 
+broadCast: 
+broadCast5: 
+processOrder: Worker[5] Worker[4] Worker[3] Worker[2] Worker[1] 
+
+
+Failed Validations:
+-------------------
+run: BroadCaster[1] 
+broadCast: BroadCaster[1] 
+broadCast5: BroadCaster[1] 
+processOrder: 
+------------------------------
+Running Pchor on: 
+  C++: .//multiCastTest/test.cpp
+  COR: .//multiCastTest/infinite.cor \n
+------------------------------
+Recieved .cor file path: .//multiCastTest/infinite.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Succesfully parsed file
+The case for indeces with no upper bound has not been implemented
+
+
+Successfull Validations:
+-------------------
+
+
+Failed Validations:
+-------------------
+------------------------------
+==============================
+Test description for .//multiComTest/:
+------------------------------
+Protocol
+-------
+test.cor describes a simple exchange where a query is sent, acknowledged and responded to.
+
+Cases
+------
+
+correct_test: Anne::sendQuery and Nicholas::respondToQuery are validated
+wrong_order: Anne::sendQuery is validated but nicholas sends the response before the acknowledgement
+
+
+
+
+
+
+
+------------------------------
+Running Pchor on: 
+  C++: .//multiComTest/correct_test.cpp
+  COR: .//multiComTest/test.cor \n
+------------------------------
+Recieved .cor file path: .//multiComTest/test.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+sendQuery: Anne[1] 
+respondToQuery: Nicholas[1] 
+
+
+Failed Validations:
+-------------------
+sendQuery: 
+respondToQuery: 
+------------------------------
+Running Pchor on: 
+  C++: .//multiComTest/wrong_order.cpp
+  COR: .//multiComTest/test.cor \n
+------------------------------
+Recieved .cor file path: .//multiComTest/test.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type k[1] at statement: IfStmt
+Reached end of function before matching projection of receive type k[1] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type k[1] at statement: CXXOperatorCallExpr
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+sendQuery: Anne[1] 
+recieveQuery: 
+run: 
+join: 
+respondToQuery: 
+
+
+Failed Validations:
+-------------------
+sendQuery: 
+recieveQuery: Nicholas[1] 
+run: Nicholas[1] 
+join: Nicholas[1] 
+respondToQuery: Nicholas[1] 
+------------------------------
+==============================
+Test description for .//ringBarrierTest/:
+------------------------------
+Protocol
+-------
+These testcases assess how differnt choreographic descriptions can validate the same c++ code.
+ring.cpp contains a simple rinbarrier api, where the amount of participants can be decided at runtime.
+
+Cases
+------
+
+finite: the code is validated for 10 participants and Process::sendThenReceive and Process::receiveThenSend are validated
+nested: tests that Pchor can nest global types within other global types. Process::sendThenReceive and Process::receiveThenSend are validated.
+outofbounds: tests that Pchor can validate for unbounded foreach expressions where n is runtime dependant.
+
+
+
+------------------------------
+Running Pchor on: 
+  C++: .//ringBarrierTest/ring.cpp
+  COR: .//ringBarrierTest/finite.cor \n
+------------------------------
+Recieved .cor file path: .//ringBarrierTest/finite.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type p[8] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[8] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[7] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[7] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[6] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[6] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[10] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[10] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[5] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[5] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[9] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[9] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[4] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[4] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[3] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[3] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[2] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[2] at statement: CompoundStmt
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+receiveThenSend: Process[8] Process[7] Process[6] Process[10] Process[5] Process[9] Process[4] Process[3] Process[2] 
+sendThenReceive: Process[1] 
+
+
+Failed Validations:
+-------------------
+receiveThenSend: 
+sendThenReceive: Process[8] Process[7] Process[6] Process[10] Process[5] Process[9] Process[4] Process[3] Process[2] 
+------------------------------
+Running Pchor on: 
+  C++: .//ringBarrierTest/ring.cpp
+  COR: .//ringBarrierTest/nested.cor \n
+------------------------------
+Recieved .cor file path: .//ringBarrierTest/nested.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type p[8] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[8] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[7] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[7] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[6] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[6] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[10] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[10] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[5] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[5] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[9] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[9] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[4] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[4] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[3] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[3] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[2] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[2] at statement: CompoundStmt
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+receiveThenSend: Process[8] Process[7] Process[6] Process[10] Process[5] Process[9] Process[4] Process[3] Process[2] 
+sendThenReceive: Process[1] 
+
+
+Failed Validations:
+-------------------
+receiveThenSend: 
+sendThenReceive: Process[8] Process[7] Process[6] Process[10] Process[5] Process[9] Process[4] Process[3] Process[2] 
+------------------------------
+Running Pchor on: 
+  C++: .//ringBarrierTest/ring.cpp
+  COR: .//ringBarrierTest/outofbounds.cor \n
+------------------------------
+Recieved .cor file path: .//ringBarrierTest/outofbounds.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type p[17] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[17] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[16] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[16] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[15] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[15] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[19] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[19] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[14] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[14] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[18] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[18] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[13] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[13] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[12] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[12] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[11] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[11] at statement: CompoundStmt
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+receiveThenSend: Process[8] Process[7] Process[6] Process[10] Process[5] Process[9] Process[4] Process[3] Process[2] 
+sendThenReceive: Process[1] 
+
+
+Failed Validations:
+-------------------
+receiveThenSend: 
+sendThenReceive: Process[8] Process[7] Process[6] Process[10] Process[5] Process[9] Process[4] Process[3] Process[2] 
+------------------------------
+Running Pchor on: 
+  C++: .//ringBarrierTest/ring.cpp
+  COR: .//ringBarrierTest/unbounded.cor \n
+------------------------------
+Recieved .cor file path: .//ringBarrierTest/unbounded.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type p[1] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[1] at statement: CompoundStmt
+Succesfully parsed file
+The case for indeces with no upper bound has not been implemented
+
+
+Successfull Validations:
+-------------------
+receiveThenSend: Process[1] 
+sendThenReceive: Process[18446744073709551615] 
+
+
+Failed Validations:
+-------------------
+receiveThenSend: 
+sendThenReceive: Process[1] 
+------------------------------
+==============================
+Test description for .//simpleAckTest/:
+------------------------------
+Protocol
+--------
+The protocol models a simple interaction where Anne sends a Message to Nicholas and receives a confirmation from Nicholas.
+
+This test tests that Pchor can work around forward declarations in c++.
+
+Cases
+------
+
+correct_test: Anne::sendMessage and Nicholas::receiveMessage are validated
+missing_op: Anne::sendMessage is validated, but Nicholas::receiveMessage is missing a receive operation
+
+
+------------------------------
+Running Pchor on: 
+  C++: .//simpleAckTest/correct_test.cpp
+  COR: .//simpleAckTest/test.cor \n
+------------------------------
+Recieved .cor file path: .//simpleAckTest/test.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+sendMessage: Anne[1] 
+receiveMessage: Nicholas[1] 
+
+
+Failed Validations:
+-------------------
+sendMessage: 
+receiveMessage: 
+------------------------------
+Running Pchor on: 
+  C++: .//simpleAckTest/missing_op.cpp
+  COR: .//simpleAckTest/test.cor \n
+------------------------------
+Recieved .cor file path: .//simpleAckTest/test.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type k[1] at statement: BinaryOperator
+Reached end of function before matching projection of receive type k[1] at statement: ReturnStmt
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+getMessage: 
+sendMessage: Anne[1] 
+recieveAnne: 
+receiveMessage: 
+
+
+Failed Validations:
+-------------------
+getMessage: Nicholas[1] 
+sendMessage: 
+recieveAnne: Nicholas[1] 
+receiveMessage: Nicholas[1] 
+------------------------------
+==============================
+Test description for .//simpleComTest/:
+------------------------------
+Protocol
+--------
+The Protocol models a single interaction between two participants, Anne and Nicholas,
+where Anne is the sender and Nicholas is the receiver.
+
+Cases
+------
+
+correcttest: Nicolas::receiveMessage and Anne::sendMessage should be validated
+wrongchannel: Nicolas::receiveMessage is validated while Anne::sendMessage does not write to channel
+wrongidentifier: Nicholas and Anna are declared, but identifier Martin is used in communication expression
+
+
+
+------------------------------
+Running Pchor on: 
+  C++: .//simpleComTest/correct_test.cpp
+  COR: .//simpleComTest/test.cor \n
+------------------------------
+Recieved .cor file path: .//simpleComTest/test.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+sendMessage: Anne[1] 
+receiveMessage: Nicholas[1] 
+
+
+Failed Validations:
+-------------------
+sendMessage: 
+receiveMessage: 
+------------------------------
+Running Pchor on: 
+  C++: .//simpleComTest/correct_test.cpp
+  COR: .//simpleComTest/wrong_identifier.cor \n
+------------------------------
+Recieved .cor file path: .//simpleComTest/wrong_identifier.cor
+------------------------------
+Running Pchor on: 
+  C++: .//simpleComTest/wrong_channel.cpp
+  COR: .//simpleComTest/test.cor \n
+------------------------------
+Recieved .cor file path: .//simpleComTest/test.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+sendMessage: 
+receiveMessage: Nicholas[1] 
+
+
+Failed Validations:
+-------------------
+sendMessage: Anne[1] 
+receiveMessage: 
+------------------------------
+Running Pchor on: 
+  C++: .//simpleComTest/wrong_channel.cpp
+  COR: .//simpleComTest/wrong_identifier.cor \n
+------------------------------
+Recieved .cor file path: .//simpleComTest/wrong_identifier.cor
+------------------------------
+==============================
+Test description for .//streamingProtTest/:
+------------------------------
+Protocol
+-------
+stream.cor describes a single exchange of a streaming protocol where a DataProducer and KeyProducer provide data and key for a Kernel to 
+use for interactions with a Consumer
+
+Cases
+------
+
+queue: tests that Pchor can validate choreographies with container-datastructures. (currently not implemented)
+
+------------------------------
+Running Pchor on: 
+  C++: .//streamingProtTest/queue.cpp
+  COR: .//streamingProtTest/stream.cor \n
+------------------------------
+Recieved .cor file path: .//streamingProtTest/stream.cor
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type c[1] at statement: ReturnStmt
+Reached end of function before matching projection of receive type c[1] at statement: BinaryOperator
+Reached end of function before matching projection of receive type c[1] at statement: BinaryOperator
+Reached end of function before matching projection of receive type c[1] at statement: ReturnStmt
+Reached end of function before matching projection of receive type d[1] at statement: ReturnStmt
+Reached end of function before matching projection of receive type d[1] at statement: ReturnStmt
+Reached end of function before matching projection of receive type d[1] at statement: ReturnStmt
+Reached end of function before matching projection of receive type d[1] at statement: BinaryOperator
+Reached end of function before matching projection of receive type d[1] at statement: BinaryOperator
+Succesfully parsed file
+
+
+Successfull Validations:
+-------------------
+sendData: 
+getDataQueue: 
+getKeyQueue: 
+sendKeys: 
+getPtrToQueue: 
+stopRun: 
+receiveData: 
+
+
+Failed Validations:
+-------------------
+sendData: Kernel[1] DataProducer[1] 
+getDataQueue: Kernel[1] 
+getKeyQueue: Kernel[1] 
+sendKeys: KeyProducer[1] 
+getPtrToQueue: Consumer[1] 
+stopRun: Consumer[1] Kernel[1] 
+receiveData: Consumer[1] 
+------------------------------
