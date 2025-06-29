@@ -1,0 +1,32 @@
+Index J{0..n},  P{1}, T{0..n}
+
+Participant Subscriber{J}, Provider{P},Topic{T}
+Channel s{J}, p{P}, t{T}
+
+messageFilter = 
+    foreach(i: J){
+        Provider[1] -> Topic[i]: t[i]<Message>.
+        foreach(l: J){
+            subscribed:
+                {
+
+                filter:
+                    {
+                        transformable:    
+                            Topic[i] -> Subscriber[j]: s[j]<Message>.
+                            .end
+                        non_transformable:
+                            . end
+                    }
+
+                not_filter:
+                    Topic[i] -> Subscriber[j]: s[j]<Message>.
+                    .end
+                }
+            not_subscribed:
+                . end
+
+                
+        }.
+        end
+    }

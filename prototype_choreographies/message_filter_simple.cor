@@ -1,0 +1,8 @@
+Participant Subscriber, Provider, Topic
+Channel s, p, t
+
+Message =
+    Provider -> Topic: t<Message>.
+    Topic -> Subscriber: s<Message>.
+    Subscriber -> Provider: p<Message.
+    end

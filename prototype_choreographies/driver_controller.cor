@@ -1,0 +1,31 @@
+Index T{1..n}, N{1..n}, H{1..n}
+
+
+Participant Topic{T}, Driver{N}, Controller{N}, HardwareState{H} 
+
+Channel t{T}, d{N}, c{N}, h{H}
+
+DriverController = 
+    foreach(i: T){
+        foreach(l: N) {
+                subscribed:
+                    Topic[i] -> Driver[l]: d[l]<State>.
+                    Driver[l] -> Controller[l]: c[l]<Command>.
+                    foreach(r: H) {
+                        hardware_for_driver:
+                        Controller[l] -> HardwareState[r]: h[r]<StateChange>.
+                        end
+                        not_hardware_for_driver:
+                        .end
+                    }.
+                    {
+                        publish:
+                        Controller[l] -> Topic[i]: t[i]<State>.
+                        end
+
+                        not_publish:
+                        .end
+                    }
+                not_subscribed:
+        } . end
+    } . end

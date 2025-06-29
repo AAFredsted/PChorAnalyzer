@@ -1,0 +1,9 @@
+Participant Topic, Driver, Controller, HardwareState
+Channel t, d, c, h
+
+SimpleDriverController = 
+    Topic -> Driver: d<State>.
+    Driver -> Controller: c<Command>.
+    Controller -> HardwareState: h<StateChange>.
+    Driver -> Topic: h<State>.
+    end
