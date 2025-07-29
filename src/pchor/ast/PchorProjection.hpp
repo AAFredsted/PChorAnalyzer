@@ -50,17 +50,16 @@ protected:
 class AbstractComProjection : public AbstractProjection {
 public:
   AbstractComProjection(ProjectionType type, const std::string &channelName,
-                        const std::string &typeName, std::size_t channelIndex)
-      : AbstractProjection(type), channelName(channelName), typeName(typeName),
-        channelIndex(channelIndex) {}
+                        const std::string &typeName)
+      : AbstractProjection(type), channelName(channelName), typeName(typeName) {}
 
   bool isComProjection() const override { return true; }
-  const std::string getChannelString() const {
-    return std::format("{}[{}]", channelName, channelIndex);
-  }
   std::string getTypeName() const override { return typeName; }
   std::string getChannelName() const override { return channelName; }
-  size_t getChannelIndex() const override { return channelIndex; }
+  size_t getChannelIndex() const override = 0;
+
+  virtual std::string getChannelString() const = 0;
+
   virtual bool
   validateFunctionDecl(clang::ASTContext &context,
                        std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
@@ -71,14 +70,12 @@ public:
 protected:
   std::string channelName;
   std::string typeName;
-  std::size_t channelIndex;
 };
 class Psend : public AbstractComProjection {
 public:
   Psend(const std::string &channelName, const std::string &typeName,
         std::size_t channelIndex)
-      : AbstractComProjection(ProjectionType::Send, channelName, typeName,
-                              channelIndex) {}
+      : AbstractComProjection(ProjectionType::Send, channelName, typeName), channelIndex(channelIndex) {}
   ~Psend() = default;
   virtual std::string toString() const override {
     return std::format("!{}[{}]<{}>.", this->channelName, this->channelIndex,
@@ -90,6 +87,15 @@ public:
                this->typeName);
   }
 
+  size_t getChannelIndex() const override {
+    return channelIndex;
+  }
+
+  std::string getChannelString() const override {
+    return std::format("{}[{}]", this->channelName, this->channelIndex);
+  }
+
+
   bool validateFunctionDecl(clang::ASTContext &context,
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                             clang::Stmt::const_child_iterator &itr,
@@ -97,14 +103,14 @@ public:
                             AbstractProjection*& parentScopeProjectionPtr) override;
 
 private:
+    size_t channelIndex;
 };
 
 class Precieve : public AbstractComProjection {
 public:
   Precieve(const std::string &channelName, const std::string &typeName,
            std::size_t channelIndex)
-      : AbstractComProjection(ProjectionType::Recieve, channelName, typeName,
-                              channelIndex) {}
+      : AbstractComProjection(ProjectionType::Recieve, channelName, typeName), channelIndex(channelIndex) {}
   ~Precieve() = default;
 
   virtual std::string toString() const override {
@@ -122,8 +128,25 @@ public:
                             clang::Stmt::const_child_iterator &itr,
                             clang::Stmt::const_child_iterator &end,
                             AbstractProjection*& parentScopeProjectionPtr) override;
+  size_t getChannelIndex() const override {
+    return channelIndex;
+  }
+
+  std::string getChannelString() const override {
+        return std::format("{}[{}]", this->channelName, this->channelIndex);
+  }
+
 
 private:
+    size_t channelIndex;
+};
+
+class Ireceive: public AbstractComProjection {
+
+};
+
+class Isend: public AbstractComProjection {
+
 };
 
 
