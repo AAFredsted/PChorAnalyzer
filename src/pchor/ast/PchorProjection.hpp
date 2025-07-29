@@ -8,6 +8,9 @@
 #include <memory>
 #include <iterator>
 
+#include "PchorAST.hpp"
+
+
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Stmt.h>
 #include <clang/AST/StmtIterator.h>
@@ -77,7 +80,8 @@ public:
         std::size_t channelIndex)
       : AbstractComProjection(ProjectionType::Send, channelName, typeName), channelIndex(channelIndex) {}
   ~Psend() = default;
-  virtual std::string toString() const override {
+  
+  std::string toString() const override {
     return std::format("!{}[{}]<{}>.", this->channelName, this->channelIndex,
                        this->typeName);
   }
@@ -113,12 +117,12 @@ public:
       : AbstractComProjection(ProjectionType::Recieve, channelName, typeName), channelIndex(channelIndex) {}
   ~Precieve() = default;
 
-  virtual std::string toString() const override {
+  std::string toString() const override {
     return std::format("?{}[{}]<{}>.", this->channelName, this->channelIndex,
                        this->typeName);
   }
 
-  virtual void print() const override {
+  void print() const override {
     std::print("?{}[{}]<{}>.", this->channelName, this->channelIndex,
                this->typeName);
   }
@@ -142,10 +146,84 @@ private:
 };
 
 class Ireceive: public AbstractComProjection {
+  Ireceive(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) 
+  : AbstractComProjection(ProjectionType::Recieve, channelName, typeName), indexNode(indexNode) {}
 
+  ~Ireceive() = default;
+
+  virtual std::string toString() const override {
+    return std::format("?{}[{}]<{}>.", this->channelName, this->indexNode->toString(),
+                       this->typeName);
+  }
+
+  void print() const override {
+    std::print("?{}[{}]<{}>.", this->channelName, this->indexNode->toString(),
+               this->typeName);
+  }
+
+  bool validateFunctionDecl(clang::ASTContext &context,
+                            std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
+                            clang::Stmt::const_child_iterator &itr,
+                            clang::Stmt::const_child_iterator &end,
+                            AbstractProjection*& parentScopeProjectionPtr) override;
+  size_t getChannelIndex() const override {
+    if(indexNode->isExprLiteral()){
+      auto temp =  std::unordered_map<std::string, size_t>{};
+      return indexNode->getLiteral(temp);
+    }
+    else {
+      std::println("[PchorProjection] warning: called getChannelIndex from Ireceive with non-literal index");
+      return 1;
+    }
+  }
+
+  std::string getChannelString() const override {
+        return std::format("{}[{}]", this->channelName, this->indexNode->toString());
+  }
+
+
+private:
+  std::shared_ptr<IndexExpr> indexNode;
 };
 
 class Isend: public AbstractComProjection {
+  Isend(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) 
+  : AbstractComProjection(ProjectionType::Recieve, channelName, typeName), indexNode(indexNode) {}
+
+  ~Isend() = default;
+
+  virtual std::string toString() const override {
+    return std::format("?{}[{}]<{}>.", this->channelName, this->indexNode->toString(),
+                       this->typeName);
+  }
+
+  void print() const override {
+    std::print("?{}[{}]<{}>.", this->channelName, this->indexNode->toString(),
+               this->typeName);
+  }
+
+  bool validateFunctionDecl(clang::ASTContext &context,
+                            std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
+                            clang::Stmt::const_child_iterator &itr,
+                            clang::Stmt::const_child_iterator &end,
+                            AbstractProjection*& parentScopeProjectionPtr) override;
+  size_t getChannelIndex() const override {
+    if(indexNode->isExprLiteral()){
+      auto temp =  std::unordered_map<std::string, size_t>{};
+      return indexNode->getLiteral(temp);
+    }
+    else {
+      std::println("[PchorProjection] warning: called getChannelIndex from Ireceive with non-literal index");
+      return 1;
+    }
+  }
+
+  std::string getChannelString() const override {
+        return std::format("{}[{}]", this->channelName, this->indexNode->toString());
+  }
+
+private:
+  std::shared_ptr<IndexExpr> indexNode;
 
 };
 
