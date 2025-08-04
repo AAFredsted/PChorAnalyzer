@@ -122,11 +122,12 @@ private:
   std::unordered_map<std::string, Context> map;
 };
 
+template <typename indexType>
 struct ParticipantKey {
   std::string name;
-  size_t index;
+  indexType index;
 
-  ParticipantKey(const std::string &name, size_t index)
+  ParticipantKey(const std::string &name, indexType index)
       : name(name), index(index) {}
 
   ParticipantKey(const ParticipantKey &other) {
@@ -140,7 +141,6 @@ struct ParticipantKey {
     }
     return *this;
   }
-
   std::string toString() const { return std::format("{}[{}]", name, index); }
   ParticipantKey(ParticipantKey &&other) = delete;
   ParticipantKey &operator=(ParticipantKey &&other) = delete;
@@ -152,13 +152,16 @@ struct ParticipantKey {
   }
 };
 
+template <typename indexType>
 struct ParticipantKeyHash {
-  size_t operator()(const ParticipantKey &key) const {
+  size_t operator()(const ParticipantKey<indexType> &key) const {
     size_t h1 = std::hash<std::string>{}(key.name);
-    size_t h2 = std::hash<size_t>{}(key.index);
+    size_t h2 = std::hash<indexType>{}(key.index);
     return h1 ^ (h2 << 1);
   }
 };
+
+
 
 class PchorProjection {
 public:
@@ -179,20 +182,20 @@ public:
     return *this;
   }
   ~PchorProjection() = default;
-  void addParticipant(const ParticipantKey &participantName) {
+  void addParticipant(const ParticipantKey<size_t> &participantName) {
     projectionMap.emplace(
         participantName,
         ProjectionList{});
   }
 
-  void addProjection(const ParticipantKey &key,
+  void addProjection(const ParticipantKey<size_t> &key,
                      std::unique_ptr<PchorAST::AbstractProjection> proj) {
     projectionMap[key].appendBack(std::move(proj));
     
   }
 
 
-  bool hasProjection(const ParticipantKey &key) const {
+  bool hasProjection(const ParticipantKey<size_t> &key) const {
     return projectionMap.contains(key);
   }
   void printProjections() const {
@@ -213,9 +216,9 @@ public:
   auto end() const { return projectionMap.end(); }
 
 private:
-  std::unordered_map<ParticipantKey,
+  std::unordered_map<ParticipantKey<size_t>,
                       ProjectionList,
-                     ParticipantKeyHash>
+                     ParticipantKeyHash<size_t>>
       projectionMap;
 };
 
