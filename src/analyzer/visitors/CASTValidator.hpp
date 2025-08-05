@@ -16,7 +16,7 @@ public:
   clang::FunctionDecl *validateFuncDecl(
       std::shared_ptr<CASTMapping> CASTMap,
       const ProjectionList &projections,
-      const std::string& participantName);
+      const ParticipantKey &participantName);
 
   bool validateProjection(clang::ASTContext &Context,
                           std::shared_ptr<CASTMapping> &CASTmap,

@@ -20,28 +20,24 @@ void CASTValidator::printValidations() {
     std::println("");
   }
 }
-/**
- * Function that validates whether found function has full definition
- * If no full definition is found, it is sought elsewhere in the Clang AST using
- */
 clang::FunctionDecl *CASTValidator::validateFuncDecl(
     std::shared_ptr<CASTMapping> CASTMap,
     const ProjectionList &projections,
-    const std::string& participantName) {
+    const ParticipantKey &participantName) {
   clang::FunctionDecl *funcDecl =
       nullptr;
 
   for (const auto &projection : projections) {
 
     const clang::Decl *currentDecl = CASTMap->getMapping<const clang::Decl *>(
-        std::format("{}{}", participantName, projection.getTypeName()));
+        std::format("{}{}", participantName.name, projection.getTypeName()));
 
     const auto *currentFuncDecl =
         llvm::dyn_cast<clang::FunctionDecl>(currentDecl);
     if (!currentFuncDecl) {
       throw std::runtime_error(std::format(
           "Mapping for participant '{}' does not point to a valid FunctionDecl",
-          participantName));
+          participantName.toString()));
     }
     if (funcDecl == nullptr) {
       funcDecl = const_cast<clang::FunctionDecl *>(
@@ -50,7 +46,7 @@ clang::FunctionDecl *CASTValidator::validateFuncDecl(
       throw std::runtime_error(std::format(
           "Projections for participant '{}' must map to the same function. "
           "Expected '{}', but found '{}'.",
-          participantName, funcDecl->getNameAsString(),
+          participantName.toString(), funcDecl->getNameAsString(),
           currentFuncDecl->getNameAsString()));
     }
   }
