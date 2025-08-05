@@ -41,6 +41,12 @@ enum class Expr : uint8_t {
   IndexExpr
 };
 
+enum class IterType: uint8_t {
+  FullIter,
+  MinExIter,
+  MaxExIter
+};
+
 //Arithmetic expression base.. Not visited and evaluated using it's own eval function
 
 enum class ArithmeticExpr : uint8_t {
@@ -550,6 +556,21 @@ public:
     }
     const std::string& getIdentifierRef() const {
       return identifier;
+    }
+
+    IterType getType() const {
+      if(min == baseIndex->getLower() && max == baseIndex->getUpper()){
+        return IterType::FullIter;
+      }
+      else if(min != baseIndex->getLower() && max == baseIndex->getUpper()){
+        return IterType::MinExIter;
+      }
+      else if(max != baseIndex->getUpper() && min == baseIndex->getLower()) {
+        return IterType::MaxExIter;
+      }
+      else {
+        throw std::runtime_error(std::format("[PchorAST] Error: Iteration Expression does not adheer to formal definitions, expected (i: I | i < max(I) | i > min(I)), received: {}", this->toString()));
+      }
     }
 private:
   std::shared_ptr<IndexASTNode> baseIndex;

@@ -226,6 +226,28 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
   if(baseIndex->getUpper() == std::numeric_limits<size_t>::max()) {
     std::println("The case for indeces with no upper bound has not been implemented");
     mappingSuccess = false;
+
+
+
+    //lets actually try to deal with this:
+
+    //first, we need to figure out, which of the three iteration cases we are in:
+
+    IterType type = iterExpr->getType();
+
+    switch(type) {
+      case IterType::FullIter:
+        std::println("fulliter case");
+        break;
+      case IterType::MaxExIter:
+        std::println("maxiter case");
+        break;
+      case IterType::MinExIter:
+        std::println("miniter case");
+        break;
+      default:
+        throw std::runtime_error("[Proj_Visitor] Error, did not receive valid IterType");
+    }
   }
   else {
     const std::string identifier = iterExpr->getIdentifierRef();

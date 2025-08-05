@@ -968,7 +968,7 @@ std::unique_ptr<BaseArithmeticExpr> PchorParser::parsePrimaryArithmeticExpr(std:
   std::vector<Token>::iterator endofScope;
   switch(itr->type) {
     case TokenType::Literal:
-      node = std::make_unique<LiteralExpr>(std::stoull(std::string(itr->value)));
+      node = std::make_unique<LiteralExpr>(IndexASTNode::parseLiteral(itr->value));
       itr++;
       break;
     case TokenType::Identifier:

@@ -1,0 +1,10 @@
+Index I{0..n}
+
+Participant Send{I}
+Channel s{I}
+
+IterEx = foreach(i < max(I)) {
+    Send[i] -> Send[n-i]: s[n-i]<Type>.
+    Send[i+1] -> Send[n-i+1]: s[n-i+1]<Type>.
+    end
+}. end
