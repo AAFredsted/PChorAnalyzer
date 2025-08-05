@@ -1,5 +1,5 @@
 #pragma once
-
+#include <variant>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -122,12 +122,33 @@ private:
   std::unordered_map<std::string, Context> map;
 };
 
-struct ParticipantKey {
-  std::string name;
-  size_t index;
 
-  ParticipantKey(const std::string &name, size_t index)
-      : name(name), index(index) {}
+
+
+/*
+We use Variant to have a relatively simple way to deal with multiple keys in one set.
+*/
+struct ParticipantKey {
+  using IndexVariant = std::variant<size_t, std::string>;
+
+
+  std::string name;
+  IndexVariant index;
+
+  ParticipantKey(const std::string &name, IndexVariant index)
+      : name(name), index(std::move(index)) {}
+  
+  ~ParticipantKey() = default;
+
+  std::string toString() const {
+    return std::visit([&](const auto &val) {
+      return std::format("{}[{}]", name, val);
+    }, index);
+  }
+
+  bool operator==(const ParticipantKey &other) const {
+    return name == other.name && index == other.index;
+  }
 
   ParticipantKey(const ParticipantKey &other) {
     this->name = other.name;
@@ -141,24 +162,22 @@ struct ParticipantKey {
     return *this;
   }
 
-  std::string toString() const { return std::format("{}[{}]", name, index); }
-  ParticipantKey(ParticipantKey &&other) = delete;
-  ParticipantKey &operator=(ParticipantKey &&other) = delete;
-
-  ~ParticipantKey() = default;
-
-  bool operator==(const ParticipantKey &other) const {
-    return name == other.name && index == other.index;
-  }
+  ParticipantKey(ParticipantKey&& other) = delete;
+  ParticipantKey& operator=(ParticipantKey&& other) = delete;
 };
+
+
 
 struct ParticipantKeyHash {
   size_t operator()(const ParticipantKey &key) const {
     size_t h1 = std::hash<std::string>{}(key.name);
-    size_t h2 = std::hash<size_t>{}(key.index);
+    size_t h2 = std::visit([](const auto &val) {
+      return std::hash<std::decay_t<decltype(val)>>{}(val);
+    }, key.index);
     return h1 ^ (h2 << 1);
   }
 };
+
 
 class PchorProjection {
 public:
