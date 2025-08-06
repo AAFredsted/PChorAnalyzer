@@ -4,27 +4,33 @@
 
 namespace PchorAST {
 
+
     struct FullIter {
         std::shared_ptr<ProjectionList> forward; //a
         std::shared_ptr<ProjectionList> backward; //b
-        std::shared_ptr<ProjectionList> unevenAB; //a+b
+        std::shared_ptr<ProjectionList> unevenOverlapAB; //a+b
         const IterType i = IterType::FullIter;
 
         // Rule of Five
-        FullIter(): forward(), backward(), unevenAB() {};
+        FullIter()
+        : forward(std::make_shared<ProjectionList>()),
+            backward(std::make_shared<ProjectionList>()),
+            unevenOverlapAB(std::make_shared<ProjectionList>()) {}
+
+
         ~FullIter() = default;
         FullIter(const FullIter&) = delete;
         FullIter& operator=(const FullIter&) = delete;
         FullIter(FullIter&& other) noexcept {
             forward = std::move(other.forward);
             backward = std::move(other.backward);
-            unevenAB = std::move(other.backward);
+            unevenOverlapAB = std::move(other.backward);
         };
         FullIter& operator=(FullIter&& other) noexcept {
             if (this != &other){
                 forward = std::move(other.forward);
                 backward = std::move(other.backward);
-                unevenAB = std::move(other.backward);
+                unevenOverlapAB = std::move(other.backward);
             }
             return *this;
         }
@@ -33,16 +39,16 @@ namespace PchorAST {
         template<typename ComType>
         requires std::derived_from<ComType, AbstractProjection>
         void addForward(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) {
+
             this->forward->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
-            this->unevenAB->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
+            this->unevenOverlapAB->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
         }
 
         template<typename ComType>
         requires std::derived_from<ComType, AbstractProjection>
         void addBackward(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) {
-
             this->backward->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
-            this->unevenAB->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
+            this->unevenOverlapAB->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
         }
     };
 
@@ -59,7 +65,16 @@ namespace PchorAST {
 
         //rule of 5
 
-        MaxExcludingIter(): forward(), backward(), forwardPlus(), backwardPlus(), evenOverlapAB(), evenOverlapCD(), unevenOverlapCB(), unevenOverlapAD() {};
+        MaxExcludingIter()
+        :   forward(std::make_shared<ProjectionList>()),
+            backward(std::make_shared<ProjectionList>()),
+            forwardPlus(std::make_shared<ProjectionList>()),
+            backwardPlus(std::make_shared<ProjectionList>()),
+            evenOverlapAB(std::make_shared<ProjectionList>()),
+            evenOverlapCD(std::make_shared<ProjectionList>()),
+            unevenOverlapCB(std::make_shared<ProjectionList>()),
+            unevenOverlapAD(std::make_shared<ProjectionList>()) {}
+
         ~MaxExcludingIter() = default;
         MaxExcludingIter(const MaxExcludingIter&) = delete;
         MaxExcludingIter& operator=(const MaxExcludingIter&) = delete;
@@ -148,7 +163,16 @@ namespace PchorAST {
         std::shared_ptr<ProjectionList> unevenOverlapCB;
         const IterType i = IterType::MinExIter;
 
-        MinExcludingIter(): forward(), backward(), forwardMinus(), backwardMinus(), evenOverlapAB(), evenOverlapCD(), unevenOverlapAD(), unevenOverlapCB() {};
+        MinExcludingIter()
+        : forward(std::make_shared<ProjectionList>()),
+            backward(std::make_shared<ProjectionList>()),
+            forwardMinus(std::make_shared<ProjectionList>()),
+            backwardMinus(std::make_shared<ProjectionList>()),
+            evenOverlapAB(std::make_shared<ProjectionList>()),
+            evenOverlapCD(std::make_shared<ProjectionList>()),
+            unevenOverlapAD(std::make_shared<ProjectionList>()),
+            unevenOverlapCB(std::make_shared<ProjectionList>()) {}
+
         ~MinExcludingIter() = default;
         MinExcludingIter(const MinExcludingIter&) = delete;
         MinExcludingIter& operator=(const MinExcludingIter&) = delete;

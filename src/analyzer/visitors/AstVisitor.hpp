@@ -112,8 +112,10 @@ public:
 
   std::shared_ptr<PchorProjection> getContext() { return ctx; }
 
-  std::shared_ptr<PchorProjection> getIterTypes(const ExprList& expr, IterType type);
-
+  std::unordered_map<std::string, FullIter> getCasesFull(const std::shared_ptr<ExprList>& expr, const std::string& i);
+  std::unordered_map<std::string, MaxExcludingIter> getCasesMaxEx(const std::shared_ptr<ExprList>& expr);
+  std::unordered_map<std::string, MinExcludingIter> getCasesMinEx(const std::shared_ptr<ExprList>& expr);
+  
   void printProjections() const { ctx->printProjections(); }
 
 private:

@@ -146,6 +146,7 @@ private:
 };
 
 class Ireceive: public AbstractComProjection {
+public:
   Ireceive(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) 
   : AbstractComProjection(ProjectionType::IReceive, channelName, typeName), indexNode(indexNode) {}
 
@@ -165,7 +166,9 @@ class Ireceive: public AbstractComProjection {
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                             clang::Stmt::const_child_iterator &itr,
                             clang::Stmt::const_child_iterator &end,
-                            AbstractProjection*& parentScopeProjectionPtr) override;
+                            AbstractProjection*& parentScopeProjectionPtr) override {
+    return true;
+  }
   size_t getChannelIndex() const override {
     if(indexNode->isExprLiteral()){
       auto temp =  std::unordered_map<std::string, size_t>{};
@@ -187,12 +190,13 @@ private:
 };
 
 class Isend: public AbstractComProjection {
+public:
   Isend(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) 
   : AbstractComProjection(ProjectionType::ISend, channelName, typeName), indexNode(indexNode) {}
 
   ~Isend() = default;
 
-  virtual std::string toString() const override {
+  std::string toString() const override {
     return std::format("?{}[{}]<{}>.", this->channelName, this->indexNode->toString(),
                        this->typeName);
   }
@@ -206,7 +210,9 @@ class Isend: public AbstractComProjection {
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                             clang::Stmt::const_child_iterator &itr,
                             clang::Stmt::const_child_iterator &end,
-                            AbstractProjection*& parentScopeProjectionPtr) override;
+                            AbstractProjection*& parentScopeProjectionPtr) override {
+    return true;
+  }
   size_t getChannelIndex() const override {
     if(indexNode->isExprLiteral()){
       auto temp =  std::unordered_map<std::string, size_t>{};

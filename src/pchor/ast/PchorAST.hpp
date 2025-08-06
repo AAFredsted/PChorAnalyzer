@@ -47,13 +47,27 @@ enum class IterType: uint8_t {
   MaxExIter
 };
 
-//Arithmetic expression base.. Not visited and evaluated using it's own eval function
 
+/*
+Identifiers for the different nodetypes in the arithmetic expression tree
+*/
 enum class ArithmeticExpr : uint8_t {
   Literal,
   Identifier,
   Addition,
   Subtraction
+};
+/*
+Identifier for the types of expressions used to validate and identify expressions for equivalence class projection
+*/
+enum class EquivalenceBaseType: uint8_t {
+  forward,
+  backward,
+  forwardPlus,
+  backwardPlus,
+  forwardMinus,
+  backwardMinus,
+  unknown
 };
 
 struct BaseArithmeticExpr {
@@ -65,6 +79,51 @@ struct BaseArithmeticExpr {
   virtual std::string toString() const = 0;
   virtual void print() const = 0;
   virtual size_t eval(std::unordered_map<std::string, size_t>& ctx) const = 0;
+  /*
+    requires [l,n] with l < n
+    in all iteration patterns, i will assume the value n-1, so we set the value equal to that and evaluate the expression.
+    Once the expression has been evaluated, we check the value against the expected values and 
+  */
+  EquivalenceBaseType getExprType(const std::string& identifier) const {
+
+    constexpr size_t forwardBase = std::numeric_limits<size_t>::max() - 1; // n-1
+    constexpr size_t forwardPlus = forwardBase + 1; // n
+    constexpr size_t forwardMinus = forwardBase - 1; // n-2
+    constexpr size_t backwardBase = 1; // = 1
+    constexpr size_t backwardPlus = backwardBase + 1; // 2
+    constexpr size_t backwardMinus = backwardBase - 1; // 0
+
+
+    std::unordered_map<std::string, size_t> ctx = {
+      {identifier, forwardBase}
+    };
+
+    const size_t j = eval(ctx);
+    //six success cases and one failure case
+    switch(j) {
+      //j == i
+      case forwardBase:
+        return EquivalenceBaseType::forward;
+      // j == i+1
+      case forwardPlus:
+        return EquivalenceBaseType::forwardPlus;
+      // j == i-1
+      case forwardMinus:
+        return EquivalenceBaseType::forwardMinus;
+
+      // j == n-(n-1) = 1
+      case backwardBase :
+        return EquivalenceBaseType::backward;
+      //j == n-(n-1) +1
+      case backwardPlus:
+        return EquivalenceBaseType::backwardPlus;
+      //j == n-(n-1)-1
+      case backwardMinus:
+        return EquivalenceBaseType::backwardMinus;
+      default:
+        return EquivalenceBaseType::unknown;
+    }
+  }
 };
 
 struct LiteralExpr : public BaseArithmeticExpr {
@@ -79,6 +138,9 @@ struct LiteralExpr : public BaseArithmeticExpr {
     std::println("{}", this->toString());
   }
   size_t eval([[maybe_unused]] std::unordered_map<std::string, size_t>& ctx) const override { return value; }
+
+
+
 };
 
 struct IdentifierExpr: public BaseArithmeticExpr {
@@ -130,6 +192,7 @@ struct AdditionExpr: public BaseBinaryOpExpr {
       }
       return lhs->eval(ctx) + rhs->eval(ctx);
     }
+
 };
 struct SubstractionExpr: public BaseBinaryOpExpr {
     SubstractionExpr(std::unique_ptr<BaseArithmeticExpr> lhs, std::unique_ptr<BaseArithmeticExpr> rhs): BaseBinaryOpExpr(ArithmeticExpr::Subtraction, std::move(lhs), std::move(rhs)) {}
@@ -350,6 +413,10 @@ public:
   bool isExprLiteral() const { return isLiteral; }
   size_t getLiteral(std::unordered_map<std::string, size_t> &ctx) const { return literal->eval(ctx); }
 
+  EquivalenceBaseType getEquivalenceType(const std::string& i){
+    return literal->getExprType(i);
+  }
+
 protected:
   std::shared_ptr<IndexASTNode> baseIndex;
   std::unique_ptr<BaseArithmeticExpr> literal;
@@ -481,7 +548,9 @@ public:
   std::vector<std::shared_ptr<ExprPchorASTNode>>::const_iterator end() const {
     return exprlist.cend();
   }
-
+  size_t size() const {
+    return exprlist.size();
+  }
 
 protected:
   std::vector<std::shared_ptr<ExprPchorASTNode>> exprlist;

@@ -1,4 +1,5 @@
 #include "AstVisitor.hpp"
+#include "../../pchor/ast/PchorProjection.hpp"
 
 namespace PchorAST {
 
@@ -222,36 +223,37 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
 
   const auto baseIndex = iterExpr->getBaseIndex();
 
+  const std::string identifier = iterExpr->getIdentifierRef();
 
   if(baseIndex->getUpper() == std::numeric_limits<size_t>::max()) {
     std::println("The case for indeces with no upper bound has not been implemented");
     mappingSuccess = false;
 
 
+    std::unordered_map<std::string, FullIter> fullIterCase;
+    std::unordered_map<std::string, MaxExcludingIter> maxIterCase;
+    std::unordered_map<std::string, MinExcludingIter> minIterCase;
 
-    //lets actually try to deal with this:
-    //first, we need all unique participant namespaces
+    const auto body = expr.getBody();
 
-    //second, we need to figure out, which of the three iteration cases we are in:
 
-    IterType type = iterExpr->getType();
-    //we want function that takes exprList and returns symbol table of T_a, T_b etc for those respective types !
-    switch(type) {
-      case IterType::FullIter:
-        std::println("fulliter case");
+    switch(iterExpr->getType()){
+      case IterType::FullIter :
+        std::println("FullIter Not implemented Yet");
+        fullIterCase = getCasesFull(body, identifier);
         break;
-      case IterType::MaxExIter:
-        std::println("maxiter case");
+      case IterType::MaxExIter :
+        std::println("MaxIter Not implemented Yet");
+        maxIterCase = getCasesMaxEx(body);
         break;
-      case IterType::MinExIter:
-        std::println("miniter case");
+      case IterType::MinExIter :
+        std::println("MinIter Not implemented Yet");
+        minIterCase = getCasesMinEx(body);
         break;
-      default:
-        throw std::runtime_error("[Proj_Visitor] Error, did not receive valid IterType");
     }
+
   }
   else {
-    const std::string identifier = iterExpr->getIdentifierRef();
     size_t el = iterExpr->getMin();
     size_t max = iterExpr->getMax();
     //due to previous check, we know that max is not max, so we can check for one above !
@@ -271,16 +273,94 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
   }
   //set index context for this iteration, then run it
 }
+//Helper Function for Insertion
+template <typename ComType>
+requires std::derived_from<ComType, AbstractProjection>
+void insertFullPattern(FullIter& iter, 
+                   const std::shared_ptr<ParticipantExpr>& participant, 
+                   const std::string& channelName,
+                   const std::string& dataType,
+                   const std::string& identifier) {
+  const auto index = participant->getIndex();
+  switch (index->getEquivalenceType(identifier)) {
+    case EquivalenceBaseType::forward:
+      iter.addForward<ComType>(channelName, dataType, index);
+      break;
+    case EquivalenceBaseType::backward:
+      iter.addBackward<ComType>(channelName, dataType, index);
+      break;
+    default:
+      throw std::runtime_error(std::format(
+        "[Proj_Visitor] The iteration pattern ({}: I) only allows expressions of type (i|n-i). Found {}",
+        identifier, index->toString()));
+  }
+}
 
-//create classes just for the basic layouts!
-//have map from identifier to basic layoyts!
-//then, we can append to layouts, and then we construct equivalence classes from that, from which we finalize our journey
+/*
+This only runs when we have i: I in the iteration !
+*/
+std::unordered_map<std::string, FullIter> Proj_PchorASTVisitor::getCasesFull(const std::shared_ptr<ExprList>& expr, const std::string& i) {
+  std::unordered_map<std::string, FullIter> BasePattern{};
+  std::println("getCasesFull Beginning");
+  for(const auto& com: *expr) {
+    if(com->getExprType() != Expr::ComExpr){
+       throw std::runtime_error(std::format("Only Com Allowed in unbounded foreach, found {}", com->toString()));
+    }
+    
+    std::shared_ptr<CommunicationExpr> comExpr = std::dynamic_pointer_cast<CommunicationExpr>(com);
+  
+    std::println("Communication Expressoin successfully extracted");
+    const auto sender = comExpr->getSender();
+    const auto receiver = comExpr->getReciever();
+    const auto channel = comExpr->getChannel();
+    const std::string& channelName = channel->getBaseParticipant()->getName();
+    const auto dataType = comExpr->getDataType();
 
+    //sender and receiver must be indexed by some type
+    if(sender->getIndex()->isExprLiteral() || receiver->getIndex()->isExprLiteral() || channel->getIndex()->isExprLiteral()){
+      throw std::runtime_error(std::format("[Proj_Visitor] Equivalence Class projection requires indeces to be expressions. Found {} and {}", sender->toString(), receiver->toString(), channel->toString()));
+    }
 
+    //idea, find pattern for types 
+    const std::string senderName = sender->getBaseParticipant()->getName();
+    if(!BasePattern.contains(senderName)) {
+      BasePattern.try_emplace(senderName);
+    }
+    insertFullPattern<Isend>(BasePattern.at(senderName), sender, channelName, dataType, i);
 
-std::shared_ptr<PchorProjection> getIterTypes(const ExprList& expr, IterType type) {
+    const std::string receiverName = receiver->getBaseParticipant()->getName();
+    if(!BasePattern.contains(receiverName)) {
+      BasePattern.try_emplace(receiverName);
+    }
+    insertFullPattern<Ireceive>(BasePattern.at(senderName), sender, channelName, dataType, i);
 
-  //idea: iterate over expr in exprlist and get itertypes (if they match, we append to a prebuilt construct, otherwise not)
+    return BasePattern;
+
+  }
+
+  return std::unordered_map<std::string, FullIter>();
+}
+std::unordered_map<std::string, MaxExcludingIter> Proj_PchorASTVisitor::getCasesMaxEx(const std::shared_ptr<ExprList>& expr) {
+    std::println("Exprlist of length {}", expr->size());
+    for(const auto& com: *expr) {
+    std::println("We attempt to print what we have");
+    com->print();
+    if(com->getExprType() != Expr::ComExpr){
+      throw std::runtime_error(std::format("Only Com Allowed in unbounded foreach, found {}", com->toString()));
+    }
+  }
+  return std::unordered_map<std::string, MaxExcludingIter>();
+
+}
+std::unordered_map<std::string, MinExcludingIter> Proj_PchorASTVisitor::getCasesMinEx(const std::shared_ptr<ExprList>& expr) {
+    for(const auto& com: *expr) {
+    if(com->getExprType() != Expr::ComExpr){
+       throw std::runtime_error(std::format("Only Com Allowed in unbounded foreach, found {}", com->toString()));
+    }
+  }
+
+  return std::unordered_map<std::string, MinExcludingIter>();
+
 }
 
 } // namespace PchorAST
