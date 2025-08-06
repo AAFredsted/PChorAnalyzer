@@ -40,6 +40,7 @@ add_library(PchorAnalyzerPlugin SHARED
     ./src/analyzer/visitors/CASTValidator.cpp
     ./src/analyzer/utils/CASTAnalyzerUtils.cpp
     ./src/analyzer/utils/ContextManager.cpp
+    ./src/analyzer/utils/IterPatterns.cpp
     ./src/utils/Utils.cpp
     ./src/analyzer/Plugin.cpp
 )

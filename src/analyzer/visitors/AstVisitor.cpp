@@ -230,11 +230,12 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
 
 
     //lets actually try to deal with this:
+    //first, we need all unique participant namespaces
 
-    //first, we need to figure out, which of the three iteration cases we are in:
+    //second, we need to figure out, which of the three iteration cases we are in:
 
     IterType type = iterExpr->getType();
-
+    //we want function that takes exprList and returns symbol table of T_a, T_b etc for those respective types !
     switch(type) {
       case IterType::FullIter:
         std::println("fulliter case");
@@ -270,4 +271,16 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
   }
   //set index context for this iteration, then run it
 }
+
+//create classes just for the basic layouts!
+//have map from identifier to basic layoyts!
+//then, we can append to layouts, and then we construct equivalence classes from that, from which we finalize our journey
+
+
+
+std::shared_ptr<PchorProjection> getIterTypes(const ExprList& expr, IterType type) {
+
+  //idea: iterate over expr in exprlist and get itertypes (if they match, we append to a prebuilt construct, otherwise not)
+}
+
 } // namespace PchorAST

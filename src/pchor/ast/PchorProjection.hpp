@@ -20,7 +20,7 @@ namespace PchorAST {
 class CASTMapping;
 class ProjectionList;
 
-enum class ProjectionType : uint8_t { Send, Recieve };
+enum class ProjectionType : uint8_t { Send, Recieve, ISend, IReceive };
 
 class AbstractProjection {
 public:
@@ -147,7 +147,7 @@ private:
 
 class Ireceive: public AbstractComProjection {
   Ireceive(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) 
-  : AbstractComProjection(ProjectionType::Recieve, channelName, typeName), indexNode(indexNode) {}
+  : AbstractComProjection(ProjectionType::IReceive, channelName, typeName), indexNode(indexNode) {}
 
   ~Ireceive() = default;
 
@@ -188,7 +188,7 @@ private:
 
 class Isend: public AbstractComProjection {
   Isend(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) 
-  : AbstractComProjection(ProjectionType::Recieve, channelName, typeName), indexNode(indexNode) {}
+  : AbstractComProjection(ProjectionType::ISend, channelName, typeName), indexNode(indexNode) {}
 
   ~Isend() = default;
 

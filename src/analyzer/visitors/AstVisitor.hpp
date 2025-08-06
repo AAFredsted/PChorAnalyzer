@@ -9,6 +9,7 @@
 #include "../../pchor/ast/PchorProjection.hpp"
 #include "../utils/CASTAnalyzerUtils.hpp"
 #include "../utils/ContextManager.hpp"
+#include "../utils/IterPatterns.hpp"
 
 namespace PchorAST {
 
@@ -110,6 +111,8 @@ public:
   void visit(const ForEachExpr &expr) override;
 
   std::shared_ptr<PchorProjection> getContext() { return ctx; }
+
+  std::shared_ptr<PchorProjection> getIterTypes(const ExprList& expr, IterType type);
 
   void printProjections() const { ctx->printProjections(); }
 
