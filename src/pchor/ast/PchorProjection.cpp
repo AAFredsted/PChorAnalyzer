@@ -94,7 +94,7 @@ bool Psend::validateFunctionDecl(
   }
 }
 
-bool Precieve::validateFunctionDecl(
+bool Preceive::validateFunctionDecl(
     clang::ASTContext &context, std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
     clang::Stmt::const_child_iterator &itr,
     clang::Stmt::const_child_iterator &end,

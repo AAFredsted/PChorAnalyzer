@@ -38,10 +38,12 @@ namespace PchorAST {
         //we only add basic types, that both add to forwardxBackward
         template<typename ComType>
         requires std::derived_from<ComType, AbstractProjection>
-        void addForward(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) {
+        void addForward(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode, bool minAllowed) {
 
             this->forward->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
-            this->unevenOverlapAB->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
+            if(minAllowed) {
+                this->unevenOverlapAB->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
+            }
         }
 
         template<typename ComType>

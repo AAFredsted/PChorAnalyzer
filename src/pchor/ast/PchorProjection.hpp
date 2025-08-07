@@ -25,9 +25,35 @@ enum class ProjectionType : uint8_t { Send, Recieve, ISend, IReceive };
 class AbstractProjection {
 public:
   AbstractProjection(ProjectionType type) : type(type) {}
+
+  AbstractProjection(const AbstractProjection& other) 
+    : type(other.type), next(other.next ? other.next->clone() : nullptr) {}
+
+  AbstractProjection& operator=(const AbstractProjection& other) {
+    if (this != &other) {
+      type = other.type;
+      next = other.next ? other.next->clone() : nullptr;
+    }
+    return *this;
+  }
+
+  AbstractProjection(AbstractProjection&& other) noexcept
+    : type(std::move(other.type)), next(std::move(other.next)) {}
+
+  AbstractProjection& operator=(AbstractProjection&& other) noexcept {
+    if (this != &other) {
+      type = std::move(other.type);
+      next = std::move(other.next);
+    }
+    return *this;
+  }
+
   virtual ~AbstractProjection() = default;
   virtual void print() const = 0;
   virtual std::string toString() const = 0;
+
+  //clone method to avoid copy-move semantics, as unique_ptr is move only
+  virtual std::unique_ptr<AbstractProjection> clone() const = 0;
 
   virtual bool isComProjection() const = 0;
   virtual std::string getTypeName() const = 0;
@@ -56,11 +82,50 @@ public:
                         const std::string &typeName)
       : AbstractProjection(type), channelName(channelName), typeName(typeName) {}
 
+  AbstractComProjection(const AbstractComProjection& other)
+      : AbstractProjection(other),  // copy base
+        channelName(other.channelName),
+        typeName(other.typeName) {}
+
+  AbstractComProjection& operator=(const AbstractComProjection& other) {
+    if (this != &other) {
+      AbstractProjection::operator=(other);  // copy base
+      channelName = other.channelName;
+      typeName = other.typeName;
+    }
+    return *this;
+  }
+
+  AbstractComProjection(AbstractComProjection&& other) noexcept
+      : AbstractProjection(std::move(other)),
+        channelName(std::move(other.channelName)),
+        typeName(std::move(other.typeName)) {}
+
+  AbstractComProjection& operator=(AbstractComProjection&& other) noexcept {
+    if (this != &other) {
+      AbstractProjection::operator=(std::move(other));
+      channelName = std::move(other.channelName);
+      typeName = std::move(other.typeName);
+    }
+    return *this;
+  }
+
+  virtual ~AbstractComProjection() = default;
+  
+
+  //implemented in derivative class
+  virtual void print() const override= 0;
+  virtual std::string toString() const override = 0;
+  virtual std::unique_ptr<AbstractProjection> clone() const override = 0;
+
+
+  //implemented in this abstract class
   bool isComProjection() const override { return true; }
   std::string getTypeName() const override { return typeName; }
   std::string getChannelName() const override { return channelName; }
   size_t getChannelIndex() const override = 0;
 
+  //added virtual functions
   virtual std::string getChannelString() const = 0;
 
   virtual bool
@@ -69,6 +134,8 @@ public:
                        clang::Stmt::const_child_iterator &itr,
                        clang::Stmt::const_child_iterator &end,
                        AbstractProjection*& parentScopeProjectionPtr) override = 0;
+
+
 
 protected:
   std::string channelName;
@@ -79,7 +146,16 @@ public:
   Psend(const std::string &channelName, const std::string &typeName,
         std::size_t channelIndex)
       : AbstractComProjection(ProjectionType::Send, channelName, typeName), channelIndex(channelIndex) {}
+  Psend(const Psend&) = default;
+  Psend(Psend&&) noexcept = default;
+  Psend& operator=(const Psend&) = default;
+  Psend& operator=(Psend&&) noexcept = default;
   ~Psend() = default;
+  
+  //cannot be overwritten virtually anymore
+  std::unique_ptr<AbstractProjection> clone() const override {
+    return std::make_unique<Psend>(*this); 
+  }
   
   std::string toString() const override {
     return std::format("!{}[{}]<{}>.", this->channelName, this->channelIndex,
@@ -110,12 +186,23 @@ private:
     size_t channelIndex;
 };
 
-class Precieve : public AbstractComProjection {
+class Preceive : public AbstractComProjection {
 public:
-  Precieve(const std::string &channelName, const std::string &typeName,
+  Preceive(const std::string &channelName, const std::string &typeName,
            std::size_t channelIndex)
       : AbstractComProjection(ProjectionType::Recieve, channelName, typeName), channelIndex(channelIndex) {}
-  ~Precieve() = default;
+
+  Preceive(const Preceive&) = default;
+  Preceive(Preceive&&) noexcept = default;
+  Preceive& operator=(const Preceive&) = default;
+  Preceive& operator=(Preceive&&) noexcept = default;
+  ~Preceive() = default;
+  
+
+  //cannot be overwritten virtually anymore
+  std::unique_ptr<AbstractProjection> clone() const override {
+    return std::make_unique<Preceive>(*this); 
+  }
 
   std::string toString() const override {
     return std::format("?{}[{}]<{}>.", this->channelName, this->channelIndex,
@@ -150,15 +237,24 @@ public:
   Ireceive(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) 
   : AbstractComProjection(ProjectionType::IReceive, channelName, typeName), indexNode(indexNode) {}
 
+  Ireceive(const Ireceive&) = default;
+  Ireceive(Ireceive&&) noexcept = default;
+  Ireceive& operator=(const Ireceive&) = default;
+  Ireceive& operator=(Ireceive&&) noexcept = default;
   ~Ireceive() = default;
 
+  //cannot be overwritten virtually anymore
+  std::unique_ptr<AbstractProjection> clone() const override {
+    return std::make_unique<Ireceive>(*this); 
+  }
+
   virtual std::string toString() const override {
-    return std::format("?{}[{}]<{}>.", this->channelName, this->indexNode->toString(),
+    return std::format("?{}[{}]<{}>.", this->channelName, this->indexNode->getArithmeticExprString(),
                        this->typeName);
   }
 
   void print() const override {
-    std::print("?{}[{}]<{}>.", this->channelName, this->indexNode->toString(),
+    std::print("?{}[{}]<{}>.", this->channelName, this->indexNode->getArithmeticExprString(),
                this->typeName);
   }
 
@@ -194,15 +290,26 @@ public:
   Isend(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) 
   : AbstractComProjection(ProjectionType::ISend, channelName, typeName), indexNode(indexNode) {}
 
+
+  Isend(const Isend&) = default;
+  Isend(Isend&&) noexcept = default;
+  Isend& operator=(const Isend&) = default;
+  Isend& operator=(Isend&&) noexcept = default;
   ~Isend() = default;
 
+
+  //cannot be overwritten virtually anymore
+  std::unique_ptr<AbstractProjection> clone() const override {
+    return std::make_unique<Isend>(*this); 
+  }
+
   std::string toString() const override {
-    return std::format("?{}[{}]<{}>.", this->channelName, this->indexNode->toString(),
+    return std::format("!{}[{}]<{}>.", this->channelName, this->indexNode->getArithmeticExprString(),
                        this->typeName);
   }
 
   void print() const override {
-    std::print("?{}[{}]<{}>.", this->channelName, this->indexNode->toString(),
+    std::print("?{}[{}]<{}>.", this->channelName, this->indexNode->getArithmeticExprString(),
                this->typeName);
   }
 
@@ -328,6 +435,36 @@ public:
         tail = tail->next.get();
       }
   }
+
+std::unique_ptr<ProjectionList> clone() const {
+    auto clonedList = std::make_unique<ProjectionList>();
+
+    if (head) {
+        // Step 1: Deep copy via head's clone (recursively copies rest of list too)
+        clonedList->head = head->clone();
+
+        // Step 2: Walk to the end to set tail
+        auto current = clonedList->head.get();
+        while (current->next) {
+            current = current->next.get();
+        }
+        clonedList->tail = current;
+    }
+
+    return clonedList;
+  }
+  void reset() {
+
+  }
+
+  void print() {
+    std::print("ProjList of: ");
+    for(const auto& elem: *this) {
+      std::print("{}", elem.toString());
+    }
+    std::println("");
+  }
+
 
   bool empty() const { return head == nullptr; }
 

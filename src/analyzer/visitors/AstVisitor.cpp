@@ -185,7 +185,7 @@ void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
                                                       this->channelIndex));
   } else {
     this->ctx->addProjection(
-        key, std::make_unique<Precieve>(this->currentChannelName,
+        key, std::make_unique<Preceive>(this->currentChannelName,
                                         this->currentDataType,
                                         this->channelIndex));
   }
@@ -236,11 +236,20 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
 
     const auto body = expr.getBody();
 
-
+    bool minAllowed;
     switch(iterExpr->getType()){
       case IterType::FullIter :
         std::println("FullIter Not implemented Yet");
-        fullIterCase = getCasesFull(body, identifier);
+        minAllowed = iterExpr->getMin() == 0;
+        fullIterCase = getCasesFull(body, identifier, minAllowed);
+        for(const auto& [name, elem]: fullIterCase) {
+          std::println("{}:",name);
+          elem.forward->print();
+          elem.backward->print();
+          elem.unevenOverlapAB->print();
+        }
+
+        //we need method to construct new equivalence classes
         break;
       case IterType::MaxExIter :
         std::println("MaxIter Not implemented Yet");
@@ -280,13 +289,17 @@ void insertFullPattern(FullIter& iter,
                    const std::shared_ptr<ParticipantExpr>& participant, 
                    const std::string& channelName,
                    const std::string& dataType,
-                   const std::string& identifier) {
+                   const std::string& identifier,
+                   bool min_allowed) {
   const auto index = participant->getIndex();
   switch (index->getEquivalenceType(identifier)) {
     case EquivalenceBaseType::forward:
-      iter.addForward<ComType>(channelName, dataType, index);
+      iter.addForward<ComType>(channelName, dataType, index, min_allowed);
       break;
     case EquivalenceBaseType::backward:
+      if(!min_allowed) {
+        throw std::runtime_error(std::format("[Proj_visitor] Backwards iteration only allowed if lower bound for index is 0. Found {}", index->toString()));
+      }
       iter.addBackward<ComType>(channelName, dataType, index);
       break;
     default:
@@ -299,8 +312,9 @@ void insertFullPattern(FullIter& iter,
 /*
 This only runs when we have i: I in the iteration !
 */
-std::unordered_map<std::string, FullIter> Proj_PchorASTVisitor::getCasesFull(const std::shared_ptr<ExprList>& expr, const std::string& i) {
+std::unordered_map<std::string, FullIter> Proj_PchorASTVisitor::getCasesFull(const std::shared_ptr<ExprList>& expr, const std::string& i, bool minAllowed) {
   std::unordered_map<std::string, FullIter> BasePattern{};
+
   std::println("getCasesFull Beginning");
   for(const auto& com: *expr) {
     if(com->getExprType() != Expr::ComExpr){
@@ -326,19 +340,16 @@ std::unordered_map<std::string, FullIter> Proj_PchorASTVisitor::getCasesFull(con
     if(!BasePattern.contains(senderName)) {
       BasePattern.try_emplace(senderName);
     }
-    insertFullPattern<Isend>(BasePattern.at(senderName), sender, channelName, dataType, i);
+    insertFullPattern<Isend>(BasePattern.at(senderName), sender, channelName, dataType, i, minAllowed);
 
     const std::string receiverName = receiver->getBaseParticipant()->getName();
     if(!BasePattern.contains(receiverName)) {
       BasePattern.try_emplace(receiverName);
     }
-    insertFullPattern<Ireceive>(BasePattern.at(senderName), sender, channelName, dataType, i);
-
-    return BasePattern;
+    insertFullPattern<Ireceive>(BasePattern.at(receiverName), receiver, channelName, dataType, i, minAllowed);
 
   }
-
-  return std::unordered_map<std::string, FullIter>();
+    return BasePattern;
 }
 std::unordered_map<std::string, MaxExcludingIter> Proj_PchorASTVisitor::getCasesMaxEx(const std::shared_ptr<ExprList>& expr) {
     std::println("Exprlist of length {}", expr->size());

@@ -132,6 +132,9 @@ struct LiteralExpr : public BaseArithmeticExpr {
   explicit LiteralExpr(size_t v): BaseArithmeticExpr(ArithmeticExpr::Literal), value(v) {}
   ~LiteralExpr() = default;
   std::string toString() const override {
+    if(value == std::numeric_limits<size_t>::max()){
+      return "n";
+    }
     return std::format("{}", value);
   }
   void print() const override {
@@ -412,6 +415,10 @@ public:
   std::string getName() const { return baseIndex->getName(); }
   bool isExprLiteral() const { return isLiteral; }
   size_t getLiteral(std::unordered_map<std::string, size_t> &ctx) const { return literal->eval(ctx); }
+
+  std::string getArithmeticExprString() {
+    return literal->toString();
+  }
 
   EquivalenceBaseType getEquivalenceType(const std::string& i){
     return literal->getExprType(i);
