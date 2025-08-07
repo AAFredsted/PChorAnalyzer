@@ -113,10 +113,11 @@ public:
   std::shared_ptr<PchorProjection> getContext() { return ctx; }
 
   std::unordered_map<std::string, FullIter> getCasesFull(const std::shared_ptr<ExprList>& expr, const std::string& i, bool minAllowed) const;
-  void addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName);
-  std::unordered_map<std::string, MaxExcludingIter> getCasesMaxEx(const std::shared_ptr<ExprList>& expr) const ;
+  std::unordered_map<std::string, MaxExcludingIter> getCasesMaxEx(const std::shared_ptr<ExprList>& expr, const std::string& i, bool minAllowed) const ;
   std::unordered_map<std::string, MinExcludingIter> getCasesMinEx(const std::shared_ptr<ExprList>& expr) const;
-  
+
+  void addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName, bool minAllowed);
+  void addEquivalenceClassesMaxEx(std::unordered_map<std::string, MaxExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName, bool minAllowed);
   void printProjections() const { ctx->printProjections(); }
 
 private:

@@ -108,13 +108,18 @@ namespace PchorAST {
 
         template<typename ComType>
         requires std::derived_from<ComType, AbstractProjection>
-        void addForward(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode) {
+        void addForward(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode, bool min_allowed) {
             /*
                 a is part of forward, even a+b and uneven a+d
             */
+
             this->forward->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
-            this->unevenOverlapAD->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
-            this->evenOverlapAB->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
+            //overlaps only occur if we allow backwards iteration
+            if(min_allowed) {
+                this->unevenOverlapAD->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
+                this->evenOverlapAB->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
+            }
+  
         }
 
 
@@ -131,15 +136,19 @@ namespace PchorAST {
         }
         template<typename ComType>
         requires std::derived_from<ComType, AbstractProjection>
-        void addForwardPlus(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode)  {
+        void addForwardPlus(const std::string& channelName, const std::string& typeName, std::shared_ptr<IndexExpr> indexNode, bool min_allowed)  {
 
 
             /*
                 c is part of forwardPlus, even CD and uneven CB
             */
             this->forwardPlus->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
-            this->unevenOverlapCB->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
-            this->evenOverlapCD->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
+            //overlaps only occur if we allow backwards iteration
+            if(min_allowed) {
+                this->unevenOverlapCB->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
+                this->evenOverlapCD->appendBack(std::make_unique<ComType>(channelName, typeName, indexNode));
+            }
+
         }
         template<typename ComType>
         requires std::derived_from<ComType, AbstractProjection>

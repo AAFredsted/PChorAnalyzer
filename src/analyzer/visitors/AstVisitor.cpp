@@ -237,11 +237,11 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
 
     const auto body = expr.getBody();
 
-    bool minAllowed;
+    bool minAllowed = iterExpr->getMin() == 0;
+    
     switch(iterExpr->getType()){
       case IterType::FullIter :
         std::println("FullIter Not implemented Yet");
-        minAllowed = iterExpr->getMin() == 0;
         fullIterCase = getCasesFull(body, identifier, minAllowed);
         for(const auto& [name, elem]: fullIterCase) {
           std::println("{}:",name);
@@ -249,14 +249,34 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
           elem.backward->print();
           elem.unevenOverlapAB->print();
         }
-        addEquivalenceClassesFull(fullIterCase, identifier, indexName);
+        addEquivalenceClassesFull(fullIterCase, identifier, indexName, minAllowed);
 
         //we need method to construct new equivalence classes
 
         break;
       case IterType::MaxExIter :
         std::println("MaxIter Not implemented Yet");
-        maxIterCase = getCasesMaxEx(body);
+        maxIterCase = getCasesMaxEx(body, identifier, minAllowed);        
+        for(const auto& [name, elem]: maxIterCase) {
+          std::println("{}:",name);
+          std::print("forward: ");
+          elem.forward->print();
+          std::print("forwardPlus: ");
+          elem.forwardPlus->print();
+          std::print("backward: ");
+          elem.backward->print();          
+          std::print("backwardPlus: ");
+          elem.backwardPlus->print();
+          std::print("EvenAB: ");
+          elem.evenOverlapAB->print();
+          std::print("EvenCD: ");
+          elem.evenOverlapCD->print();
+          std::print("UnevenAD: ");
+          elem.unevenOverlapAD->print();
+          std::print("EvenBC: ");
+          elem.unevenOverlapCB->print();
+        }
+        addEquivalenceClassesMaxEx(maxIterCase, identifier, indexName, minAllowed);
         break;
       case IterType::MinExIter :
         std::println("MinIter Not implemented Yet");
@@ -285,7 +305,7 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
   }
   //set index context for this iteration, then run it
 }
-//Helper Function for Insertion
+//Helper Functions for Insertion
 template <typename ComType>
 requires std::derived_from<ComType, AbstractProjection>
 void insertFullPattern(FullIter& iter, 
@@ -308,6 +328,42 @@ void insertFullPattern(FullIter& iter,
     default:
       throw std::runtime_error(std::format(
         "[Proj_Visitor] The iteration pattern ({}: I) only allows expressions of type (i|n-i). Found {}",
+        identifier, index->toString()));
+  }
+}
+
+//Helper Function for Insertion
+template <typename ComType>
+requires std::derived_from<ComType, AbstractProjection>
+void insertMaxExPattern(MaxExcludingIter& iter, 
+                   const std::shared_ptr<ParticipantExpr>& participant, 
+                   const std::string& channelName,
+                   const std::string& dataType,
+                   const std::string& identifier,
+                   bool min_allowed) {
+  const auto index = participant->getIndex();
+  switch(index->getEquivalenceType(identifier)) {
+    case EquivalenceBaseType::forward :
+      iter.addForward<ComType>(channelName, dataType, index, min_allowed);
+      break;
+    case EquivalenceBaseType::backward :
+      if(!min_allowed) {
+        throw std::runtime_error(std::format("[Proj_visitor] Backwards iteration only allowed if lower bound for index is 0. Found {}", index->toString()));
+      }
+      iter.addBackward<ComType>(channelName, dataType, index);
+      break;
+    case EquivalenceBaseType::forwardPlus :
+      iter.addForwardPlus<ComType>(channelName, dataType, index, min_allowed);
+      break;
+    case EquivalenceBaseType::backwardPlus :
+      if(!min_allowed) {
+        throw std::runtime_error(std::format("[Proj_visitor] Backwards iteration only allowed if lower bound for index is 0. Found {}", index->toString()));
+      }
+      iter.addBackwardPlus<ComType>(channelName, dataType, index);
+      break;
+    default:
+      throw std::runtime_error(std::format(
+        "[Proj_Visitor] The iteration pattern ({} < max(I)) only allows expressions of type (i|n-i|i+1|n-i+1). Found {}",
         identifier, index->toString()));
   }
 }
@@ -355,10 +411,65 @@ std::unordered_map<std::string, FullIter> Proj_PchorASTVisitor::getCasesFull(con
     return BasePattern;
 }
 
-void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName) {
+
+std::unordered_map<std::string, MaxExcludingIter> Proj_PchorASTVisitor::getCasesMaxEx(const std::shared_ptr<ExprList>& expr, const std::string& i, bool minAllowed) const {
+  std::println("getCasesMax Beginning");
+
+  std::unordered_map<std::string, MaxExcludingIter> BasePattern{};
+
+  for(const auto& com: *expr) {
+    if(com->getExprType() != Expr::ComExpr){
+      throw std::runtime_error(std::format("Only Com Allowed in unbounded foreach, found {}", com->toString()));
+    }
+
+    std::shared_ptr<CommunicationExpr> comExpr = std::dynamic_pointer_cast<CommunicationExpr>(com);
+
+    std::println("Communication Expressoin successfully extracted");
+    const auto sender = comExpr->getSender();
+    const auto receiver = comExpr->getReciever();
+    const auto channel = comExpr->getChannel();
+    const std::string& channelName = channel->getBaseParticipant()->getName();
+    const auto dataType = comExpr->getDataType();
+
+
+
+    //sender and receiver must be indexed by some type
+    if(sender->getIndex()->isExprLiteral() || receiver->getIndex()->isExprLiteral() || channel->getIndex()->isExprLiteral()){
+      throw std::runtime_error(std::format("[Proj_Visitor] Equivalence Class projection requires indeces to be expressions. Found {} and {}", sender->toString(), receiver->toString(), channel->toString()));
+    }
+
+    //idea, find pattern for types 
+    const std::string senderName = sender->getBaseParticipant()->getName();
+    if(!BasePattern.contains(senderName)) {
+      BasePattern.try_emplace(senderName);
+    }
+    insertMaxExPattern<Isend>(BasePattern.at(senderName), sender, channelName, dataType, i, minAllowed);
+
+    const std::string receiverName = receiver->getBaseParticipant()->getName();
+    if(!BasePattern.contains(receiverName)) {
+      BasePattern.try_emplace(receiverName);
+    }
+    insertMaxExPattern<Ireceive>(BasePattern.at(receiverName), receiver, channelName, dataType, i, minAllowed);
+
+  }
+  return BasePattern;
+
+}
+std::unordered_map<std::string, MinExcludingIter> Proj_PchorASTVisitor::getCasesMinEx(const std::shared_ptr<ExprList>& expr) const {
+    for(const auto& com: *expr) {
+    if(com->getExprType() != Expr::ComExpr){
+       throw std::runtime_error(std::format("Only Com Allowed in unbounded foreach, found {}", com->toString()));
+    }
+  }
+
+  return std::unordered_map<std::string, MinExcludingIter>();
+
+}
+
+void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName, bool minAllowed) {
   //We either only have one case for each version
 
-  bool backward = !baseCases.begin()->second.backward->empty();
+  bool backward = minAllowed;
 
   //we use appendCloneBack to add correct elements, if appropriate
 
@@ -407,27 +518,134 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
     }
   }
 }
-std::unordered_map<std::string, MaxExcludingIter> Proj_PchorASTVisitor::getCasesMaxEx(const std::shared_ptr<ExprList>& expr) const {
-    std::println("Exprlist of length {}", expr->size());
-    for(const auto& com: *expr) {
-    std::println("We attempt to print what we have");
-    com->print();
-    if(com->getExprType() != Expr::ComExpr){
-      throw std::runtime_error(std::format("Only Com Allowed in unbounded foreach, found {}", com->toString()));
+void Proj_PchorASTVisitor::addEquivalenceClassesMaxEx(std::unordered_map<std::string, MaxExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName, bool minAllowed) {
+    bool backward = minAllowed;
+    std::println("backward is {}", backward);
+
+    std::println("We enter addmax case");
+    for(const auto& [name, bases] : baseCases) {
+      std::println("we run iteration on {}", name);
+      //simple case: we do not allow for backwards traversal
+      if(!backward) {
+        //if no backward, we have no overlap, so only 3 cases... fuck <3
+        //case 1 max(I) > i > min(i) : I, case2 i = min(I) : I, case3 i = max(I) : I 
+        std::println("we enter no backward, as we should");
+        //case 1 max(I) > i > min(i) : I
+        ParticipantKey key1{name, std::format("min({}) < {} < max({}) :{}",indexName, indexName, identifier, indexName)};
+        if(!this->ctx->hasProjection(key1)) {
+            ctx->addParticipant(key1);
+        }
+        ctx->appendCloneProjection(key1, bases.forwardPlus);
+        ctx->appendCloneProjection(key1, bases.forward);
+
+        //case 2 case2 i = min(I)
+        ParticipantKey key2{name, std::format("{} = min({}): {}", identifier, indexName, indexName)};
+        if(!this->ctx->hasProjection(key2)) {
+            ctx->addParticipant(key2);
+        }
+        ctx->appendCloneProjection(key2, bases.forward);
+
+        //case 3 case2 i = max(I)
+        ParticipantKey key3{name, std::format("{} = max({}): {}", identifier, indexName, indexName)};
+        if(!this->ctx->hasProjection(key3)) {
+            ctx->addParticipant(key3);
+        }
+        ctx->appendCloneProjection(key3, bases.forwardPlus);
+
+        std::println("something has been added");
+
+      }
+      else {
+
+        //we now have 7 cases
+        /*
+        Case 1: j = 1; Tj = Ta.Tb
+        Case 2:min(I) < j < max(I)/2; Tj = Tc.Ta.Tb.Td
+        Case 3: j = n/2 (if n even); Tj = Tc, Ta+b.Td
+        Case 4: j = n/2 + 1 (if n odd); Tj = Tc+b.Ta+d
+        Case 5: j = n
+        2 + 1 (alternative overlap); Tj = Tb.Tc+d.Ta
+        Case 6: n/2 < j < n; Tj = Tb.Td.Tc.Ta
+        Case 7: j = n. Tj = Td.T
+        */
+
+
+        //case 1:i = min(I)
+        ParticipantKey key1{name, std::format("{1} = min({0}): {0}", indexName, identifier)};
+        if(!this->ctx->hasProjection(key1)) {
+            ctx->addParticipant(key1);
+        }
+        // here i and n-i apply
+        ctx->appendCloneProjection(key1, bases.forward);
+        ctx->appendCloneProjection(key1, bases.backward);
+
+        //case 2: min(I) < j < max(I)/2 (no overlap)
+        ParticipantKey key2{name, std::format("min({0}) < {1} < max({0})/2: {0}", indexName, identifier)};
+        if(!this->ctx->hasProjection(key2)) {
+            ctx->addParticipant(key2);
+        }
+
+        ctx->appendCloneProjection(key2, bases.forwardPlus);
+        ctx->appendCloneProjection(key2, bases.forward);
+        ctx->appendCloneProjection(key2, bases.backward);
+        ctx->appendCloneProjection(key2, bases.backwardPlus);
+
+        //case 3: i = max(I)/2 (if n even); Tj = Tc, Ta+b.Td
+
+        ParticipantKey key3{name, std::format("{1} = max({0})/2: {0} even", indexName, identifier)};
+        if(!this->ctx->hasProjection(key3)) {
+            ctx->addParticipant(key3);
+        }
+
+        ctx->appendCloneProjection(key3, bases.forwardPlus);
+        ctx->appendCloneProjection(key3, bases.evenOverlapAB);
+        ctx->appendCloneProjection(key3, bases.backwardPlus);
+
+
+        //case 4: i = max(I)/2 + 1 (if n odd); Tj = Tc+b.Ta+d
+
+        ParticipantKey key4{name, std::format("{1} = max({0})/2+1: {0} odd", indexName, identifier)};
+        if(!this->ctx->hasProjection(key4)) {
+            ctx->addParticipant(key4);
+        }
+
+        ctx->appendCloneProjection(key4, bases.unevenOverlapCB);
+        ctx->appendCloneProjection(key4, bases.unevenOverlapAD);
+
+
+        //case 5: i = max(I)/2+1 (if n even); Tj = Tb.Tc+d.Ta
+
+        ParticipantKey key5{name, std::format("{1} = max({0})/2+1: {0} even", indexName, identifier)};
+        if(!this->ctx->hasProjection(key5)) {
+            ctx->addParticipant(key5);
+        }
+
+        ctx->appendCloneProjection(key5, bases.backwardPlus);
+        ctx->appendCloneProjection(key5, bases.evenOverlapCD);
+        ctx->appendCloneProjection(key5, bases.forwardPlus);
+  
+
+        //case 6: max(I) > i > max(I)/2+1 no overlap; Tj =  Tb.Td.Tc.Ta
+
+        ParticipantKey key6{name, std::format(" max({0}) > {1} > max({0})/2+1: {0}", indexName, identifier)};
+        if(!this->ctx->hasProjection(key6)) {
+              ctx->addParticipant(key6);
+        }
+        ctx->appendCloneProjection(key6, bases.backward);
+        ctx->appendCloneProjection(key6, bases.backwardPlus);
+        ctx->appendCloneProjection(key6, bases.forwardPlus);
+        ctx->appendCloneProjection(key6, bases.forward);
+
+
+        //case 7: i = max(I); Tj = Td.Tc       
+        ParticipantKey key7{name, std::format("{1} = max({0}): {0}", indexName, identifier)};
+        if(!this->ctx->hasProjection(key7)) {
+              ctx->addParticipant(key7);
+        }
+        ctx->appendCloneProjection(key7, bases.backwardPlus);
+        ctx->appendCloneProjection(key7, bases.forwardPlus);
+      }
     }
-  }
-  return std::unordered_map<std::string, MaxExcludingIter>();
-
-}
-std::unordered_map<std::string, MinExcludingIter> Proj_PchorASTVisitor::getCasesMinEx(const std::shared_ptr<ExprList>& expr) const {
-    for(const auto& com: *expr) {
-    if(com->getExprType() != Expr::ComExpr){
-       throw std::runtime_error(std::format("Only Com Allowed in unbounded foreach, found {}", com->toString()));
-    }
-  }
-
-  return std::unordered_map<std::string, MinExcludingIter>();
-
 }
 
 } // namespace PchorAST

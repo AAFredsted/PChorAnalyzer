@@ -1,4 +1,4 @@
-Index I{0..n}
+Index I{1..n}
 
 Participant Send{I}
 Participant Receive{I}
