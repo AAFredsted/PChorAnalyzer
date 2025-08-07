@@ -309,7 +309,7 @@ public:
   }
 
   void print() const override {
-    std::print("?{}[{}]<{}>.", this->channelName, this->indexNode->getArithmeticExprString(),
+    std::print("!{}[{}]<{}>.", this->channelName, this->indexNode->getArithmeticExprString(),
                this->typeName);
   }
 
@@ -436,6 +436,23 @@ public:
       }
   }
 
+  void appendCloneBack(std::shared_ptr<ProjectionList> projection) {
+      if(projection->empty()){
+        return;
+      }
+      std::unique_ptr<ProjectionList> projClone = projection->clone();
+
+      if(!head) {
+        head = std::move(projClone->head);
+        tail = std::move(projClone->tail);
+      }
+      else {
+        tail->next = std::move(projClone->head);
+        tail = std::move(projClone->tail);
+      }
+
+  }
+
 std::unique_ptr<ProjectionList> clone() const {
     auto clonedList = std::make_unique<ProjectionList>();
 
@@ -453,9 +470,7 @@ std::unique_ptr<ProjectionList> clone() const {
 
     return clonedList;
   }
-  void reset() {
 
-  }
 
   void print() {
     std::print("ProjList of: ");

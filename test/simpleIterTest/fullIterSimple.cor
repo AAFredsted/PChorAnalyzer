@@ -1,0 +1,13 @@
+Index I{0..n}
+
+Participant Send{I}
+Participant Receive{I}
+Channel s{I}
+Channel r{I}
+
+IterEx = 
+    foreach(i: I) {
+        Send[i] -> Receive[i]: s[i]<Type>.
+        end
+    } . end
+

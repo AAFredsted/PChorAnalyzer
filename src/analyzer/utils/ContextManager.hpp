@@ -210,6 +210,10 @@ public:
     
   }
 
+  void appendCloneProjection(const ParticipantKey &key, std::shared_ptr<ProjectionList> proj) {
+    projectionMap.at(key).appendCloneBack(proj);
+  }
+
 
   bool hasProjection(const ParticipantKey &key) const {
     return projectionMap.contains(key);
@@ -226,6 +230,7 @@ public:
     }
   }
 
+  
   auto begin() { return projectionMap.begin(); }
   auto end() { return projectionMap.end(); }
   auto begin() const { return projectionMap.begin(); }

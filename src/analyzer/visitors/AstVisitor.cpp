@@ -223,7 +223,8 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
 
   const auto baseIndex = iterExpr->getBaseIndex();
 
-  const std::string identifier = iterExpr->getIdentifierRef();
+  const std::string& identifier = iterExpr->getIdentifierRef();
+  const std::string& indexName = baseIndex->getName();
 
   if(baseIndex->getUpper() == std::numeric_limits<size_t>::max()) {
     std::println("The case for indeces with no upper bound has not been implemented");
@@ -248,8 +249,10 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
           elem.backward->print();
           elem.unevenOverlapAB->print();
         }
+        addEquivalenceClassesFull(fullIterCase, identifier, indexName);
 
         //we need method to construct new equivalence classes
+
         break;
       case IterType::MaxExIter :
         std::println("MaxIter Not implemented Yet");
@@ -312,7 +315,7 @@ void insertFullPattern(FullIter& iter,
 /*
 This only runs when we have i: I in the iteration !
 */
-std::unordered_map<std::string, FullIter> Proj_PchorASTVisitor::getCasesFull(const std::shared_ptr<ExprList>& expr, const std::string& i, bool minAllowed) {
+std::unordered_map<std::string, FullIter> Proj_PchorASTVisitor::getCasesFull(const std::shared_ptr<ExprList>& expr, const std::string& i, bool minAllowed) const {
   std::unordered_map<std::string, FullIter> BasePattern{};
 
   std::println("getCasesFull Beginning");
@@ -351,7 +354,60 @@ std::unordered_map<std::string, FullIter> Proj_PchorASTVisitor::getCasesFull(con
   }
     return BasePattern;
 }
-std::unordered_map<std::string, MaxExcludingIter> Proj_PchorASTVisitor::getCasesMaxEx(const std::shared_ptr<ExprList>& expr) {
+
+void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName) {
+  //We either only have one case for each version
+
+  bool backward = !baseCases.begin()->second.backward->empty();
+
+  //we use appendCloneBack to add correct elements, if appropriate
+
+  for(const auto& [name, bases] : baseCases) {
+
+
+    if(!backward) {
+      //only one case i : I
+      ParticipantKey key{name, std::format("{}:{}", identifier, indexName)};
+      if(!this->ctx->hasProjection(key)) {
+          ctx->addParticipant(key);
+      }
+      ctx->appendCloneProjection(key, bases.forward);
+    }
+    else {  
+      // three cases
+      //Case 1: i < n/2
+      ParticipantKey key1{name, std::format("{} < n/2+1 : {}", identifier, indexName)};
+      if(!this->ctx->hasProjection(key1)) {
+          ctx->addParticipant(key1);
+      }
+
+      ctx->appendCloneProjection(key1, bases.forward);
+      ctx->appendCloneProjection(key1, bases.backward);
+
+      //case 2: i > n/2
+
+      ParticipantKey key2{name, std::format("{} > n/2+1 : {}", identifier, indexName)};
+      if(!this->ctx->hasProjection(key2)) {
+          ctx->addParticipant(key2);
+      }
+
+      ctx->appendCloneProjection(key2, bases.backward);
+      ctx->appendCloneProjection(key2, bases.forward);
+
+
+      //case 3 i = n/2
+
+      ParticipantKey key3{name, std::format("{} = n/2+1 : {}", identifier, indexName)};
+      if(!this->ctx->hasProjection(key3)) {
+          ctx->addParticipant(key3);
+      }
+
+      ctx->appendCloneProjection(key3, bases.unevenOverlapAB);
+
+    }
+  }
+}
+std::unordered_map<std::string, MaxExcludingIter> Proj_PchorASTVisitor::getCasesMaxEx(const std::shared_ptr<ExprList>& expr) const {
     std::println("Exprlist of length {}", expr->size());
     for(const auto& com: *expr) {
     std::println("We attempt to print what we have");
@@ -363,7 +419,7 @@ std::unordered_map<std::string, MaxExcludingIter> Proj_PchorASTVisitor::getCases
   return std::unordered_map<std::string, MaxExcludingIter>();
 
 }
-std::unordered_map<std::string, MinExcludingIter> Proj_PchorASTVisitor::getCasesMinEx(const std::shared_ptr<ExprList>& expr) {
+std::unordered_map<std::string, MinExcludingIter> Proj_PchorASTVisitor::getCasesMinEx(const std::shared_ptr<ExprList>& expr) const {
     for(const auto& com: *expr) {
     if(com->getExprType() != Expr::ComExpr){
        throw std::runtime_error(std::format("Only Com Allowed in unbounded foreach, found {}", com->toString()));
