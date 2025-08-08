@@ -1,11 +1,11 @@
-Index I{0..5}
+Index I{0..n}
 
 Participant P{I}
 Channel c{I}
 
 iterexample = foreach(i : I) {
-    P[i] -> P[max(I)-i]: c[i]<something>.
-    P[max(I)-i] -> P[i]: c[i]<something>.
+    P[i] -> P[max(I)-i+min(I)]: c[i]<something>.
+    P[max(I)-i+min(I)] -> P[i]: c[i]<something>.
     end
 } . end
 

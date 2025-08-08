@@ -629,7 +629,7 @@ PchorParser::parseIterExpr(std::vector<Token>::iterator &itr, const std::vector<
     }
 
     itr++;
-    min = parseMinExpr(itr, end, IndexASTDecl)-1;
+    min = parseMinExpr(itr, end, IndexASTDecl)+1;
     max = IndexASTDecl->getUpper();
   }
   else {
@@ -884,11 +884,11 @@ size_t PchorParser::parseMaxExpr(std::vector<Token>::iterator &itr, const std::v
     throw std::runtime_error(std::format("Expected symbol, '(', following min-operator. Instead, found: {}", itr->toString()));
   }
   itr++;
-
+  /*
   if(itr != end) {
     throw std::runtime_error("Max-Expression was malformed");
   }
-
+  */
   return nodePtr->getUpper();
 }
 
@@ -916,10 +916,11 @@ size_t PchorParser::parseMinExpr(std::vector<Token>::iterator &itr, const std::v
       throw std::runtime_error(std::format("Expected symbol, '(', following min-operator. Instead, found: {}", itr->toString()));
     }
     itr++;
-
+    /*
     if(itr != end) {
       throw std::runtime_error("Min-Expression was malformed");
     }
+    */
     return nodePtr->getLower();
 
 }

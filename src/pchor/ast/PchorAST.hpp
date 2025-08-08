@@ -81,49 +81,47 @@ struct BaseArithmeticExpr {
   virtual size_t eval(std::unordered_map<std::string, size_t>& ctx) const = 0;
   /*
     requires [l,n] with l < n
-    in all iteration patterns, i will assume the value n-1, so we set the value equal to that and evaluate the expression.
-    Once the expression has been evaluated, we check the value against the expected values and 
+    We identify pattern based on I=[l..n]
+
+    i: forward
+    n-i+l: backward
+    i+1: forwardPlus
+    n-i+l+1: backwardPlus
+    i-1: forwardMinus
+    n-i+l-1: backwardMinus
+    --: unknown
+
+
+    we evaluate expression e for i = max and see what comes out
+
+    For all iteration patterns i = max(I)-1 will occur in the iteration pattern (i: I | i < max(I) | i > min(I)).
+    Since eval throws an error if it would result in an overflow/underflow, we can eval this and return the matching type.
+
   */
-  EquivalenceBaseType getExprType(const std::string& identifier) const {
-
-    constexpr size_t forwardBase = std::numeric_limits<size_t>::max() - 1; // n-1
-    constexpr size_t forwardPlus = forwardBase + 1; // n
-    constexpr size_t forwardMinus = forwardBase - 1; // n-2
-    constexpr size_t backwardBase = 1; // = 1
-    constexpr size_t backwardPlus = backwardBase + 1; // 2
-    constexpr size_t backwardMinus = backwardBase - 1; // 0
-
+  EquivalenceBaseType getEquivalenceBaseType(const std::string& identifier, size_t min, size_t max) const {
+    const size_t forwardBase   = max - 1;
+    const size_t forwardPlus   = forwardBase + 1;
+    const size_t forwardMinus  = forwardBase - 1;
+    const size_t backwardBase  = 1 + min;
+    const size_t backwardPlus  = backwardBase + 1;
+    const size_t backwardMinus = backwardBase - 1;
 
     std::unordered_map<std::string, size_t> ctx = {
-      {identifier, forwardBase}
+        {identifier, forwardBase}
     };
-
     const size_t j = eval(ctx);
-    //six success cases and one failure case
-    switch(j) {
-      //j == i
-      case forwardBase:
-        return EquivalenceBaseType::forward;
-      // j == i+1
-      case forwardPlus:
-        return EquivalenceBaseType::forwardPlus;
-      // j == i-1
-      case forwardMinus:
-        return EquivalenceBaseType::forwardMinus;
 
-      // j == n-(n-1) = 1
-      case backwardBase :
-        return EquivalenceBaseType::backward;
-      //j == n-(n-1) +1
-      case backwardPlus:
-        return EquivalenceBaseType::backwardPlus;
-      //j == n-(n-1)-1
-      case backwardMinus:
-        return EquivalenceBaseType::backwardMinus;
-      default:
-        return EquivalenceBaseType::unknown;
-    }
+    if (j == forwardBase)               return EquivalenceBaseType::forward;
+    else if (j == forwardPlus)          return EquivalenceBaseType::forwardPlus;
+    else if (j == forwardMinus)         return EquivalenceBaseType::forwardMinus;
+    else if (j == backwardBase)         return EquivalenceBaseType::backward;
+    else if (j == backwardPlus)         return EquivalenceBaseType::backwardPlus;
+    else if (j == backwardMinus)        return EquivalenceBaseType::backwardMinus;
+    else                                return EquivalenceBaseType::unknown;
+
+    
   }
+
 };
 
 struct LiteralExpr : public BaseArithmeticExpr {
@@ -420,8 +418,8 @@ public:
     return literal->toString();
   }
 
-  EquivalenceBaseType getEquivalenceType(const std::string& i){
-    return literal->getExprType(i);
+  EquivalenceBaseType getEquivalenceBaseType(const std::string& i){
+    return literal->getEquivalenceBaseType(i, baseIndex->getLower(), baseIndex->getUpper());
   }
 
 protected:
