@@ -175,7 +175,7 @@ void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
   }
   ParticipantKey key{expr.getBaseParticipant()->getName(), literal};
 
-  if (!this->ctx->hasProjection(key)) {
+  if (!this->ctx->hasParticipant(key)) {
     this->ctx->addParticipant(key);
   }
   if (this->isSender) {
@@ -222,7 +222,8 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
   const auto iterExpr = expr.getIter();
 
   const auto baseIndex = iterExpr->getBaseIndex();
-
+  size_t l = baseIndex->getLower();
+  size_t n = baseIndex->getUpper();
   const std::string& identifier = iterExpr->getIdentifierRef();
   const std::string& indexName = baseIndex->getName();
 
@@ -242,7 +243,7 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
           elem.backward->print();
           elem.unevenOverlapAB->print();
         }
-        addEquivalenceClassesFull(fullIterCase, identifier, indexName);
+        addEquivalenceClassesFull(fullIterCase, identifier, indexName, l, n);
         break;
       case IterType::MaxExIter :
         maxIterCase = getCasesMaxEx(body, identifier);        
@@ -265,7 +266,7 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
           std::print("EvenCD: ");
           elem.unevenOverlapCD->print();
         }
-        addEquivalenceClassesMaxEx(maxIterCase, identifier, indexName);
+        addEquivalenceClassesMaxEx(maxIterCase, identifier, indexName, l, n);
         break;
       case IterType::MinExIter :
         minIterCase = getCasesMinEx(body, identifier);
@@ -288,7 +289,7 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
           std::print("EvenCD: ");
           elem.unevenOverlapCD->print();
           //missing method here
-          addEquivalenceClassesMinEx(minIterCase, identifier, indexName);
+          addEquivalenceClassesMinEx(minIterCase, identifier, indexName, l, n);
         }
         break;
     }
@@ -593,8 +594,8 @@ std::unordered_map<std::string, MinExcludingIter> Proj_PchorASTVisitor::getCases
   }
   return BasePattern;
 }
-void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName) {
-  /*
+void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n) {
+  /*  
     for every FullIter, we run the following assesment:
     if(backward.empty()) we only need to care about forward case
     
@@ -602,10 +603,10 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
 
     else we also need to care about b and a+b, where the following pattern appears
 
-    for i: I = [l,n] and K=|I| and k=rounddown(K/2), the following patterns emerge for all n and l<n:
-    a.b : if i<=k for K|2 and K!|2
-    a+b : if i=k+1 for K!|2
-    b.a : if i>k for K|2 and if i>k+1 for K!|2
+    for i: I = [l,n] and K=|I| and c=rounddown((K-l)/2)+l, the following patterns emerge for all n and l<n:
+    a.b : [l,c) for K|2 and K!|2
+    a+b : [c,c] for K!|2
+    b.a : [c,n] K|2 and (c,n] for K!|2
 
     We turn the above into equivalence classes and add them to our key system
 
@@ -614,53 +615,53 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
 
   for(const auto& [name, bases] : baseCases) {
 
-
-
-      //a.b : if i<=k for K|2 and K!|2
-      ParticipantKey key1{name, std::format("{} < n/2+1 : {}", identifier, indexName)};
-      if(!this->ctx->hasProjection(key1)) {
-          ctx->addParticipant(key1);
+      if(!this->ctx->hasParticipantGroup(name)){
+        ctx->addParticipantGroup(name);
       }
-      std::shared_ptr<ProjectionList> ab = std::make_shared<ProjectionList>();
-      ab->appendCloneBack(bases.forward);
-      ab->appendCloneBack(bases.backward);
+
+      // a.b : [l,c) for K|2 and K!|2
+      Range r1 = Range{Bound{RangeSymbol::L, true, true}, Bound{RangeSymbol::C, false, false}};
+      ParticipantKey key1{name, r1, EvenCase::Both};
+
+      std::shared_ptr<ProjectionList> case1 = std::make_shared<ProjectionList>();
+      case1->appendCloneBack(bases.forward);
+      case1->appendCloneBack(bases.backward);
 
       //add to other relevant types here
+      //new function to handle all cases for us :) <3
+      ctx->appendCloneRangedProjection(key1, case1,l, n);
 
-      ctx->appendCloneProjection(key1, ab);
-
-      //a+b : if i=k+1 for K!|2
-
-      ParticipantKey key2{name, std::format("{} > n/2+1 : {}", identifier, indexName)};
-      if(!this->ctx->hasProjection(key2)) {
-          ctx->addParticipant(key2);
-      }
+      //a+b : [c,c] for K!|2
+      Range r2 = Range{Bound{RangeSymbol::C, true, true}, Bound{RangeSymbol::C, true, false}};
+      ParticipantKey key2{name, r2, EvenCase::Odd};
 
       std::shared_ptr<ProjectionList> apb = std::make_shared<ProjectionList>();
       apb->appendCloneBack(bases.unevenOverlapAB);
 
       //add to other relevant types here
 
-      ctx->appendCloneProjection(key2, apb);
+      ctx->appendCloneRangedProjection(key2, apb, l, n);
+      
 
-      // b.a : if i>k for K|2 and if i>k+1 for K!|2
+      // b.a : [c,n] K|2 and (c,n] for K!|2
+      Range r3 = Range{Bound{RangeSymbol::C, true, true}, Bound{RangeSymbol::N,true, false}};
+      ParticipantKey key3{name, r3, EvenCase::Even};
+      Range r4 = Range{Bound{RangeSymbol::C, false, true}, Bound{RangeSymbol::C, true, false}};
+      ParticipantKey key4{name, r4, EvenCase::Odd};
 
-      ParticipantKey key3{name, std::format("{} = n/2+1 : {}", identifier, indexName)};
-      if(!this->ctx->hasProjection(key3)) {
-          ctx->addParticipant(key3);
-      }
-      std::shared_ptr<ProjectionList> ba = std::make_shared<ProjectionList>();
-      ba->appendCloneBack(bases.backward);
-      ba->appendCloneBack(bases.forward);
+      std::shared_ptr<ProjectionList> case3 = std::make_shared<ProjectionList>();
+      case3->appendCloneBack(bases.backward);
+      case3->appendCloneBack(bases.forward);
 
       //add to other relevant types here
-
-      ctx->appendCloneProjection(key3, ba);
+      //return here
+      ctx->appendCloneRangedProjection(key3, case3, l, n);
+      ctx->appendCloneRangedProjection(key4, case3, l, n);
 
     }
   }
 
-void Proj_PchorASTVisitor::addEquivalenceClassesMaxEx(std::unordered_map<std::string, MaxExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName) {
+void Proj_PchorASTVisitor::addEquivalenceClassesMaxEx(std::unordered_map<std::string, MaxExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n ) {
   /*
     for every MaxExcludingIter, we run the following assesment:
     if(backward.empty() and backwardMinus.empty()) we only need to care about forward and forwardPlus case
@@ -673,133 +674,113 @@ void Proj_PchorASTVisitor::addEquivalenceClassesMaxEx(std::unordered_map<std::st
 
     else we also need to care about  a, b, c, d, and all overlaps (a+b, c+d | a+d, b+c)
 
-    for i: I = [l,n] and K=|I| and k=rounddown(K/2), the following patterns emerge for all n and l<n:
+    for i: I = [l,n] and K=|I| and k=rounddown((K-l)/2)-l, the following patterns emerge for all n and l<n:
 
-    a.d : if i = l for K|2 and K!|2
-    c.a.d.b : if l < i < k for K|2 and K!|2
-    c+d.a+b : if i = k for K!|2
-    c.a+d.b : if i=k for K|2
-    d.c+b.a : if i=k+1 for K|2
-    d.b.c.a : if n > i > k+1 for K|2 and i>k for K!|2
-    b.c : if i = n for K|2 and K!|2
+    a.d : [l,l] for K|2 and K!|2
+    c.a.d.b : (l, c-1)  for K|2 and (l, c-1] and K!|2
+    c+d.a+b : [c, c] for K!|2
+    c.a+d.b : [c-1, c-1] for K|2
+    d.c+b.a : [c, c] for K|2
+    d.b.c.a : (c, n) for K|2 and K!|2
+    b.c : [n,n] for K|2 and K!|2
     We turn the above into equivalence classes and add them to our key system
 
     In total, seven distinct patterns are possible, against which must be checked for all.
   */
   for(const auto& [name, bases]: baseCases) {
+
+    if(!this->ctx->hasParticipantGroup(name)){
+      this->ctx->addParticipantGroup(name);
+    }
     
-    
-    //case 1: a.d : if i = l for K|2 and K!|2
-    ParticipantKey key1{name, std::format("{1} = min({0}): {0}", indexName, identifier)};
-    if(!this->ctx->hasProjection(key1)) {
-        ctx->addParticipant(key1);
-    }
+    //case 1: a.d : [l,l] for K|2 and K!|2
+    ParticipantKey key1{name, Range{Bound{RangeSymbol::L, true, true}, Bound{RangeSymbol::L, true, false}}, EvenCase::Both};
 
-    std::shared_ptr<ProjectionList> ad = std::make_shared<ProjectionList>();
-    ad->appendCloneBack(bases.forward);
-    ad->appendCloneBack(bases.backwardMinus);
+    std::shared_ptr<ProjectionList> case1 = std::make_shared<ProjectionList>();
+    case1->appendCloneBack(bases.forward);
+    case1->appendCloneBack(bases.backwardMinus);
+
+    //add to other relevant types here
+    ctx->appendCloneRangedProjection(key1, case1, l, n);
+
+    //case 2: c.a.d.b : (l, c-1)  for K|2 and (l, c-1] and K!|2 issue here
+    ParticipantKey key2e{name, Range{Bound{RangeSymbol::L, false, true}, Bound{RangeSymbol::lC, false, false}}, EvenCase::Even};
+    ParticipantKey key2o{name, Range{Bound{RangeSymbol::L, false, true}, Bound{RangeSymbol::lC, true, false}}, EvenCase::Odd};
+
+
+    std::shared_ptr<ProjectionList> case2 = std::make_shared<ProjectionList>();
+    case2->appendCloneBack(bases.forwardPlus);
+    case2->appendCloneBack(bases.forward);
+    case2->appendCloneBack(bases.backwardMinus);
+    case2->appendCloneBack(bases.backward);
 
     //add to other relevant types here
 
-    ctx->appendCloneProjection(key1, ad);
+    ctx->appendCloneRangedProjection(key2e, case2, l, n);
+    ctx->appendCloneRangedProjection(key2o, case2, l, n);
 
-    //case 2: c.a.d.b : if l < i < k for K|2 and K!|2
-    ParticipantKey key2{name, std::format("min({0}) < {1} < max({0})/2: {0}", indexName, identifier)};
-    if(!this->ctx->hasProjection(key2)) {
-        ctx->addParticipant(key2);
-    }
+    //case 3:  c+d.a+b : [c, c] for K!|2
 
+    ParticipantKey key3{name, Range{Bound{RangeSymbol::C, true, true}, Bound{RangeSymbol::C, true, false}}, EvenCase::Odd};
 
-    std::shared_ptr<ProjectionList> cadb = std::make_shared<ProjectionList>();
-    cadb->appendCloneBack(bases.forwardPlus);
-    cadb->appendCloneBack(bases.forward);
-    cadb->appendCloneBack(bases.backwardMinus);
-    cadb->appendCloneBack(bases.backward);
+    std::shared_ptr<ProjectionList> case3 = std::make_shared<ProjectionList>();
+    case3->appendCloneBack(bases.unevenOverlapCD);
+    case3->appendCloneBack(bases.unevenOverlapAB);
 
     //add to other relevant types here
 
-    ctx->appendCloneProjection(key2, cadb);
-
-    //case 3: c+d.a+b : if i = k for K!|2
-
-    ParticipantKey key3{name, std::format("{1} = max({0})/2: {0} even", indexName, identifier)};
-    if(!this->ctx->hasProjection(key3)) {
-        ctx->addParticipant(key3);
-    }
-
-    std::shared_ptr<ProjectionList> cpdapb = std::make_shared<ProjectionList>();
-    cpdapb->appendCloneBack(bases.unevenOverlapCD);
-    cpdapb->appendCloneBack(bases.unevenOverlapAB);
-
-    //add to other relevant types here
-
-    ctx->appendCloneProjection(key3, cpdapb);
+    ctx->appendCloneRangedProjection(key3, case3, l, n);
     
 
-    //case 4:c.a+d.b : if i=k for K|2
+    //case 4: c.a+d.b : [c-1, c-1] for K|2
 
-    ParticipantKey key4{name, std::format("{1} = max({0})/2+1: {0} odd", indexName, identifier)};
-    if(!this->ctx->hasProjection(key4)) {
-        ctx->addParticipant(key4);
-    }
+    ParticipantKey key4{name, Range{Bound{RangeSymbol::lC, true, true}, Bound{RangeSymbol::lC, true, false}}, EvenCase::Even};
 
 
-    std::shared_ptr<ProjectionList> capdb = std::make_shared<ProjectionList>();
-    capdb->appendCloneBack(bases.forwardPlus);
-    capdb->appendCloneBack(bases.evenOverlapAD);
-    capdb->appendCloneBack(bases.backward);
+    std::shared_ptr<ProjectionList> case4 = std::make_shared<ProjectionList>();
+    case4->appendCloneBack(bases.forwardPlus);
+    case4->appendCloneBack(bases.evenOverlapAD);
+    case4->appendCloneBack(bases.backward);
 
     //add to other relevant types here
-    ctx->appendCloneProjection(key4, capdb);
+    ctx->appendCloneRangedProjection(key4, case4, l, n);
 
-    //case 5: d.b+c.a : if i=k+1 for K|2
-    ParticipantKey key5{name, std::format("{1} = max({0})/2+1: {0} even", indexName, identifier)};
-    if(!this->ctx->hasProjection(key5)) {
-        ctx->addParticipant(key5);
-    }
+    //case 5: d.c+b.a : [c, c] for K|2
+    ParticipantKey key5{name, Range{Bound{RangeSymbol::C, true, true}, Bound{RangeSymbol::C, true, false}}, EvenCase::Even};
 
-    std::shared_ptr<ProjectionList> dbpca = std::make_shared<ProjectionList>();
-    dbpca->appendCloneBack(bases.backwardMinus);
-    dbpca->appendCloneBack(bases.evenOverlapBC);
-    dbpca->appendCloneBack(bases.forward);
+    std::shared_ptr<ProjectionList> case5 = std::make_shared<ProjectionList>();
+    case5->appendCloneBack(bases.backwardMinus);
+    case5->appendCloneBack(bases.evenOverlapBC);
+    case5->appendCloneBack(bases.forward);
     //add to other relevant types here
-    ctx->appendCloneProjection(key5, dbpca);
+    ctx->appendCloneRangedProjection(key5, case5, l, n);
 
-    //case 6: d.b.c.a : if i > k+1 for K|2 and i>k for K!|2
+    //case 6: d.b.c.a : (c, n) for K|2 and K!|2
 
-    ParticipantKey key6{name, std::format(" max({0}) > {1} > max({0})/2+1: {0}", indexName, identifier)};
-    if(!this->ctx->hasProjection(key6)) {
-          ctx->addParticipant(key6);
-    }
+    ParticipantKey key6{name, Range{Bound{RangeSymbol::C, false, true}, Bound{RangeSymbol::N, false, false}}, EvenCase::Both};
 
-
-    std::shared_ptr<ProjectionList> dbca = std::make_shared<ProjectionList>();
-    dbca->appendCloneBack(bases.backwardMinus);
-    dbca->appendCloneBack(bases.backward);
-    dbca->appendCloneBack(bases.forwardPlus);
-    dbca->appendCloneBack(bases.forward);
+    std::shared_ptr<ProjectionList> case6 = std::make_shared<ProjectionList>();
+    case6->appendCloneBack(bases.backwardMinus);
+    case6->appendCloneBack(bases.backward);
+    case6->appendCloneBack(bases.forwardPlus);
+    case6->appendCloneBack(bases.forward);
     //add to other relevant types here
-    ctx->appendCloneProjection(key6, dbca);
+    ctx->appendCloneRangedProjection(key6, case6, l, n);
 
-    //case7: b.c : if i = n for K|2 and K!|2
+    //case7: [n,n] for K|2 and K!|2
+    ParticipantKey key7{name, Range{Bound{RangeSymbol::N, true, true}, Bound{RangeSymbol::N, true, false}}, EvenCase::Both};
 
-    ParticipantKey key7{name, std::format("{1} = max({0}): {0}", indexName, identifier)};
-    if(!this->ctx->hasProjection(key7)) {
-          ctx->addParticipant(key7);
-    }
-
-
-    std::shared_ptr<ProjectionList> bc = std::make_shared<ProjectionList>();
-    bc->appendCloneBack(bases.backward);
-    bc->appendCloneBack(bases.forwardPlus);
+    std::shared_ptr<ProjectionList> case7 = std::make_shared<ProjectionList>();
+    case7->appendCloneBack(bases.backward);
+    case7->appendCloneBack(bases.forwardPlus);
 
     //add to other relevant types here
 
-    ctx->appendCloneProjection(key7, bc);
+    ctx->appendCloneRangedProjection(key7, case7, l, n);
   }
 }
 
-void Proj_PchorASTVisitor::addEquivalenceClassesMinEx(std::unordered_map<std::string, MinExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName) {
+void Proj_PchorASTVisitor::addEquivalenceClassesMinEx(std::unordered_map<std::string, MinExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n) {
   /*
     for every MinExcludingIter, we run the following assesment:
     if(backward.empty() and backwardPlus.empty()) we only need to care about forward and forwardPlus case
@@ -812,128 +793,110 @@ void Proj_PchorASTVisitor::addEquivalenceClassesMinEx(std::unordered_map<std::st
 
     else we also need to care about  a, b, c, d, and all overlaps (a+b, c+d | a+d, b+c)
 
-    for i: I = [l,n] and K=|I| and k=rounddown(K/2), the following patterns emerge for all n and l<n:
+    for i: I = [l,n] and K=|I| and k=rounddown((K-l)/2)+l, the following patterns emerge for all n and l<n:
 
-    c.b : if i = l for K|2 and K!|2
-    a.c.b.d: if l < i <= k for K|2 and K!|2
-    a+b.c+d : if i = k+1 for K!|2
-    a.b+c.d : if i=k+1 for K|2
-    b.a+d.c : if i=k+2 for K|2
-    b.d.a.c : if n > i > k+2 for K|2 and i>k+1 for K!|2
-    d.a : if i = n for K|2 and K!|2
+    c.b : [l,l] for K|2 and K!|2
+    a.c.b.d: (l, c-1) for K|2 and (l, c-1] K!|2
+    a+b.c+d :[c,c] for K!|2
+    a.b+c.d : [c-1,c-1] for K|2
+    b.a+d.c : [c,c] for K|2
+    b.d.a.c : (c,n) for K|2 and K!|2
+    d.a : [n,n for] K|2 and K!|2
     We turn the above into equivalence classes and add them to our key system
 
     In total, seven distinct patterns are possible, against which must be checked for all.
   */
   for(const auto& [name, bases]: baseCases) {
     
+    if(!this->ctx->hasParticipantGroup(name)){
+      this->ctx->addParticipantGroup(name);
+    }
     
-    //case 1: c.b : if i = l for K|2 and K!|2
-    ParticipantKey key1{name, std::format("{1} = min({0}): {0}", indexName, identifier)};
-    if(!this->ctx->hasProjection(key1)) {
-        ctx->addParticipant(key1);
-    }
+    
+    //case 1: c.b : [l,l] for K|2 and K!|2
+    ParticipantKey key1{name, Range{Bound{RangeSymbol::L, true, true}, Bound{RangeSymbol::L, true, false}}, EvenCase::Both};
 
-    std::shared_ptr<ProjectionList> cb = std::make_shared<ProjectionList>();
-    cb->appendCloneBack(bases.forwardMinus);
-    cb->appendCloneBack(bases.backward);
+    std::shared_ptr<ProjectionList> case1 = std::make_shared<ProjectionList>();
+    case1->appendCloneBack(bases.forwardMinus);
+    case1->appendCloneBack(bases.backward);
 
     //add to other relevant types here
 
-    ctx->appendCloneProjection(key1, cb);
+    ctx->appendCloneRangedProjection(key1, case1, l, n);
 
-    //case 2: a.c.b.d: if l < i <= k for K|2 and K!|2
-    ParticipantKey key2{name, std::format("min({0}) < {1} < max({0})/2: {0}", indexName, identifier)};
-    if(!this->ctx->hasProjection(key2)) {
-        ctx->addParticipant(key2);
-    }
+    //case 2: a.c.b.d: (l, c-1) for K|2 and (l, c-1] K!|2
+    ParticipantKey key2e{name, Range{Bound{RangeSymbol::L, false, true}, Bound{RangeSymbol::lC, false, false}}, EvenCase::Even};
+    ParticipantKey key2o{name, Range{Bound{RangeSymbol::L, false, true}, Bound{RangeSymbol::lC, true, false}}, EvenCase::Odd};
 
 
-    std::shared_ptr<ProjectionList> acbd = std::make_shared<ProjectionList>();
-    acbd->appendCloneBack(bases.forward);
-    acbd->appendCloneBack(bases.forwardMinus);
-    acbd->appendCloneBack(bases.backward);
-    acbd->appendCloneBack(bases.backwardPlus);
+    std::shared_ptr<ProjectionList> case2 = std::make_shared<ProjectionList>();
+    case2->appendCloneBack(bases.forward);
+    case2->appendCloneBack(bases.forwardMinus);
+    case2->appendCloneBack(bases.backward);
+    case2->appendCloneBack(bases.backwardPlus);
 
     //add to other relevant types here
 
-    ctx->appendCloneProjection(key2, acbd);
+    ctx->appendCloneRangedProjection(key2e, case2, l, n);
+    ctx->appendCloneRangedProjection(key2o, case2, l, n);
 
-    //case 3: a+b.c+d : if i = k+1 for K!|2
+    //case 3: a+b.c+d :[c,c] for K!|2
+    ParticipantKey key3{name, Range{Bound{RangeSymbol::C, true, true}, Bound{RangeSymbol::C, true, false}}, EvenCase::Odd};
 
-    ParticipantKey key3{name, std::format("{1} = max({0})/2: {0} even", indexName, identifier)};
-    if(!this->ctx->hasProjection(key3)) {
-        ctx->addParticipant(key3);
-    }
 
-    std::shared_ptr<ProjectionList> apbcpd = std::make_shared<ProjectionList>();
-    apbcpd->appendCloneBack(bases.unevenOverlapAB);
-    apbcpd->appendCloneBack(bases.unevenOverlapCD);
+    std::shared_ptr<ProjectionList> case3 = std::make_shared<ProjectionList>();
+    case3->appendCloneBack(bases.unevenOverlapAB);
+    case3->appendCloneBack(bases.unevenOverlapCD);
 
     //add to other relevant types here
 
-    ctx->appendCloneProjection(key3, apbcpd);
+    ctx->appendCloneRangedProjection(key3, case3, l, n);
     
 
-    //case 4: a.b+c.d : if i=k+1 for K|2
-    ParticipantKey key4{name, std::format("{1} = max({0})/2+1: {0} odd", indexName, identifier)};
-    if(!this->ctx->hasProjection(key4)) {
-        ctx->addParticipant(key4);
-    }
+    //case 4: a.b+c.d : [c-1,c-1] for K|2
+    ParticipantKey key4{name, Range{Bound{RangeSymbol::lC, true, true}, Bound{RangeSymbol::lC, true, false}}, EvenCase::Even};
 
-
-    std::shared_ptr<ProjectionList> abpcd = std::make_shared<ProjectionList>();
-    abpcd->appendCloneBack(bases.forward);
-    abpcd->appendCloneBack(bases.evenOverlapBC);
-    abpcd->appendCloneBack(bases.backwardPlus);
+    std::shared_ptr<ProjectionList> case4 = std::make_shared<ProjectionList>();
+    case4->appendCloneBack(bases.forward);
+    case4->appendCloneBack(bases.evenOverlapBC);
+    case4->appendCloneBack(bases.backwardPlus);
 
     //add to other relevant types here
-    ctx->appendCloneProjection(key4, abpcd);
+    ctx->appendCloneRangedProjection(key4, case4, l, n);
 
-    //case 5: b.a+d.c : if i=k+2 for K|2
-    ParticipantKey key5{name, std::format("{1} = max({0})/2+1: {0} even", indexName, identifier)};
-    if(!this->ctx->hasProjection(key5)) {
-        ctx->addParticipant(key5);
-    }
+    //case 5: b.a+d.c : [c,c] for K|2
+    ParticipantKey key5{name, Range{Bound{RangeSymbol::C, true, true}, Bound{RangeSymbol::C, true, false}}, EvenCase::Even};
 
-    std::shared_ptr<ProjectionList> bapdc = std::make_shared<ProjectionList>();
-    bapdc->appendCloneBack(bases.backward);
-    bapdc->appendCloneBack(bases.evenOverlapAD);
-    bapdc->appendCloneBack(bases.forwardMinus);
+    std::shared_ptr<ProjectionList> case5 = std::make_shared<ProjectionList>();
+    case5->appendCloneBack(bases.backward);
+    case5->appendCloneBack(bases.evenOverlapAD);
+    case5->appendCloneBack(bases.forwardMinus);
     //add to other relevant types here
-    ctx->appendCloneProjection(key5, bapdc);
+    ctx->appendCloneRangedProjection(key5, case5, l, n);
 
-    //case 6: b.d.a.c : if n > i > k+2 for K|2 and i>k+1 for K!|2
+    //case 6: b.d.a.c : (c,n) for K|2 and K!|2
 
-    ParticipantKey key6{name, std::format(" max({0}) > {1} > max({0})/2+1: {0}", indexName, identifier)};
-    if(!this->ctx->hasProjection(key6)) {
-          ctx->addParticipant(key6);
-    }
+    ParticipantKey key6{name, Range{Bound{RangeSymbol::C, false, true}, Bound{RangeSymbol::N, false, false}}, EvenCase::Both};
 
-
-    std::shared_ptr<ProjectionList> bdac = std::make_shared<ProjectionList>();
-    bdac->appendCloneBack(bases.backward);
-    bdac->appendCloneBack(bases.backwardPlus);
-    bdac->appendCloneBack(bases.forward);
-    bdac->appendCloneBack(bases.forwardMinus);
+    std::shared_ptr<ProjectionList> case6 = std::make_shared<ProjectionList>();
+    case6->appendCloneBack(bases.backward);
+    case6->appendCloneBack(bases.backwardPlus);
+    case6->appendCloneBack(bases.forward);
+    case6->appendCloneBack(bases.forwardMinus);
     //add to other relevant types here
-    ctx->appendCloneProjection(key6, bdac);
+    ctx->appendCloneRangedProjection(key6, case6, l, n);
 
-    //case7: d.a : if i = n for K|2 and K!|2
+    //case7: d.a : [n,n for] K|2 and K!|2
 
-    ParticipantKey key7{name, std::format("{1} = max({0}): {0}", indexName, identifier)};
-    if(!this->ctx->hasProjection(key7)) {
-          ctx->addParticipant(key7);
-    }
+    ParticipantKey key7{name, Range{Bound{RangeSymbol::N, true, true}, Bound{RangeSymbol::N, true, false}}, EvenCase::Both};
 
-
-    std::shared_ptr<ProjectionList> da = std::make_shared<ProjectionList>();
-    da->appendCloneBack(bases.backwardPlus);
-    da->appendCloneBack(bases.forward);
+    std::shared_ptr<ProjectionList> case7 = std::make_shared<ProjectionList>();
+    case7->appendCloneBack(bases.backwardPlus);
+    case7->appendCloneBack(bases.forward);
 
     //add to other relevant types here
 
-    ctx->appendCloneProjection(key7, da);
+    ctx->appendCloneRangedProjection(key7, case7, l, n);
   }
 }
 

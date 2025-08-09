@@ -5,6 +5,6 @@ Channel s{I}
 
 IterEx = foreach(i > min(I)) {
     Send[i] -> Send[n-i]: s[n-i]<Type>.
-    Send[i-1] -> Send[n-i-1]: s[n-i]<Type>.
+    Send[i-1] -> Send[n-i+1]: s[n-i]<Type>.
     end
 }. end

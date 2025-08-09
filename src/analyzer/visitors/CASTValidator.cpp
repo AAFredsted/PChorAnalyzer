@@ -56,66 +56,68 @@ clang::FunctionDecl *CASTValidator::validateFuncDecl(
 bool CASTValidator::validateProjection(
     clang::ASTContext &Context, std::shared_ptr<CASTMapping> &CASTmap,
     std::shared_ptr<PchorProjection> &projectionMap) {
+  //doubly nested loop, as mapping contains two values 
+  for (const auto& [groupname, participantGroup]: *projectionMap) {  
+    for (const auto &[participantName, projections] : participantGroup) {
 
-  for (const auto &[participantName, projections] : *projectionMap) {
+      const auto* record = CASTmap->getMapping<const clang::Decl*>(participantName.name);
+      const auto* castRecord = llvm::dyn_cast<clang::CXXRecordDecl>(record);
 
-    const auto* record = CASTmap->getMapping<const clang::Decl*>(participantName.name);
-    const auto* castRecord = llvm::dyn_cast<clang::CXXRecordDecl>(record);
-
-    if(!castRecord) {
-        throw std::runtime_error(
-          std::format("Participant {} did not map to a record in the CASTmapping. Instead, mapped to:  {}\n",  participantName.name, record->getDeclKindName()));
-    }
-
-    auto methods = std::vector<clang::CXXMethodDecl*>{};
-
-    for(auto* method: castRecord->methods() ){
-      if(!method->isUserProvided() || llvm::isa<clang::CXXConstructorDecl>(method) || llvm::isa<clang::CXXDestructorDecl>(method) || method->isOverloadedOperator()){
-        continue;
-      }
-      methods.push_back(method);
-    }
-
-    //reverse ordering to minimize runtime
-    for(auto ritr = methods.rbegin(); ritr != methods.rend(); ++ritr){
-      const auto* fullDecl = AnalyzerUtils::getFullDecl(*ritr);
-      std::string funcName{(*ritr)->getNameAsString()};
-
-      if(!fullDecl || !fullDecl->hasBody()){
-        throw std::runtime_error(
-            std::format("Function {} has no body\n", funcName));
-      }
-      if (!failedValidations.contains(funcName) &&
-          !successfullValidations.contains(funcName)) {
-        failedValidations[funcName] = std::vector<std::string>{};
-        successfullValidations[funcName] = std::vector<std::string>{};
+      if(!castRecord) {
+          throw std::runtime_error(
+            std::format("Participant {} did not map to a record in the CASTmapping. Instead, mapped to:  {}\n",  participantName.name, record->getDeclKindName()));
       }
 
-      const clang::Stmt *body = fullDecl->getBody();
+      auto methods = std::vector<clang::CXXMethodDecl*>{};
 
-      auto elm = body->children();
-      auto itr = elm.begin();
-      auto end = elm.end();
-
-      auto projectionNode = projections.begin();
-      AbstractProjection* nestedFunctionNext = nullptr;
-      
-      bool successFullMapping = projectionNode->validateFunctionDecl(Context, CASTmap, itr, end, nestedFunctionNext);
-
-      if (itr != end) {
-        llvm::errs() << std::format("Warning: Not all statements in {} consumed "
-                                    "by projections. Stopped at: {}\n",
-                                    funcName, itr->getStmtClassName());
+      for(auto* method: castRecord->methods() ){
+        if(!method->isUserProvided() || llvm::isa<clang::CXXConstructorDecl>(method) || llvm::isa<clang::CXXDestructorDecl>(method) || method->isOverloadedOperator()){
+          continue;
+        }
+        methods.push_back(method);
       }
 
-      if (successFullMapping) {
-        //to begin with, we only need one sucessfull mapping for each
-        successfullValidations[funcName].push_back(participantName.toString());
-        break;
-      } else {
-        failedValidations[funcName].push_back(participantName.toString());
-      }
+      //reverse ordering to minimize runtime
+      for(auto ritr = methods.rbegin(); ritr != methods.rend(); ++ritr){
+        const auto* fullDecl = AnalyzerUtils::getFullDecl(*ritr);
+        std::string funcName{(*ritr)->getNameAsString()};
 
+        if(!fullDecl || !fullDecl->hasBody()){
+          throw std::runtime_error(
+              std::format("Function {} has no body\n", funcName));
+        }
+        if (!failedValidations.contains(funcName) &&
+            !successfullValidations.contains(funcName)) {
+          failedValidations[funcName] = std::vector<std::string>{};
+          successfullValidations[funcName] = std::vector<std::string>{};
+        }
+
+        const clang::Stmt *body = fullDecl->getBody();
+
+        auto elm = body->children();
+        auto itr = elm.begin();
+        auto end = elm.end();
+
+        auto projectionNode = projections->begin();
+        AbstractProjection* nestedFunctionNext = nullptr;
+        
+        bool successFullMapping = projectionNode->validateFunctionDecl(Context, CASTmap, itr, end, nestedFunctionNext);
+
+        if (itr != end) {
+          llvm::errs() << std::format("Warning: Not all statements in {} consumed "
+                                      "by projections. Stopped at: {}\n",
+                                      funcName, itr->getStmtClassName());
+        }
+
+        if (successFullMapping) {
+          //to begin with, we only need one sucessfull mapping for each
+          successfullValidations[funcName].push_back(participantName.toString());
+          break;
+        } else {
+          failedValidations[funcName].push_back(participantName.toString());
+        }
+
+      }
     }
   }
 

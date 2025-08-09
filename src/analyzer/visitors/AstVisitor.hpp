@@ -115,9 +115,9 @@ public:
   std::unordered_map<std::string, FullIter> getCasesFull(const std::shared_ptr<ExprList>& expr, const std::string& i) const;
   std::unordered_map<std::string, MaxExcludingIter> getCasesMaxEx(const std::shared_ptr<ExprList>& expr, const std::string& i) const ;
   std::unordered_map<std::string, MinExcludingIter> getCasesMinEx(const std::shared_ptr<ExprList>& expr, const std::string& i) const;
-  void addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName);
-  void addEquivalenceClassesMaxEx(std::unordered_map<std::string, MaxExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName);
-  void addEquivalenceClassesMinEx(std::unordered_map<std::string, MinExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName);
+  void addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n);
+  void addEquivalenceClassesMaxEx(std::unordered_map<std::string, MaxExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n);
+  void addEquivalenceClassesMinEx(std::unordered_map<std::string, MinExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n);
 
   //not fixed
 
