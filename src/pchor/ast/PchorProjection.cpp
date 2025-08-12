@@ -186,7 +186,7 @@ bool Preceive::validateFunctionDecl(
   while (!waitMatchingDone) {
     if (cpy == end) {
       std::println(
-          "Reached end of function before matching projection of "
+          "[PchorValidator] Warning: Reached end of function before matching projection of "
           "receive type {} at statement: {}\n",
           this->getChannelString(), itr->getStmtClassName());
       break;
@@ -261,7 +261,7 @@ bool Ireceive::validateFunctionDecl(
   while (!waitMatchingDone) {
     if (cpy == end) {
       std::println(
-          "Reached end of function before matching projection of "
+          "[PchorValidator] Warning: Reached end of function before matching projection of "
           "receive type {} at statement: {}\n",
           this->getChannelString(), itr->getStmtClassName());
       break;
