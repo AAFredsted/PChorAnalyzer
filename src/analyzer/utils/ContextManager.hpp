@@ -532,7 +532,8 @@ public:
   Bug: currently,this function does not handle the cases of even|odd|both for key and rKey, it simply uses the even attribute from rKey.
   */
   void appendCloneRangedProjection(const ParticipantKey &rKey, std::shared_ptr<ProjectionList> rProj, size_t l, size_t n) {
-      // 1. Collect changes to apply after iteration
+    std::println("we run appendCloneRangedProjection");  
+    // 1. Collect changes to apply after iteration
       std::vector<ParticipantKey> keysToRemove;
       std::vector<std::pair<ParticipantKey, std::shared_ptr<ProjectionList>>> keysToInsert;
 
@@ -545,13 +546,15 @@ public:
       for (const auto& [key, proj] : projectionMap[rKey.name]) {
        
           if (key.index && !key.range) {
+            std::println("literal key found {}", key.toString());
             size_t index = *(key.index);
             if(index == l && rKey.isMinInclusive()) {
+              std::println("we enter minInclusive Case");
               //we replace key with key range 
               Range ll = Range{Bound{RangeSymbol::L, true, true}, Bound{RangeSymbol::L, true, false}};
               ParticipantKey lKey{key.name, *(key.index), ll, EvenCase::Both};
 
-              std::shared_ptr<ProjectionList> lProj{};
+              std::shared_ptr<ProjectionList> lProj = std::make_shared<ProjectionList>();
               lProj->appendCloneBack(proj);
               lProj->appendCloneBack(rProj);
 
@@ -560,12 +563,13 @@ public:
               keysToInsert.emplace_back(lKey, lProj);
             }
             else if(index == n && rKey.isMaxInclusive()) {
+              std::println("we enter maxinclusive case");
               //we replace key with key range + new range
              
               Range nn = Range{Bound{RangeSymbol::N, true, true}, Bound{RangeSymbol::N, true, false}};
               ParticipantKey nKey{key.name, *(key.index), nn, EvenCase::Both};
 
-              std::shared_ptr<ProjectionList> nProj{};
+              std::shared_ptr<ProjectionList> nProj = std::make_shared<ProjectionList>();
               nProj->appendCloneBack(proj);
               nProj->appendCloneBack(rProj);
 
@@ -573,37 +577,41 @@ public:
               keysToInsert.emplace_back(nKey, nProj);
             }
             else {
-
+              std::println("we enter in between case");
               //make intersect
               Range pRange = *(rKey.range);
               EvenCase pEven = *(rKey.even);
               ParticipantKey pKey{key.name, *(key.index), pRange, pEven};
-              std::shared_ptr<ProjectionList> pProj{};
+              std::shared_ptr<ProjectionList> pProj = std::make_shared<ProjectionList>();
+              std::println("pProj created");
               pProj->appendCloneBack(proj);
+              std::println("first clone done");
               pProj->appendCloneBack(rProj);
+              std::println("second clone done");
 
               keysToInsert.emplace_back(pKey, pProj);
 
               //make left
               if(limitedRange.isLeftDifference(pRange)) {
+                std::println("isleftDif");
                 ParticipantKey LKey{key.name, *(key.index), limitedRange.leftDifference(pRange), pEven};
                 keysToInsert.emplace_back(LKey, proj);
               }
 
               //make right
               if(limitedRange.isRightDifference(pRange)){
+                std::println("is rightDif");
                 ParticipantKey RKey{key.name, *(key.index), limitedRange.rightDifference(pRange), pEven};
                 keysToInsert.emplace_back(RKey, proj);
               }
               //append to to remove
-
+              //we keep literal untill entire range has been added
               keysToRemove.push_back(key);
-
             }
           }
-          if(key.index && key.range && (*(key.even) == EvenCase::Both  || *(rKey.even) == EvenCase::Both || *(key.even) == *(rKey.even)) ) {
+          else if(key.index && key.range && (*(key.even) == EvenCase::Both  || *(rKey.even) == EvenCase::Both || *(key.even) == *(rKey.even)) ) {
             //final case to solve
-
+            std::println("we enter both case");
             size_t i = *(key.index);
             if(i == l && rKey.range->isMinInclusive()){
               //handling of specific edgecase
@@ -629,7 +637,7 @@ public:
                 //techically wrong, but it is going to be sufficiently correct 
                 EvenCase iC = *(rKey.even);
                 ParticipantKey intersectKey{key.name, *(key.index), inter, iC};
-                std::shared_ptr<ProjectionList> iProj{};
+                std::shared_ptr<ProjectionList> iProj = std::make_shared<ProjectionList>();
                 iProj->appendCloneBack(proj);
                 iProj->appendCloneBack(rProj);
                 keysToInsert.emplace_back(intersectKey, iProj);
@@ -657,9 +665,11 @@ public:
               }
             }
           }
-          if (key.range && (*(key.even) == EvenCase::Both  || *(rKey.even) == EvenCase::Both || *(key.even) == *(rKey.even))) {
-                const Range& L = *key.range;
-                const Range& R = *rKey.range;
+          else if (key.range && (*(key.even) == EvenCase::Both  || *(rKey.even) == EvenCase::Both || *(key.even) == *(rKey.even))) {
+              const Range& L = *key.range;
+              const Range& R = *rKey.range;
+
+              std::println("we enter range only case");
 
               if(L == R){
                 //we directly append no change to bucket structure
@@ -675,7 +685,7 @@ public:
                 //techically wrong, but it is going to be sufficiently correct 
                 EvenCase iC = *(rKey.even);
                 ParticipantKey intersectKey{key.name, inter, iC};
-                std::shared_ptr<ProjectionList> iProj{};
+                std::shared_ptr<ProjectionList> iProj = std::make_shared<ProjectionList>();
                 iProj->appendCloneBack(proj);
                 iProj->appendCloneBack(rProj);
                 keysToInsert.emplace_back(intersectKey, iProj);

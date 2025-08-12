@@ -4,7 +4,7 @@ Participant P{I}
 Channel c{I}
 
 iterexample = 
-    P[1]->P[2]: c[2]<something>.
+    P[0]->P[2]: c[2]<something>.
     foreach(i : I) {
         P[i] -> P[max(I)-i+min(I)]: c[i]<something>.
         P[max(I)-i+min(I)] -> P[i]: c[i]<something>.

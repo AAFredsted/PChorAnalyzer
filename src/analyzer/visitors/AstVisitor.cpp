@@ -592,7 +592,8 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
 
       // a.b : [l,c) for K|2 and K!|2
       Range r1 = Range{Bound{RangeSymbol::L, true, true}, Bound{RangeSymbol::C, false, false}};
-      ParticipantKey key1{name, r1, EvenCase::Both};
+      ParticipantKey key1e{name, r1, EvenCase::Even};
+      ParticipantKey key1o{name, r1, EvenCase::Odd};
 
       std::shared_ptr<ProjectionList> case1 = std::make_shared<ProjectionList>();
       case1->appendCloneBack(bases.forward);
@@ -600,7 +601,9 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
 
       //add to other relevant types here
       //new function to handle all cases for us :) <3
-      ctx->appendCloneRangedProjection(key1, case1,l, n);
+      ctx->appendCloneRangedProjection(key1e, case1,l, n);
+      ctx->appendCloneRangedProjection(key1o, case1,l, n);
+
 
       //a+b : [c,c] for K!|2
       Range r2 = Range{Bound{RangeSymbol::C, true, true}, Bound{RangeSymbol::C, true, false}};
@@ -615,10 +618,10 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
       
 
       // b.a : [c,n] K|2 and (c,n] for K!|2
-      Range r3 = Range{Bound{RangeSymbol::C, true, true}, Bound{RangeSymbol::N,true, false}};
-      ParticipantKey key3{name, r3, EvenCase::Even};
-      Range r4 = Range{Bound{RangeSymbol::C, false, true}, Bound{RangeSymbol::C, true, false}};
-      ParticipantKey key4{name, r4, EvenCase::Odd};
+      Range r3e = Range{Bound{RangeSymbol::C, true, true}, Bound{RangeSymbol::N,true, false}};
+      ParticipantKey key3e{name, r3e, EvenCase::Even};
+      Range r3o = Range{Bound{RangeSymbol::C, false, true}, Bound{RangeSymbol::N, true, false}};
+      ParticipantKey key3o{name, r3o, EvenCase::Odd};
 
       std::shared_ptr<ProjectionList> case3 = std::make_shared<ProjectionList>();
       case3->appendCloneBack(bases.backward);
@@ -626,8 +629,11 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
 
       //add to other relevant types here
       //return here
-      ctx->appendCloneRangedProjection(key3, case3, l, n);
-      ctx->appendCloneRangedProjection(key4, case3, l, n);
+      std::println("we fail here");
+      ctx->appendCloneRangedProjection(key3e, case3, l, n);
+      std::println("we fail here");
+      //we only remove when adding closing odd case !
+      ctx->appendCloneRangedProjection(key3o, case3, l, n);
 
     }
   }

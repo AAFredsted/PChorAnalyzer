@@ -432,11 +432,15 @@ public:
   }
 
   void appendCloneBack(std::shared_ptr<ProjectionList> projection) {
+      std::println("appendCloneBack is run");
+      projection->print();
       if(projection->empty()){
         return;
       }
       std::unique_ptr<ProjectionList> projClone = projection->clone();
+      projClone->print();
 
+      this->print();
       if(!head) {
         head = std::move(projClone->head);
         tail = projClone->tail;
