@@ -860,7 +860,7 @@ std::shared_ptr<RecExpr> PchorParser::parseRecursiveExpr(
   return nullptr;
 }
 
-size_t PchorParser::parseMaxExpr(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end, std::shared_ptr<IndexASTNode>& nodePtr) {
+size_t PchorParser::parseMaxExpr(std::vector<Token>::iterator &itr, [[maybe_unused]] const std::vector<Token>::iterator &end, std::shared_ptr<IndexASTNode>& nodePtr) {
   
   if(itr->type != TokenType::Symbol || itr->value != "(") {
     throw std::runtime_error(std::format("Expected symbol, '(', following min-operator. Instead, found: {}", itr->toString()));
@@ -892,7 +892,7 @@ size_t PchorParser::parseMaxExpr(std::vector<Token>::iterator &itr, const std::v
   return nodePtr->getUpper();
 }
 
-size_t PchorParser::parseMinExpr(std::vector<Token>::iterator &itr, const std::vector<Token>::iterator &end, std::shared_ptr<IndexASTNode>& nodePtr) {
+size_t PchorParser::parseMinExpr(std::vector<Token>::iterator &itr, [[maybe_unused]] const std::vector<Token>::iterator &end, std::shared_ptr<IndexASTNode>& nodePtr) {
 
     if(itr->type != TokenType::Symbol || itr->value != "(") {
       throw std::runtime_error(std::format("Expected symbol, '(', following min-operator. Instead, found: {}", itr->toString()));

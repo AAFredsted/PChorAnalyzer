@@ -286,6 +286,10 @@ public:
     std::println("{}", this->toString());
   }
   virtual std::string toString() const override  {
+    constexpr size_t n = std::numeric_limits<size_t>::max();
+    if(upper == n){
+      return std::format("Index {} with lower bound:{}, upper bound: n", name, lower);
+    }
     return std::format("Index {} with lower bound:{}, upper bound: {}", name, lower,
                  upper);
   }
@@ -617,6 +621,10 @@ public:
     }
 
     virtual std::string toString() const override {
+      constexpr size_t n = std::numeric_limits<size_t>::max();
+      if(max == n){
+        return std::format("Iteration Index with identifier {}, min {} and max n\n", identifier, min);
+      }
       return std::format("Iteration Index with identifier {}, min {} and max {}\n", identifier, min, max);
     }
 

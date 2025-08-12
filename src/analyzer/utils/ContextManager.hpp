@@ -543,7 +543,6 @@ public:
 
       // 2. Iterate over the map
       for (const auto& [key, proj] : projectionMap[rKey.name]) {
-
        
           if (key.index && !key.range) {
             size_t index = *(key.index);

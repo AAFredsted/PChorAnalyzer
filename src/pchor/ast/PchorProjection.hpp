@@ -135,18 +135,6 @@ public:
                        clang::Stmt::const_child_iterator &end,
                        AbstractProjection*& parentScopeProjectionPtr) override = 0;
 
-  
-  bool validateReceiveOperation(clang::ASTContext &context,
-                       std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
-                       clang::Stmt::const_child_iterator &itr,
-                       clang::Stmt::const_child_iterator &end,
-                       AbstractProjection*& parentScopeProjectionPtr);
-  bool validateSendOperation(clang::ASTContext &context,
-                       std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
-                       clang::Stmt::const_child_iterator &itr,
-                       clang::Stmt::const_child_iterator &end,
-                       AbstractProjection*& parentScopeProjectionPtr);
-
 
 protected:
   std::string channelName;
@@ -451,11 +439,11 @@ public:
 
       if(!head) {
         head = std::move(projClone->head);
-        tail = std::move(projClone->tail);
+        tail = projClone->tail;
       }
       else {
         tail->next = std::move(projClone->head);
-        tail = std::move(projClone->tail);
+        tail = projClone->tail;
       }
 
   }
