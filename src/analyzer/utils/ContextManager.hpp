@@ -394,9 +394,21 @@ struct ParticipantKey {
   }
 
   std::string toString() const {
-    std::string result = name;
+    constexpr size_t n = std::numeric_limits<size_t>::max();
+    constexpr size_t nl = n-1; 
+
+    std::string result = name + "{";
     if (index) {
-      result += std::format("{}", *index);
+      if(*index == n){
+        result += "[n]";
+      }
+      else if(*index == nl) {
+        result += "[n-1]";
+      }
+      else {
+        result += std::format("[{}]", *index);
+      }
+
     }
     if (range) {
       result += std::format("{}", range->toString());
@@ -404,18 +416,18 @@ struct ParticipantKey {
     if (even) {
       switch(*even) {
         case EvenCase::Both :
-          result += "K|2 && K!|2";
+          result += "B";
           break;
         case EvenCase::Even :
-          result += "K|2";
+          result += "E";
           break;
         case EvenCase::Odd :
-          result += "K!|2";
+          result += "O";
           break; 
       }
       
     }
-    return result;
+    return result + "}";
   }
 
   bool operator==(const ParticipantKey& other) const {

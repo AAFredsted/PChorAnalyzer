@@ -1,44 +1,43 @@
 #include "CASTAnalyzerUtils.hpp"
+#include <print>
 
 namespace PchorAST {
 void AnalyzerUtils::printDecl(const clang::Decl *decl) {
   if (!decl) {
-    llvm::outs() << "Decl not found\n";
+    std::println("Decl not found\n");
     return;
   }
 
   // Check if the declaration is a class
-  llvm::outs() << "Decl of type " << decl->getDeclKindName() << "\n";
+  std::println("Decl of type {}", decl->getDeclKindName());
 
   if (const auto *classDecl = llvm::dyn_cast<clang::CXXRecordDecl>(decl)) {
-    llvm::outs() << "Class Decl: " << classDecl->getNameAsString() << "\n";
+    std::println("Class Decl: {}", classDecl->getNameAsString());
   }
   // Check if the declaration is a field
   else if (const auto *fieldDecl = llvm::dyn_cast<clang::FieldDecl>(decl)) {
-    llvm::outs() << "Field Decl: " << fieldDecl->getNameAsString() << "\n";
+    std::println("Field Decl: {}",fieldDecl->getNameAsString());
   }
   // Check if the declaration is a function
   else if (const auto *funcDecl = llvm::dyn_cast<clang::FunctionDecl>(decl)) {
     // Skip constructors and destructors
     if (llvm::isa<clang::CXXConstructorDecl>(funcDecl)) {
-      llvm::outs() << "Constructor Decl: " << funcDecl->getNameAsString()
-                   << "\n";
+      std::println("Constructor Decl: {}", funcDecl->getNameAsString());
     } else if (llvm::isa<clang::CXXDestructorDecl>(funcDecl)) {
-      llvm::outs() << "Destructor Decl: " << funcDecl->getNameAsString()
-                   << "\n";
+      std::println("Destructor Decl: {}", funcDecl->getNameAsString());
     } else {
-      llvm::outs() << "Function Decl: " << funcDecl->getNameAsString() << "\n";
+      std::println("Function Decl: {}", funcDecl->getNameAsString());
     }
   }
   // Handle other types of declarations
   else {
-    llvm::outs() << "Other Decl Type: " << decl->getDeclKindName() << "\n";
+    std::println("Other Decl Type: {}", decl->getDeclKindName());
   }
 }
 
 void AnalyzerUtils::printRecordFields(const clang::Decl *decl) {
   if (decl) {
-    llvm::outs() << "Mapped Node is: " << decl->getDeclKindName() << "\n";
+    std::println("Mapped Node is: {}", decl->getDeclKindName());
     if (auto ctx = decl->getDeclContext()) {
       for (const auto childDecl : ctx->decls()) {
         if (childDecl->getDeclKindName() == std::string("Field")) {
@@ -47,29 +46,28 @@ void AnalyzerUtils::printRecordFields(const clang::Decl *decl) {
         }
       }
     } else {
-      llvm::outs() << "Decl has no children\n";
+      std::println("Decl has no children\n");
     }
   } else {
-    llvm::outs() << "Decl not found\n";
+    std::println("Decl not found\n");
   }
 }
 
 void AnalyzerUtils::printDeclChildren(const clang::Decl *decl) {
   if (decl) {
-    llvm::outs() << "Mapped Node is: " << decl->getDeclKindName() << "\n";
+    std::println("Mapped Node is: {}", decl->getDeclKindName());
     if (auto ctx = decl->getDeclContext()) {
       for (const auto childDecl : ctx->decls()) {
 
         if (childDecl) {
-          llvm::outs() << "Child Decl: " << childDecl->getDeclKindName()
-                       << "\n";
+          std::println("Child Decl: {}", childDecl->getDeclKindName());
         }
       }
     } else {
-      llvm::outs() << "Decl has no children\n";
+      std::println("Decl has no children\n");
     }
   } else {
-    llvm::outs() << "Decl not found\n";
+    std::println("Decl not found\n");
   }
 }
 
@@ -96,9 +94,6 @@ AnalyzerUtils::findFunctionDefinition(const clang::Stmt *possibleFunctionCall,
     llvm::errs() << "Invalid input to findFunctionDefinition.\n";
     return nullptr;
   }
-  //uncomment for debug output
-  //llvm::outs() << "We dump what we have\n";
-  //possibleFunctionCall->dump();
   auto memberCallMatcher = clang::ast_matchers::stmt(
     clang::ast_matchers::anyOf(
       clang::ast_matchers::cxxMemberCallExpr().bind("memberCall"),
@@ -267,7 +262,6 @@ bool AnalyzerUtils::validateSendExpression(const clang::Stmt *opCallExpr,
     llvm::errs() << "Invalid input to validateSendExpression.\n";
     return false;
   }
-  //llvm::outs() << "we try to run validateSendExpr\n";
 
   std::string typeName = "";
   if (const auto *named = llvm::dyn_cast<clang::NamedDecl>(typeDecl)) {
@@ -361,13 +355,6 @@ bool AnalyzerUtils::validateSendExpression(const clang::Stmt *opCallExpr,
 
   // Run the matcher on the AST node
   finder.match(*opCallExpr, context);
-  /*DEBUG
-
-    if (!matched) {
-    llvm::outs() << "We failed to match for this: "
-                 << opCallExpr->getStmtClassName() << "\n";
-  }
-  */
 
   return matched != nullptr;
 }
@@ -398,12 +385,6 @@ bool AnalyzerUtils::validateRecieveExpression(
   finder.addMatcher(whileMatcher, new DebugStoreMatchCallback<clang::WhileStmt>(
                                       "recvWhile", matched));
   finder.match(*whileStmt, context);
-  /*DEBUG
-    if (matched) {
-    llvm::outs() << matched->getStmtClassName() << "\n";
-  }
-  */
-
 
   return matched != nullptr;
 }

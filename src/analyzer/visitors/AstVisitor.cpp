@@ -237,60 +237,31 @@ void Proj_PchorASTVisitor::visit(const ForEachExpr &expr) {
     switch(iterExpr->getType()){
       case IterType::FullIter :
         fullIterCase = getCasesFull(body, identifier);
-        for(const auto& [name, elem]: fullIterCase) {
-          std::println("{}:",name);
-          elem.forward->print();
-          elem.backward->print();
-          elem.unevenOverlapAB->print();
+        if(debug) {
+          for(const auto& [name, elem]: fullIterCase) {
+            elem.print(name);
+          }
         }
+
         addEquivalenceClassesFull(fullIterCase, identifier, indexName, l, n);
         break;
       case IterType::MaxExIter :
-        maxIterCase = getCasesMaxEx(body, identifier);        
-        for(const auto& [name, elem]: maxIterCase) {
-          std::println("{}:",name);
-          std::print("forward: ");
-          elem.forward->print();
-          std::print("forwardPlus: ");
-          elem.forwardPlus->print();
-          std::print("backwardMinus: ");
-          elem.backwardMinus->print();
-          std::print("backward: ");
-          elem.backward->print();          
-          std::print("EvenAD: ");
-          elem.evenOverlapAD->print();
-          std::print("EvenBC: ");
-          elem.evenOverlapBC->print();
-          std::print("UnevenAB: ");
-          elem.unevenOverlapAB->print();
-          std::print("EvenCD: ");
-          elem.unevenOverlapCD->print();
-        }
+        maxIterCase = getCasesMaxEx(body, identifier);
+        if(debug) {
+          for(const auto& [name, elem]: maxIterCase) {
+            elem.print(name);
+          }
+        }        
+
         addEquivalenceClassesMaxEx(maxIterCase, identifier, indexName, l, n);
         break;
       case IterType::MinExIter :
         minIterCase = getCasesMinEx(body, identifier);
         for(const auto& [name, elem]: minIterCase) {
-          std::println("{}:",name);
-          std::print("forwardMinus: ");
-          elem.forwardMinus->print();
-          std::print("forward: ");
-          elem.forward->print();      
-          std::print("backward: ");
-          elem.backward->print();
-          std::print("backwardPlus: ");
-          elem.backwardPlus->print();    
-          std::print("EvenAD: ");
-          elem.evenOverlapAD->print();
-          std::print("EvenBC: ");
-          elem.evenOverlapBC->print();
-          std::print("UnevenAB: ");
-          elem.unevenOverlapAB->print();
-          std::print("EvenCD: ");
-          elem.unevenOverlapCD->print();
+          elem.print(name);
           //missing method here
-          addEquivalenceClassesMinEx(minIterCase, identifier, indexName, l, n);
         }
+        addEquivalenceClassesMinEx(minIterCase, identifier, indexName, l, n);
         break;
     }
 
@@ -594,7 +565,7 @@ std::unordered_map<std::string, MinExcludingIter> Proj_PchorASTVisitor::getCases
   }
   return BasePattern;
 }
-void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n) {
+void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, [[maybe_unused]]  const std::string& identifier, [[maybe_unused]] const std::string& indexName, size_t l, size_t n) {
   /*  
     for every FullIter, we run the following assesment:
     if(backward.empty()) we only need to care about forward case
@@ -661,7 +632,7 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
     }
   }
 
-void Proj_PchorASTVisitor::addEquivalenceClassesMaxEx(std::unordered_map<std::string, MaxExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n ) {
+void Proj_PchorASTVisitor::addEquivalenceClassesMaxEx(std::unordered_map<std::string, MaxExcludingIter>& baseCases, [[maybe_unused]]  const std::string& identifier, [[maybe_unused]]  const std::string& indexName, size_t l, size_t n ) {
   /*
     for every MaxExcludingIter, we run the following assesment:
     if(backward.empty() and backwardMinus.empty()) we only need to care about forward and forwardPlus case
@@ -780,7 +751,7 @@ void Proj_PchorASTVisitor::addEquivalenceClassesMaxEx(std::unordered_map<std::st
   }
 }
 
-void Proj_PchorASTVisitor::addEquivalenceClassesMinEx(std::unordered_map<std::string, MinExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n) {
+void Proj_PchorASTVisitor::addEquivalenceClassesMinEx(std::unordered_map<std::string, MinExcludingIter>& baseCases, [[maybe_unused]] const std::string& identifier, [[maybe_unused]] const std::string& indexName, size_t l, size_t n) {
   /*
     for every MinExcludingIter, we run the following assesment:
     if(backward.empty() and backwardPlus.empty()) we only need to care about forward and forwardPlus case

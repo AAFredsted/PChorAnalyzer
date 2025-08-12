@@ -135,6 +135,17 @@ public:
                        clang::Stmt::const_child_iterator &end,
                        AbstractProjection*& parentScopeProjectionPtr) override = 0;
 
+  
+  bool validateReceiveOperation(clang::ASTContext &context,
+                       std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
+                       clang::Stmt::const_child_iterator &itr,
+                       clang::Stmt::const_child_iterator &end,
+                       AbstractProjection*& parentScopeProjectionPtr);
+  bool validateSendOperation(clang::ASTContext &context,
+                       std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
+                       clang::Stmt::const_child_iterator &itr,
+                       clang::Stmt::const_child_iterator &end,
+                       AbstractProjection*& parentScopeProjectionPtr);
 
 
 protected:
@@ -262,9 +273,7 @@ public:
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                             clang::Stmt::const_child_iterator &itr,
                             clang::Stmt::const_child_iterator &end,
-                            AbstractProjection*& parentScopeProjectionPtr) override {
-    return true;
-  }
+                            AbstractProjection*& parentScopeProjectionPtr) override;
   size_t getChannelIndex() const override {
     if(indexNode->isExprLiteral()){
       auto temp =  std::unordered_map<std::string, size_t>{};
@@ -317,9 +326,7 @@ public:
                             std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
                             clang::Stmt::const_child_iterator &itr,
                             clang::Stmt::const_child_iterator &end,
-                            AbstractProjection*& parentScopeProjectionPtr) override {
-    return true;
-  }
+                            AbstractProjection*& parentScopeProjectionPtr) override;
   size_t getChannelIndex() const override {
     if(indexNode->isExprLiteral()){
       auto temp =  std::unordered_map<std::string, size_t>{};

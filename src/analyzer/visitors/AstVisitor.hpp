@@ -15,8 +15,8 @@ namespace PchorAST {
 
 class AbstractPchorASTVisitor {
 public:
-  AbstractPchorASTVisitor(clang::ASTContext &clangContext)
-      : clangContext(clangContext) {}
+  AbstractPchorASTVisitor(clang::ASTContext &clangContext, bool debug)
+      : clangContext(clangContext), debug(debug) {}
   virtual ~AbstractPchorASTVisitor() = default;
 
   // Visiting Declarations
@@ -39,13 +39,14 @@ public:
 
 protected:
   clang::ASTContext &clangContext;
+  bool debug;
 };
 
 class CAST_PchorASTVisitor : public AbstractPchorASTVisitor {
 
 public:
-  CAST_PchorASTVisitor(clang::ASTContext &clangContext)
-      : AbstractPchorASTVisitor(clangContext),
+  CAST_PchorASTVisitor(clang::ASTContext &clangContext, bool debug)
+      : AbstractPchorASTVisitor(clangContext, debug),
         ctx(std::make_shared<PchorAST::CASTMapping>()), currentDataType(""),
         senderIdentifier(""), recieverIdentifier(""), mappingSuccess(true) {}
 
@@ -83,8 +84,8 @@ private:
 
 class Proj_PchorASTVisitor : public AbstractPchorASTVisitor {
 public:
-  Proj_PchorASTVisitor(clang::ASTContext &clangContext)
-      : AbstractPchorASTVisitor(clangContext),
+  Proj_PchorASTVisitor(clang::ASTContext &clangContext, bool debug)
+      : AbstractPchorASTVisitor(clangContext, debug),
         indexIdentifierMap(),
         ctx(std::make_shared<PchorProjection>()), currentDataType(""),
         currentChannelName(""), channelIndex(), isSender(true),

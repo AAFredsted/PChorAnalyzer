@@ -1,0 +1,332 @@
+
+
+Token List provided by PchorLexer
+--------------------------------
+Keyword Index 1
+
+Identifier I 1
+
+Symbol { 1
+
+Literal 1 1
+
+Symbol . 1
+
+Symbol . 1
+
+Literal 10 1
+
+Symbol } 1
+
+Keyword Participant 2
+
+Identifier Process 2
+
+Symbol { 2
+
+Identifier I 2
+
+Symbol } 2
+
+Keyword Channel 3
+
+Identifier p 3
+
+Symbol { 3
+
+Identifier I 3
+
+Symbol } 3
+
+Identifier Ring 5
+
+Symbol = 5
+
+Keyword foreach 6
+
+Symbol ( 6
+
+Identifier i 6
+
+Symbol < 6
+
+Keyword max 6
+
+Symbol ( 6
+
+Identifier I 6
+
+Symbol ) 6
+
+Symbol ) 6
+
+Symbol { 6
+
+Identifier Process 7
+
+Symbol [ 7
+
+Identifier i 7
+
+Symbol ] 7
+
+Symbol -> 7
+
+Identifier Process 7
+
+Symbol [ 7
+
+Identifier i 7
+
+Symbol + 7
+
+Literal 1 7
+
+Symbol ] 7
+
+Symbol : 7
+
+Identifier p 7
+
+Symbol [ 7
+
+Identifier i 7
+
+Symbol + 7
+
+Literal 1 7
+
+Symbol ] 7
+
+Symbol < 7
+
+Identifier Ping 7
+
+Symbol > 7
+
+Symbol . 7
+
+Keyword end 7
+
+Symbol } 8
+
+Symbol . 8
+
+Identifier Process 8
+
+Symbol [ 8
+
+Keyword max 8
+
+Symbol ( 8
+
+Identifier I 8
+
+Symbol ) 8
+
+Symbol ] 8
+
+Symbol -> 8
+
+Identifier Process 8
+
+Symbol [ 8
+
+Keyword min 8
+
+Symbol ( 8
+
+Identifier I 8
+
+Symbol ) 8
+
+Symbol ] 8
+
+Symbol : 8
+
+Identifier p 8
+
+Symbol [ 8
+
+Keyword min 8
+
+Symbol ( 8
+
+Identifier I 8
+
+Symbol ) 8
+
+Symbol ] 8
+
+Symbol < 8
+
+Identifier Ping 8
+
+Symbol > 8
+
+Symbol . 8
+
+Keyword end 8
+
+EndOfFile  9
+
+Succesfully parsed file
+
+
+Print of AST Declarations
+----------------
+ASTElement 1
+------------
+Index PchorUnaryIndex with lower bound:1, upper bound: 1
+ASTElement 2
+------------
+Index I with lower bound:1, upper bound: 10
+ASTElement 3
+------------
+Participant Process indexed with I
+ASTElement 4
+------------
+Channel p indexed with I
+ASTElement 5
+------------
+Global Type Ring with expressions:
+Expression List of: 
+forEach expression
+Iteration Index with identifier i, min 1 and max 9
+Expression List of: 
+Communication Expression:
+Sender: Participant Process indexed with: Index Expr with base I and value: i
+Receiver: Participant Process indexed with: Index Expr with base I and value: i + 1
+Channel: Channel p indexed with: Index Expr with base I and value: i + 1
+Datatype: Ping
+Communication Expression:
+Sender: Participant Process indexed with: Index Expr with base I and value: 10
+Receiver: Participant Process indexed with: Index Expr with base I and value: 1
+Channel: Channel p indexed with: Index Expr with base I and value: 1
+Datatype: Ping
+
+crash occurs somewhere in addLiteralProjection
+case 4
+Process1: !p[2]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 4
+Process2: ?p[2]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 1
+Process2: !p[3]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 4
+Process3: ?p[3]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 1
+Process3: !p[4]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 4
+Process4: ?p[4]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 1
+Process4: !p[5]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 4
+Process5: ?p[5]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 1
+Process5: !p[6]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 4
+Process6: ?p[6]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 1
+Process6: !p[7]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 4
+Process7: ?p[7]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 1
+Process7: !p[8]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 4
+Process8: ?p[8]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 1
+Process8: !p[9]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 4
+Process9: ?p[9]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 1
+Process9: !p[10]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 4
+Process10: ?p[10]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 1
+Process10: !p[1]<Ping>.
+crash occurs somewhere in addLiteralProjection
+case 1
+Process1: ?p[1]<Ping>.
+
+
+PChorAST CAST Mappings
+------------------
+Mapping for p
+Mapping for Ping
+Mapping for Process
+
+
+PchorAST Participant projections:
+-------------------------------
+Projection for participant Process8: ?p[8]<Ping>.!p[9]<Ping>. 
+Projection fRecieved .cor file path: ./ringBarrierTest/finite.cor
+Debug flag found. Debug Output will be printed
+
+
+AST has been fully created. CASTMapping and Choreography Projection Commencing!
+Symbol table correctly passed to ChoreographyAstConsumer
+CAST mapping created
+Projection created
+Reached end of function before matching projection of receive type p[8] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[8] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[7] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[7] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[6] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[6] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[10] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[10] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[5] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[5] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[9] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[9] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[4] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[4] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[3] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[3] at statement: CompoundStmt
+Reached end of function before matching projection of receive type p[2] at statement: ExprWithCleanups
+Reached end of function before matching projection of receive type p[2] at statement: CompoundStmt
+Decl of type Field
+Field Decl: p
+Decl of type CXXRecord
+Class Decl: Ping
+Decl of type CXXRecord
+Class Decl: Process
+or participant Process7: ?p[7]<Ping>.!p[8]<Ping>. 
+Projection for participant Process6: ?p[6]<Ping>.!p[7]<Ping>. 
+Projection for participant Process10: ?p[10]<Ping>.!p[1]<Ping>. 
+Projection for participant Process5: ?p[5]<Ping>.!p[6]<Ping>. 
+Projection for participant Process9: ?p[9]<Ping>.!p[10]<Ping>. 
+Projection for participant Process4: ?p[4]<Ping>.!p[5]<Ping>. 
+Projection for participant Process3: ?p[3]<Ping>.!p[4]<Ping>. 
+Projection for participant Process2: ?p[2]<Ping>.!p[3]<Ping>. 
+Projection for participant Process1: !p[2]<Ping>.?p[1]<Ping>. 
+
+
+Successfull Validations:
+-------------------
+receiveThenSend: Process8 Process7 Process6 Process10 Process5 Process9 Process4 Process3 Process2 
+sendThenReceive: Process1 
+
+
+Failed Validations:
+-------------------
+receiveThenSend: 
+sendThenReceive: Process8 Process7 Process6 Process10 Process5 Process9 Process4 Process3 Process2 

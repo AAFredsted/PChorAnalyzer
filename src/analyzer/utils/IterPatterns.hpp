@@ -40,6 +40,13 @@ namespace PchorAST {
             }
             return *this;
         }
+        
+        void print(const std::string name) const {
+            std::println("{}:",name);
+            forward->print();
+            backward->print();
+            unevenOverlapAB->print();
+        }
 
         //basic type for a and a+b
         template<typename ComType>
@@ -116,6 +123,25 @@ namespace PchorAST {
         }
 
         ~MaxExcludingIter() = default;
+        void print(const std::string& name) const {
+            std::println("{}:",name);
+            std::print("forward: ");
+            forward->print();
+            std::print("forwardPlus: ");
+            forwardPlus->print();
+            std::print("backwardMinus: ");
+            backwardMinus->print();
+            std::print("backward: ");
+            backward->print();          
+            std::print("EvenAD: ");
+            evenOverlapAD->print();
+            std::print("EvenBC: ");
+            evenOverlapBC->print();
+            std::print("UnevenAB: ");
+            unevenOverlapAB->print();
+            std::print("EvenCD: ");
+            unevenOverlapCD->print();
+        }
 
         template<typename ComType>
         requires std::derived_from<ComType, AbstractProjection>
@@ -257,6 +283,25 @@ namespace PchorAST {
             return *this;
         }
 
+        void print(const std::string& name ) const  {
+            std::println("{}:",name);
+            std::print("forwardMinus: ");
+            forwardMinus->print();
+            std::print("forward: ");
+            forward->print();      
+            std::print("backward: ");
+            backward->print();
+            std::print("backwardPlus: ");
+            backwardPlus->print();    
+            std::print("EvenAD: ");
+            evenOverlapAD->print();
+            std::print("EvenBC: ");
+            evenOverlapBC->print();
+            std::print("UnevenAB: ");
+            unevenOverlapAB->print();
+            std::print("EvenCD: ");
+            unevenOverlapCD->print();
+        }
 
 
         template<typename ComType>

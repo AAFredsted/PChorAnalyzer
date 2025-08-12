@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <iterator>
+#include <print>
 
 using namespace clang;
 
@@ -22,14 +23,14 @@ public:
       std::shared_ptr<PchorAST::SymbolTable> sTable, bool debug, bool onlyproj)
       : sTable(std::move(sTable)), debug(debug), onlyproj(onlyproj) {}
 void HandleTranslationUnit(ASTContext &Context) override {
-    llvm::outs() << "\n\nAST has been fully created. CASTMapping and Choreography Projection Commencing!\n";
+    std::println("\n\nAST has been fully created. CASTMapping and Choreography Projection Commencing!\n");
     try {
       if (!sTable) {
-        llvm::outs() << "Error: HandleTranslationUnit received no SymbolTable. Continuing to compilation\n";
+       std::println("Error: HandleTranslationUnit received no SymbolTable. Continuing to compilation\n");
         return;
       }
 
-      llvm::outs() << "Symbol table correctly passed to ChoreographyAstConsumer\n";
+      std::println("Symbol table correctly passed to ChoreographyAstConsumer\n");
       auto globalTypePtr = sTable->back();
       if ((*globalTypePtr)->getDeclType() != PchorAST::Decl::Global_Type_Decl) {
         throw std::runtime_error("Final Expression is required to be a Global type expression.");
@@ -37,15 +38,15 @@ void HandleTranslationUnit(ASTContext &Context) override {
 
       if (onlyproj) {
         // Only projection logic
-        PchorAST::Proj_PchorASTVisitor Proj_visitor(Context);
+        PchorAST::Proj_PchorASTVisitor Proj_visitor(Context, debug);
         (*globalTypePtr)->accept(Proj_visitor);
         Proj_visitor.printProjections();
         return;
       }
 
       // Full pipeline
-      PchorAST::CAST_PchorASTVisitor CAST_visitor(Context);
-      PchorAST::Proj_PchorASTVisitor Proj_visitor(Context);
+      PchorAST::CAST_PchorASTVisitor CAST_visitor(Context, debug);
+      PchorAST::Proj_PchorASTVisitor Proj_visitor(Context, debug);
 
       for (auto itr = sTable->begin(); itr != sTable->end(); ++itr) {
         if ((*itr)->getDeclType() != PchorAST::Decl::Global_Type_Decl ||
@@ -53,9 +54,9 @@ void HandleTranslationUnit(ASTContext &Context) override {
           (*itr)->accept(CAST_visitor);
         }
       }
-      llvm::outs() << "CAST mapping created\n";
+      std::println("CAST mapping created\n");
       (*globalTypePtr)->accept(Proj_visitor);
-      llvm::outs() << "Projection created\n";
+      std::println("Projection created\n");
 
       auto CASTMapping = CAST_visitor.getContext();
       auto Projections = Proj_visitor.getContext();
@@ -105,15 +106,14 @@ protected:
     for (const auto &arg : args) {
       if (arg.find("--cor=") != std::string::npos) {
         corFilePath = arg.substr(arg.find("--cor=") + 6);
-        llvm::outs() << "Recieved .cor file path: " << corFilePath << "\n";
       }
       if (arg.find("--debug") != std::string::npos) {
         debug = true;
-        llvm::outs() << "Debug flag found. Debug Output will be printed\n";
+        std::println("Debug flag found. Debug Output will be printed\n");
       }
       if(arg.find("--projection") != std::string::npos) {
         onlyproj = true;
-        llvm::outs() << "Projection flag found. Program will only generate local type projections\n";
+        std::println("Projection flag found. Program will only generate local type projections\n");
       }
     }
 
