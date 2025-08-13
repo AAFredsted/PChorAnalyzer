@@ -1,4 +1,4 @@
-Index I{0..n}
+Index I{0..5}
 
 Participant P{I}
 Channel c{I}
