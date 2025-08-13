@@ -321,7 +321,7 @@ struct Range {
       return Range(lower, upper);
     }
     if (other.upper < upper) {
-      Bound newLower = Bound(other.upper.symbol, !other.upper.inclusive, !other.upper.lhs);
+      Bound newLower = Bound(other.upper.symbol, !other.upper.inclusive, true);
       return Range(newLower, upper);
     }
     throw std::runtime_error(std::format("Invalid Ranges Received, no right difference for {} without {}",this->toString(), other.toString()));
@@ -572,21 +572,13 @@ public:
     
     //we only need it to work for max and min, but cases
 
+    //attempting to insert P[l] 
 
-    //1: we do not exist, and no other version like us exists, so we add ourselves anew
-    //2: find ranged version of us without literal, so we generate version of us
-    //3: we already exist, so we just add
-    //4: find ranged version with literal, just add
-
-      //first, check if any matches with ranges exist
-
-      //then, check if any only ranges exist
-
-      //add directly if exists
+      //case 1: P[i] exists, so we insert directly
       if(this->hasParticipant(key)){
         addProjection(key, std::move(proj));
       }
-      //matching range and literal
+      //case2:  P{[i]range even} exists: we add to all P[i]x that match i
       else if(hasMatchingRangeWithLiteral(key)) {
         for(const auto& [iKey, iProj]: projectionMap.at(key.name)) {
           if(iKey.index && *(iKey.index) == *(key.index)){
@@ -594,100 +586,100 @@ public:
           }
         }
       }
+      //case 3: there exists a P{range evencase}, which we need to have our literal number map to
       else if(hasMathingRangeToLiteral(key, l, n)) {
         //case where we need to gen I for entire range 0: ohh nooo
         std::vector<ParticipantKey> keysToRemove;
         std::vector<std::pair<ParticipantKey, std::shared_ptr<ProjectionList>>> keysToInsert;
         size_t i = *(key.index);
 
+
+        //the cases are as folloiwing
+        /*
+          i = l
+            range [n,l] is turned into (l, n] with new projection P[l][l,l] existing (that is all)
+
+          i \in (l, n)
+              P[i]range is generated for all ranges for P
+          i = n
+            range [n,l] is turned into [l, n) with new projection P[n][n,n] existing (that is all)
+        */
         //(l,n)
-        Range lnRange{Bound(RangeSymbol::L, false, true), Bound(RangeSymbol::N, false, false)};
+        
         for(const auto& [iKey, iProj]: projectionMap.at(key.name)) {
-            //basically, we map entire range, except for max and min, or we only map max or min,
-            //then, we remove old one
-            //finish this tomorrow and make hella sick example, then do presentation
-            if(*(key.index) == l && !iKey.index && iKey.isMinInclusive()) {
-              //okay.. so we have P{[l]} and P{[l,Bound, both}
-              //generate 2 keys
-              //P{[l], [l,l], both} and P{(l,Bound, both}
-              
 
-              //insert the two and remove the old one 
+            //case 1: min
+            if(i == l && !iKey.index && iKey.isMinInclusive()) {
+              std::println("we enter l case");
+              Range ll{Bound{RangeSymbol::L, true, true}, Bound{RangeSymbol::L, true, false}};
+              ParticipantKey llKey{iKey.name, i, ll, *(iKey.even)};
+              std::shared_ptr<ProjectionList> llProj = std::make_shared<ProjectionList>();
 
-              Range lr{Bound{RangeSymbol::L, true, true}, Bound{RangeSymbol::L, true, false}};
-             
+              llProj->appendCloneBack(iProj);
+              llProj->appendBack(proj->clone());
+              std::print("Insert new minimum: {} ", llKey.toString());
+              llProj->print();
 
-              ParticipantKey lKey{key.name, i, lr, EvenCase::Both};
-              std::shared_ptr<ProjectionList> lProj = std::make_shared<ProjectionList>();
-              lProj->appendCloneBack(iProj);
-              lProj->appendBack(proj->clone());
-              keysToInsert.emplace_back(lKey, lProj);
+              keysToInsert.emplace_back(llKey, llProj);
 
 
-              if(iKey.range->isRightDifference(lr)){
-                Range cr = iKey.range->rightDifference(lr);
-                ParticipantKey lcKey{iKey.name, cr, *(iKey.even)};
-                std::shared_ptr<ProjectionList> lcProj = std::make_shared<ProjectionList>();
-                lcProj->appendCloneBack(iProj);
-                keysToInsert.emplace_back(lcKey, lcProj);
-              }
-            
-              keysToRemove.push_back(iKey);              
-            }
-            else if(*(key.index) == n && !iKey.index && iKey.isMaxInclusive()) {
+              //if range was not [l,l], we generate (l,k for whatever was there before !
+              if(iKey.range->isRightDifference(ll)) {
+                Range rightDiff = iKey.range->rightDifference(ll);
+                //we copy over from what was left
+                ParticipantKey rightDiffKey{iKey.name, rightDiff, *(iKey.even)};
 
-              Range nr{Bound{RangeSymbol::N, true, true}, Bound{RangeSymbol::N, true, false}};
-              ParticipantKey nKey{key.name, i, nr, EvenCase::Both};
-              std::shared_ptr<ProjectionList> nProj = std::make_shared<ProjectionList>();
+                std::shared_ptr<ProjectionList> rightDiffProj = std::make_shared<ProjectionList>();
+                rightDiffProj->appendCloneBack(iProj);
+                std::print("Insert right diff: {}", rightDiffKey.toString());
+                rightDiffProj->print();
 
-              nProj->appendCloneBack(iProj);
-              nProj->appendBack(proj->clone());
-              keysToInsert.emplace_back(nKey, nProj);
-
-              if(iKey.range->isLeftDifference(nr)){
-                Range cr = iKey.range->leftDifference(cr);
-                ParticipantKey cnKey{iKey.name, cr, *(iKey.even)};
-                std::shared_ptr<ProjectionList> cnProj = std::make_shared<ProjectionList>();
-
-                cnProj->appendCloneBack(iProj);
-                keysToInsert.emplace_back(cnKey, cnProj);
-
-              }          
-          
-              keysToRemove.push_back(iKey);     
-
-            }
-            else if(!iKey.index){
-              //okay.. so we have to copy it over directly, and get differences on left and right
-              Range r = *(iKey.range);
-              ParticipantKey rKey{key.name, i, r, *(iKey.even)};
-              std::shared_ptr<ProjectionList> rProj = std::make_shared<ProjectionList>();
-              rProj->appendCloneBack(iProj);
-              rProj->appendBack(proj->clone());
-
-              keysToInsert.emplace_back(rKey, rProj);
-              
-              if(lnRange.isLeftDifference(r)) {
-                Range lcr = lnRange.leftDifference(r);
-                ParticipantKey lcKey{key.name, i, lcr, *(iKey.even)};
-                std::shared_ptr<ProjectionList> lcProj = std::make_shared<ProjectionList>();
-                lcProj->appendCloneBack(iProj);
-                lcProj->appendBack(proj->clone());
-
-                keysToInsert.emplace_back(lcKey, lcProj);
-              }
-              if(lnRange.isRightDifference(r)) {                
-                Range cnr = lnRange.rightDifference(r);
-                ParticipantKey cnKey{key.name, i, cnr, *(iKey.even)};
-                std::shared_ptr<ProjectionList> cnProj = std::make_shared<ProjectionList>();
-                cnProj->appendCloneBack(iProj);
-                cnProj->appendBack(proj->clone());
-
-                keysToInsert.emplace_back(cnKey, cnProj);
-
+                keysToInsert.emplace_back(rightDiffKey, rightDiffProj);
               }
 
+              //remove old key
+              std::println("we remove: {}", iKey.toString());
               keysToRemove.push_back(iKey);
+              std::println("we leave l case");
+            }
+            //case 2: max
+            else if(i==n && !iKey.index && iKey.isMaxInclusive()) {
+              std::println("we enter l case");
+              Range nn{Bound{RangeSymbol::N, true, true}, Bound{RangeSymbol::N, true, false}};
+              ParticipantKey nnKey{iKey.name, i, nn, *(iKey.even)};
+              std::shared_ptr<ProjectionList> nnProj = std::make_shared<ProjectionList>();
+
+              nnProj->appendCloneBack(iProj);
+              nnProj->appendBack(proj->clone());
+              std::print("Insert new maximum: {} ", nnKey.toString());
+              nnProj->print();
+
+              keysToInsert.emplace_back(nnKey, nnProj);
+
+
+              //if range was not [n,n], we generate k,n) for whatever  k was there before !
+              if(iKey.range->isLeftDifference(nn)) {
+                Range leftDiff = iKey.range->leftDifference(nn);
+                //we copy over from what was left
+                ParticipantKey leftDiffKey{iKey.name, leftDiff, *(iKey.even)};
+
+                std::shared_ptr<ProjectionList> leftDiffProj = std::make_shared<ProjectionList>();
+                leftDiffProj->appendCloneBack(iProj);
+                std::print("Insert left diff: {}", leftDiffKey.toString());
+                leftDiffProj->print();
+
+                keysToInsert.emplace_back(leftDiffKey, leftDiffProj);
+              }
+
+              //remove old key
+              std::println("we remove: {}", iKey.toString());
+              keysToRemove.push_back(iKey);
+              std::println("we leave n case");
+            }
+            //case 3: (l,n)
+            else if(i != l && i != n && !iKey.index) {
+              //dont remove anything, just add!
+              std::println("we should not enter this case for now !!");
 
             }
         }
@@ -701,6 +693,7 @@ public:
             projectionMap[newKey.name][newKey] = newProj;
         }
       }
+      //final case, we add ourselves as no ranged participants were identified to map onto
       else{
         //we have no ranged
         this->addParticipant(key);
