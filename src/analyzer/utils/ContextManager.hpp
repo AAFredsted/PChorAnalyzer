@@ -717,7 +717,6 @@ public:
   Bug: currently,this function does not handle the cases of even|odd|both for key and rKey, it simply uses the even attribute from rKey.
   */
   void appendCloneRangedProjection(const ParticipantKey &rKey, std::shared_ptr<ProjectionList> rProj, size_t l, size_t n) {
-    std::println("we run appendCloneRangedProjection");  
     // 1. Collect changes to apply after iteration
       std::vector<ParticipantKey> keysToRemove;
       std::vector<std::pair<ParticipantKey, std::shared_ptr<ProjectionList>>> keysToInsert;
@@ -853,8 +852,6 @@ public:
           else if (key.range && (*(key.even) == EvenCase::Both  || *(rKey.even) == EvenCase::Both || *(key.even) == *(rKey.even))) {
               const Range& L = *key.range;
               const Range& R = *rKey.range;
-
-              std::println("we enter range only case");
 
               if(L == R){
                 //we directly append no change to bucket structure

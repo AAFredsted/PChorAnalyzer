@@ -4,10 +4,8 @@ Participant P{I}
 Channel c{I}
 
 iterexample = foreach(i : I) {
-    P[i] -> P[max(I)-i+min(I)]: c[i]<something>.
+    P[i] -> P[max(I)-i+min(I)]: c[max(I)-i+min(I)]<something>.
     P[max(I)-i+min(I)] -> P[i]: c[i]<something>.
     end
 } . end
 
-//The reason that it works, is that since we have 4 unique starting points, we can only have 4 unique behaviours !
-//Appending to each iteration will append to an index already found or add 
