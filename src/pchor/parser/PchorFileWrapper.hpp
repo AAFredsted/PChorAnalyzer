@@ -8,7 +8,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-
 namespace PchorAST {
 class PchorFileWrapper {
   std::string buffer;

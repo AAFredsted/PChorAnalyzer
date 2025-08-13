@@ -13,11 +13,10 @@ bool Psend::validateFunctionDecl(
     clang::ASTContext &context, std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
     clang::Stmt::const_child_iterator &itr,
     clang::Stmt::const_child_iterator &end,
-    AbstractProjection*& parentScopeProjectionPtr) {
+    AbstractProjection *&parentScopeProjectionPtr) {
   // we set a param to a value
   auto cpy = itr;
   bool matchingdone = false;
-
 
   const auto *channelDecl =
       CASTmap->getMapping<const clang::Decl *>(this->channelName);
@@ -28,15 +27,16 @@ bool Psend::validateFunctionDecl(
     throw std::runtime_error(
         std::format("Failed to Retrieve data from CASTmap"));
   }
-  
-  AbstractProjection* childScopeProjectionPtr = nullptr;
+
+  AbstractProjection *childScopeProjectionPtr = nullptr;
 
   while (!matchingdone) {
     if (cpy == end) {
-      llvm::errs() << std::format(
-          "[PchorValidator] Warning: Reached end of function before matching projection of send "
-          "type {} at statement: {}\n",
-          this->getChannelString(), itr->getStmtClassName());
+      llvm::errs() << std::format("[PchorValidator] Warning: Reached end of "
+                                  "function before matching projection of send "
+                                  "type {} at statement: {}\n",
+                                  this->getChannelString(),
+                                  itr->getStmtClassName());
       break;
     }
     const auto *opExpr = *cpy;
@@ -54,31 +54,28 @@ bool Psend::validateFunctionDecl(
         auto childItr = childElm.begin();
         auto childEnd = childElm.end();
 
-        matchingdone =
-            this->validateFunctionDecl(context, CASTmap, childItr, childEnd, childScopeProjectionPtr);
+        matchingdone = this->validateFunctionDecl(
+            context, CASTmap, childItr, childEnd, childScopeProjectionPtr);
       }
     }
     cpy++;
   }
   itr = cpy;
 
-
-  if(itr != end) {
-    if(childScopeProjectionPtr){
-      return childScopeProjectionPtr->validateFunctionDecl(context, CASTmap, itr, end, parentScopeProjectionPtr);
-    }
-    else if(this->next){
-      return this->next->validateFunctionDecl(context, CASTmap, itr, end, parentScopeProjectionPtr);
-    }
-    else{
+  if (itr != end) {
+    if (childScopeProjectionPtr) {
+      return childScopeProjectionPtr->validateFunctionDecl(
+          context, CASTmap, itr, end, parentScopeProjectionPtr);
+    } else if (this->next) {
+      return this->next->validateFunctionDecl(context, CASTmap, itr, end,
+                                              parentScopeProjectionPtr);
+    } else {
       return matchingdone;
     }
-  }
-  else {
-    if(matchingdone) {
+  } else {
+    if (matchingdone) {
       parentScopeProjectionPtr = this->next.get();
-    }
-    else {
+    } else {
       parentScopeProjectionPtr = this;
     }
     return matchingdone;
@@ -89,11 +86,10 @@ bool Isend::validateFunctionDecl(
     clang::ASTContext &context, std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
     clang::Stmt::const_child_iterator &itr,
     clang::Stmt::const_child_iterator &end,
-    AbstractProjection*& parentScopeProjectionPtr) {
+    AbstractProjection *&parentScopeProjectionPtr) {
   // we set a param to a value
   auto cpy = itr;
   bool matchingdone = false;
-
 
   const auto *channelDecl =
       CASTmap->getMapping<const clang::Decl *>(this->channelName);
@@ -104,15 +100,16 @@ bool Isend::validateFunctionDecl(
     throw std::runtime_error(
         std::format("Failed to Retrieve data from CASTmap"));
   }
-  
-  AbstractProjection* childScopeProjectionPtr = nullptr;
+
+  AbstractProjection *childScopeProjectionPtr = nullptr;
 
   while (!matchingdone) {
     if (cpy == end) {
-      llvm::errs() << std::format(
-          "[PchorValidator] Warning: Reached end of function before matching projection of send "
-          "type {} at statement: {}\n",
-          this->getChannelString(), itr->getStmtClassName());
+      llvm::errs() << std::format("[PchorValidator] Warning: Reached end of "
+                                  "function before matching projection of send "
+                                  "type {} at statement: {}\n",
+                                  this->getChannelString(),
+                                  itr->getStmtClassName());
       break;
     }
     const auto *opExpr = *cpy;
@@ -130,31 +127,28 @@ bool Isend::validateFunctionDecl(
         auto childItr = childElm.begin();
         auto childEnd = childElm.end();
 
-        matchingdone =
-            this->validateFunctionDecl(context, CASTmap, childItr, childEnd, childScopeProjectionPtr);
+        matchingdone = this->validateFunctionDecl(
+            context, CASTmap, childItr, childEnd, childScopeProjectionPtr);
       }
     }
     cpy++;
   }
   itr = cpy;
 
-
-  if(itr != end) {
-    if(childScopeProjectionPtr){
-      return childScopeProjectionPtr->validateFunctionDecl(context, CASTmap, itr, end, parentScopeProjectionPtr);
-    }
-    else if(this->next){
-      return this->next->validateFunctionDecl(context, CASTmap, itr, end, parentScopeProjectionPtr);
-    }
-    else{
+  if (itr != end) {
+    if (childScopeProjectionPtr) {
+      return childScopeProjectionPtr->validateFunctionDecl(
+          context, CASTmap, itr, end, parentScopeProjectionPtr);
+    } else if (this->next) {
+      return this->next->validateFunctionDecl(context, CASTmap, itr, end,
+                                              parentScopeProjectionPtr);
+    } else {
       return matchingdone;
     }
-  }
-  else {
-    if(matchingdone) {
+  } else {
+    if (matchingdone) {
       parentScopeProjectionPtr = this->next.get();
-    }
-    else {
+    } else {
       parentScopeProjectionPtr = this;
     }
     return matchingdone;
@@ -165,7 +159,7 @@ bool Preceive::validateFunctionDecl(
     clang::ASTContext &context, std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
     clang::Stmt::const_child_iterator &itr,
     clang::Stmt::const_child_iterator &end,
-    AbstractProjection*& parentScopeProjectionPtr) {
+    AbstractProjection *&parentScopeProjectionPtr) {
 
   auto cpy = itr;
   bool waitMatchingDone = false;
@@ -181,14 +175,14 @@ bool Preceive::validateFunctionDecl(
         std::format("Failed to Retrieve data from CASTmap"));
   }
 
-  AbstractProjection* childScopeProjectionPtr = nullptr;
+  AbstractProjection *childScopeProjectionPtr = nullptr;
 
   while (!waitMatchingDone) {
     if (cpy == end) {
-      std::println(
-          "[PchorValidator] Warning: Reached end of function before matching projection of "
-          "receive type {} at statement: {}\n",
-          this->getChannelString(), itr->getStmtClassName());
+      std::println("[PchorValidator] Warning: Reached end of function before "
+                   "matching projection of "
+                   "receive type {} at statement: {}\n",
+                   this->getChannelString(), itr->getStmtClassName());
       break;
     }
     std::string type = cpy->getStmtClassName();
@@ -206,30 +200,28 @@ bool Preceive::validateFunctionDecl(
         auto childElm = body->children();
         auto childItr = childElm.begin();
         auto childEnd = childElm.end();
-        waitMatchingDone =
-            this->validateFunctionDecl(context, CASTmap, childItr, childEnd, childScopeProjectionPtr);
+        waitMatchingDone = this->validateFunctionDecl(
+            context, CASTmap, childItr, childEnd, childScopeProjectionPtr);
       }
     }
     cpy++;
   }
   itr = cpy;
 
-  if(itr != end) {
-    if(childScopeProjectionPtr){
-      return childScopeProjectionPtr->validateFunctionDecl(context, CASTmap, itr, end, parentScopeProjectionPtr);
-    }
-    else if(this->next){
-      return this->next->validateFunctionDecl(context, CASTmap, itr, end, parentScopeProjectionPtr);
-    }
-    else{
+  if (itr != end) {
+    if (childScopeProjectionPtr) {
+      return childScopeProjectionPtr->validateFunctionDecl(
+          context, CASTmap, itr, end, parentScopeProjectionPtr);
+    } else if (this->next) {
+      return this->next->validateFunctionDecl(context, CASTmap, itr, end,
+                                              parentScopeProjectionPtr);
+    } else {
       return waitMatchingDone;
     }
-  }
-  else {
-    if(waitMatchingDone) {
+  } else {
+    if (waitMatchingDone) {
       parentScopeProjectionPtr = this->next.get();
-    }
-    else {
+    } else {
       parentScopeProjectionPtr = this;
     }
     return waitMatchingDone;
@@ -240,7 +232,7 @@ bool Ireceive::validateFunctionDecl(
     clang::ASTContext &context, std::shared_ptr<PchorAST::CASTMapping> &CASTmap,
     clang::Stmt::const_child_iterator &itr,
     clang::Stmt::const_child_iterator &end,
-    AbstractProjection*& parentScopeProjectionPtr) {
+    AbstractProjection *&parentScopeProjectionPtr) {
 
   auto cpy = itr;
   bool waitMatchingDone = false;
@@ -256,14 +248,14 @@ bool Ireceive::validateFunctionDecl(
         std::format("Failed to Retrieve data from CASTmap"));
   }
 
-  AbstractProjection* childScopeProjectionPtr = nullptr;
+  AbstractProjection *childScopeProjectionPtr = nullptr;
 
   while (!waitMatchingDone) {
     if (cpy == end) {
-      std::println(
-          "[PchorValidator] Warning: Reached end of function before matching projection of "
-          "receive type {} at statement: {}\n",
-          this->getChannelString(), itr->getStmtClassName());
+      std::println("[PchorValidator] Warning: Reached end of function before "
+                   "matching projection of "
+                   "receive type {} at statement: {}\n",
+                   this->getChannelString(), itr->getStmtClassName());
       break;
     }
     std::string type = cpy->getStmtClassName();
@@ -281,35 +273,32 @@ bool Ireceive::validateFunctionDecl(
         auto childElm = body->children();
         auto childItr = childElm.begin();
         auto childEnd = childElm.end();
-        waitMatchingDone =
-            this->validateFunctionDecl(context, CASTmap, childItr, childEnd, childScopeProjectionPtr);
+        waitMatchingDone = this->validateFunctionDecl(
+            context, CASTmap, childItr, childEnd, childScopeProjectionPtr);
       }
     }
     cpy++;
   }
   itr = cpy;
 
-  if(itr != end) {
-    if(childScopeProjectionPtr){
-      return childScopeProjectionPtr->validateFunctionDecl(context, CASTmap, itr, end, parentScopeProjectionPtr);
-    }
-    else if(this->next){
-      return this->next->validateFunctionDecl(context, CASTmap, itr, end, parentScopeProjectionPtr);
-    }
-    else{
+  if (itr != end) {
+    if (childScopeProjectionPtr) {
+      return childScopeProjectionPtr->validateFunctionDecl(
+          context, CASTmap, itr, end, parentScopeProjectionPtr);
+    } else if (this->next) {
+      return this->next->validateFunctionDecl(context, CASTmap, itr, end,
+                                              parentScopeProjectionPtr);
+    } else {
       return waitMatchingDone;
     }
-  }
-  else {
-    if(waitMatchingDone) {
+  } else {
+    if (waitMatchingDone) {
       parentScopeProjectionPtr = this->next.get();
-    }
-    else {
+    } else {
       parentScopeProjectionPtr = this;
     }
     return waitMatchingDone;
   }
 };
-
 
 } // namespace PchorAST

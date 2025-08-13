@@ -1,7 +1,7 @@
 #include "PchorTokenizer.hpp"
+#include <algorithm>
 #include <string>
 #include <vector>
-#include <algorithm>
 namespace PchorAST {
 std::string Token::toString() const {
   std::string s;

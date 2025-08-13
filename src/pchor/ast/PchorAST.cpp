@@ -55,5 +55,4 @@ void GlobalTypeASTNode::accept(AbstractPchorASTVisitor &visitor) const {
   visitor.visit(*this);
 }
 
-
 } // namespace PchorAST

@@ -85,8 +85,7 @@ private:
 class Proj_PchorASTVisitor : public AbstractPchorASTVisitor {
 public:
   Proj_PchorASTVisitor(clang::ASTContext &clangContext, bool debug)
-      : AbstractPchorASTVisitor(clangContext, debug),
-        indexIdentifierMap(),
+      : AbstractPchorASTVisitor(clangContext, debug), indexIdentifierMap(),
         ctx(std::make_shared<PchorProjection>()), currentDataType(""),
         currentChannelName(""), channelIndex(), isSender(true),
         mappingSuccess(true) {}
@@ -112,16 +111,30 @@ public:
   void visit(const ForEachExpr &expr) override;
 
   std::shared_ptr<PchorProjection> getContext() { return ctx; }
-  //fixed
-  std::unordered_map<std::string, FullIter> getCasesFull(const std::shared_ptr<ExprList>& expr, const std::string& i) const;
-  std::unordered_map<std::string, MaxExcludingIter> getCasesMaxEx(const std::shared_ptr<ExprList>& expr, const std::string& i) const ;
-  std::unordered_map<std::string, MinExcludingIter> getCasesMinEx(const std::shared_ptr<ExprList>& expr, const std::string& i) const;
-  void addEquivalenceClassesFull(std::unordered_map<std::string, FullIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n);
-  void addEquivalenceClassesMaxEx(std::unordered_map<std::string, MaxExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n);
-  void addEquivalenceClassesMinEx(std::unordered_map<std::string, MinExcludingIter>& baseCases, const std::string& identifier, const std::string& indexName, size_t l, size_t n);
+  // fixed
+  std::unordered_map<std::string, FullIter>
+  getCasesFull(const std::shared_ptr<ExprList> &expr,
+               const std::string &i) const;
+  std::unordered_map<std::string, MaxExcludingIter>
+  getCasesMaxEx(const std::shared_ptr<ExprList> &expr,
+                const std::string &i) const;
+  std::unordered_map<std::string, MinExcludingIter>
+  getCasesMinEx(const std::shared_ptr<ExprList> &expr,
+                const std::string &i) const;
+  void addEquivalenceClassesFull(
+      std::unordered_map<std::string, FullIter> &baseCases,
+      const std::string &identifier, const std::string &indexName, size_t l,
+      size_t n);
+  void addEquivalenceClassesMaxEx(
+      std::unordered_map<std::string, MaxExcludingIter> &baseCases,
+      const std::string &identifier, const std::string &indexName, size_t l,
+      size_t n);
+  void addEquivalenceClassesMinEx(
+      std::unordered_map<std::string, MinExcludingIter> &baseCases,
+      const std::string &identifier, const std::string &indexName, size_t l,
+      size_t n);
 
-  //not fixed
-
+  // not fixed
 
   void printProjections() const { ctx->printProjections(); }
 

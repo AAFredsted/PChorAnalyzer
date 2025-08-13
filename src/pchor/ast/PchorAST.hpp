@@ -4,8 +4,8 @@
 #include <memory> // For std::shared_ptr
 #include <print>
 #include <string>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "../parser/PchorTokenizer.hpp"
@@ -41,12 +41,7 @@ enum class Expr : uint8_t {
   IndexExpr
 };
 
-enum class IterType: uint8_t {
-  FullIter,
-  MinExIter,
-  MaxExIter
-};
-
+enum class IterType : uint8_t { FullIter, MinExIter, MaxExIter };
 
 /*
 Identifiers for the different nodetypes in the arithmetic expression tree
@@ -58,9 +53,10 @@ enum class ArithmeticExpr : uint8_t {
   Subtraction
 };
 /*
-Identifier for the types of expressions used to validate and identify expressions for equivalence class projection
+Identifier for the types of expressions used to validate and identify
+expressions for equivalence class projection
 */
-enum class EquivalenceBaseType: uint8_t {
+enum class EquivalenceBaseType : uint8_t {
   forward,
   backward,
   forwardPlus,
@@ -72,13 +68,13 @@ enum class EquivalenceBaseType: uint8_t {
 
 struct BaseArithmeticExpr {
   ArithmeticExpr exprType;
-  BaseArithmeticExpr(ArithmeticExpr exprType): exprType(exprType) {}
+  BaseArithmeticExpr(ArithmeticExpr exprType) : exprType(exprType) {}
 
   virtual ~BaseArithmeticExpr() = default;
-  
+
   virtual std::string toString() const = 0;
   virtual void print() const = 0;
-  virtual size_t eval(std::unordered_map<std::string, size_t>& ctx) const = 0;
+  virtual size_t eval(std::unordered_map<std::string, size_t> &ctx) const = 0;
   /*
     requires [l,n] with l < n
     We identify pattern based on I=[l..n]
@@ -94,128 +90,144 @@ struct BaseArithmeticExpr {
 
     we evaluate expression e for i = max and see what comes out
 
-    For all iteration patterns i = max(I)-1 will occur in the iteration pattern (i: I | i < max(I) | i > min(I)).
-    Since eval throws an error if it would result in an overflow/underflow, we can eval this and return the matching type.
+    For all iteration patterns i = max(I)-1 will occur in the iteration pattern
+    (i: I | i < max(I) | i > min(I)). Since eval throws an error if it would
+    result in an overflow/underflow, we can eval this and return the matching
+    type.
 
   */
-  EquivalenceBaseType getEquivalenceBaseType(const std::string& identifier, size_t min, size_t max) const {
-    const size_t forwardBase   = max - 1;
-    const size_t forwardPlus   = forwardBase + 1;
-    const size_t forwardMinus  = forwardBase - 1;
-    const size_t backwardBase  = 1 + min;
-    const size_t backwardPlus  = backwardBase + 1;
+  EquivalenceBaseType getEquivalenceBaseType(const std::string &identifier,
+                                             size_t min, size_t max) const {
+    const size_t forwardBase = max - 1;
+    const size_t forwardPlus = forwardBase + 1;
+    const size_t forwardMinus = forwardBase - 1;
+    const size_t backwardBase = 1 + min;
+    const size_t backwardPlus = backwardBase + 1;
     const size_t backwardMinus = backwardBase - 1;
 
-    std::unordered_map<std::string, size_t> ctx = {
-        {identifier, forwardBase}
-    };
+    std::unordered_map<std::string, size_t> ctx = {{identifier, forwardBase}};
     const size_t j = eval(ctx);
 
-    if (j == forwardBase)               return EquivalenceBaseType::forward;
-    else if (j == forwardPlus)          return EquivalenceBaseType::forwardPlus;
-    else if (j == forwardMinus)         return EquivalenceBaseType::forwardMinus;
-    else if (j == backwardBase)         return EquivalenceBaseType::backward;
-    else if (j == backwardPlus)         return EquivalenceBaseType::backwardPlus;
-    else if (j == backwardMinus)        return EquivalenceBaseType::backwardMinus;
-    else                                return EquivalenceBaseType::unknown;
-
-    
+    if (j == forwardBase)
+      return EquivalenceBaseType::forward;
+    else if (j == forwardPlus)
+      return EquivalenceBaseType::forwardPlus;
+    else if (j == forwardMinus)
+      return EquivalenceBaseType::forwardMinus;
+    else if (j == backwardBase)
+      return EquivalenceBaseType::backward;
+    else if (j == backwardPlus)
+      return EquivalenceBaseType::backwardPlus;
+    else if (j == backwardMinus)
+      return EquivalenceBaseType::backwardMinus;
+    else
+      return EquivalenceBaseType::unknown;
   }
-
 };
 
 struct LiteralExpr : public BaseArithmeticExpr {
 
   size_t value;
-  explicit LiteralExpr(size_t v): BaseArithmeticExpr(ArithmeticExpr::Literal), value(v) {}
+  explicit LiteralExpr(size_t v)
+      : BaseArithmeticExpr(ArithmeticExpr::Literal), value(v) {}
   ~LiteralExpr() = default;
   std::string toString() const override {
-    if(value == std::numeric_limits<size_t>::max()){
+    if (value == std::numeric_limits<size_t>::max()) {
       return "n";
     }
     return std::format("{}", value);
   }
-  void print() const override {
-    std::println("{}", this->toString());
+  void print() const override { std::println("{}", this->toString()); }
+  size_t eval([[maybe_unused]] std::unordered_map<std::string, size_t> &ctx)
+      const override {
+    return value;
   }
-  size_t eval([[maybe_unused]] std::unordered_map<std::string, size_t>& ctx) const override { return value; }
-
-
-
 };
 
-struct IdentifierExpr: public BaseArithmeticExpr {
+struct IdentifierExpr : public BaseArithmeticExpr {
   std::string name;
-  explicit IdentifierExpr(const std::string& name): BaseArithmeticExpr(ArithmeticExpr::Identifier), name(std::move(name)) {}
-  explicit IdentifierExpr(const std::string_view& name): BaseArithmeticExpr(ArithmeticExpr::Identifier), name(std::string(name)) {}
+  explicit IdentifierExpr(const std::string &name)
+      : BaseArithmeticExpr(ArithmeticExpr::Identifier), name(std::move(name)) {}
+  explicit IdentifierExpr(const std::string_view &name)
+      : BaseArithmeticExpr(ArithmeticExpr::Identifier),
+        name(std::string(name)) {}
   ~IdentifierExpr() = default;
   std::string toString() const override { return name; }
   void print() const override { std::println("{}", this->toString()); }
 
   size_t eval(std::unordered_map<std::string, size_t> &ctx) const override {
-    if(!ctx.contains(this->name)){
-      throw std::runtime_error(std::format("Arithmetic Expression Context does not provide value for identifier {}", this->name));
+    if (!ctx.contains(this->name)) {
+      throw std::runtime_error(
+          std::format("Arithmetic Expression Context does not provide value "
+                      "for identifier {}",
+                      this->name));
     }
     return ctx.at(this->name);
   }
-
 };
 
 struct BaseBinaryOpExpr : public BaseArithmeticExpr {
   std::unique_ptr<BaseArithmeticExpr> lhs;
   std::unique_ptr<BaseArithmeticExpr> rhs;
 
-  BaseBinaryOpExpr(ArithmeticExpr type, std::unique_ptr<BaseArithmeticExpr> lhs, std::unique_ptr<BaseArithmeticExpr> rhs): BaseArithmeticExpr(type), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+  BaseBinaryOpExpr(ArithmeticExpr type, std::unique_ptr<BaseArithmeticExpr> lhs,
+                   std::unique_ptr<BaseArithmeticExpr> rhs)
+      : BaseArithmeticExpr(type), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
   ~BaseBinaryOpExpr() = default;
   std::string toString() const override = 0;
   void print() const override = 0;
-  size_t eval(std::unordered_map<std::string, size_t>& ctx) const override = 0;
-  
+  size_t eval(std::unordered_map<std::string, size_t> &ctx) const override = 0;
 };
 
-struct AdditionExpr: public BaseBinaryOpExpr {
+struct AdditionExpr : public BaseBinaryOpExpr {
 
-    AdditionExpr(std::unique_ptr<BaseArithmeticExpr> lhs, std::unique_ptr<BaseArithmeticExpr> rhs): BaseBinaryOpExpr(ArithmeticExpr::Addition, std::move(lhs), std::move(rhs)) {}
-    ~AdditionExpr() = default;
+  AdditionExpr(std::unique_ptr<BaseArithmeticExpr> lhs,
+               std::unique_ptr<BaseArithmeticExpr> rhs)
+      : BaseBinaryOpExpr(ArithmeticExpr::Addition, std::move(lhs),
+                         std::move(rhs)) {}
+  ~AdditionExpr() = default;
 
-    std::string toString() const override {
-      return std::format("{} + {}", lhs->toString(), rhs->toString());
+  std::string toString() const override {
+    return std::format("{} + {}", lhs->toString(), rhs->toString());
+  }
+  void print() const override { std::println("{}", this->toString()); }
+  size_t eval([[maybe_unused]] std::unordered_map<std::string, size_t> &ctx)
+      const override {
+    size_t l = lhs->eval(ctx);
+    size_t r = rhs->eval(ctx);
+    // assume both are below max
+    if (std::numeric_limits<size_t>::max() - l < r) {
+      throw std::overflow_error(
+          std::format("AdditionExpr: Size_t overflow for expression: {}",
+                      this->toString()));
     }
-    void print() const override {
-      std::println("{}", this->toString());
-    }
-    size_t eval([[maybe_unused]] std::unordered_map<std::string, size_t>& ctx) const override {
-      size_t l = lhs->eval(ctx);
-      size_t r = rhs->eval(ctx);
-      //assume both are below max
-      if(std::numeric_limits<size_t>::max() - l < r){
-        throw std::overflow_error(std::format("AdditionExpr: Size_t overflow for expression: {}", this->toString()));
-      }
-      return lhs->eval(ctx) + rhs->eval(ctx);
-    }
-
+    return lhs->eval(ctx) + rhs->eval(ctx);
+  }
 };
-struct SubstractionExpr: public BaseBinaryOpExpr {
-    SubstractionExpr(std::unique_ptr<BaseArithmeticExpr> lhs, std::unique_ptr<BaseArithmeticExpr> rhs): BaseBinaryOpExpr(ArithmeticExpr::Subtraction, std::move(lhs), std::move(rhs)) {}
-    ~SubstractionExpr() = default;
+struct SubstractionExpr : public BaseBinaryOpExpr {
+  SubstractionExpr(std::unique_ptr<BaseArithmeticExpr> lhs,
+                   std::unique_ptr<BaseArithmeticExpr> rhs)
+      : BaseBinaryOpExpr(ArithmeticExpr::Subtraction, std::move(lhs),
+                         std::move(rhs)) {}
+  ~SubstractionExpr() = default;
 
-    std::string toString() const override {
-      return std::format("{} - {}", lhs->toString(), rhs->toString());
+  std::string toString() const override {
+    return std::format("{} - {}", lhs->toString(), rhs->toString());
+  }
+  void print() const override { std::println("{}", this->toString()); }
+  size_t eval([[maybe_unused]] std::unordered_map<std::string, size_t> &ctx)
+      const override {
+    size_t l = lhs->eval(ctx);
+    size_t r = rhs->eval(ctx);
+    // assume both are below max
+    if (l < r) {
+      throw std::overflow_error(
+          std::format("AdditionExpr: Size_t underflow for expression: {}",
+                      this->toString()));
     }
-    void print() const override {
-      std::println("{}", this->toString());
-    }
-    size_t eval([[maybe_unused]] std::unordered_map<std::string, size_t>& ctx) const override {
-      size_t l = lhs->eval(ctx);
-      size_t r = rhs->eval(ctx);
-      //assume both are below max
-      if(l < r){
-        throw std::overflow_error(std::format("AdditionExpr: Size_t underflow for expression: {}", this->toString()));
-      }
-      return lhs->eval(ctx) - rhs->eval(ctx);
-    }
+    return lhs->eval(ctx) - rhs->eval(ctx);
+  }
 };
-
 
 // Base Class for Declaration Nodes
 class DeclPchorASTNode {
@@ -244,7 +256,7 @@ protected:
   explicit DeclPchorASTNode(Decl declType, std::string_view name)
       : name(std::string(name)), decl(declType) {}
 };
-//Base Class for ExpressionPchorASTNode
+// Base Class for ExpressionPchorASTNode
 class ExprPchorASTNode {
 public:
   virtual ~ExprPchorASTNode() = default;
@@ -282,16 +294,15 @@ public:
   size_t getLower() const { return lower; }
   size_t getUpper() const { return upper; }
 
-  void print() const override {
-    std::println("{}", this->toString());
-  }
-  virtual std::string toString() const override  {
+  void print() const override { std::println("{}", this->toString()); }
+  virtual std::string toString() const override {
     constexpr size_t n = std::numeric_limits<size_t>::max();
-    if(upper == n){
-      return std::format("Index {} with lower bound:{}, upper bound: n", name, lower);
+    if (upper == n) {
+      return std::format("Index {} with lower bound:{}, upper bound: n", name,
+                         lower);
     }
-    return std::format("Index {} with lower bound:{}, upper bound: {}", name, lower,
-                 upper);
+    return std::format("Index {} with lower bound:{}, upper bound: {}", name,
+                       lower, upper);
   }
 
   void accept(AbstractPchorASTVisitor &visitor) const override;
@@ -327,11 +338,10 @@ public:
 
   void accept(AbstractPchorASTVisitor &visitor) const override;
 
-  void print() const override {
-    std::println("{}", this->toString());
-  }
-  virtual std::string toString() const override  {
-    return std::format("Participant {} indexed with {}", name, index->getName());
+  void print() const override { std::println("{}", this->toString()); }
+  virtual std::string toString() const override {
+    return std::format("Participant {} indexed with {}", name,
+                       index->getName());
   }
 
 protected:
@@ -348,9 +358,7 @@ public:
 
   void accept(AbstractPchorASTVisitor &visitor) const override;
 
-  void print() const override {
-    std::println("{}", this->toString());
-  }
+  void print() const override { std::println("{}", this->toString()); }
   virtual std::string toString() const override {
     return std::format("Channel {} indexed with {}", name, index->getName());
   }
@@ -379,7 +387,7 @@ public:
     std::println("");
   }
 
-  virtual std::string toString() const override  {
+  virtual std::string toString() const override {
     return std::format("Label {}", name);
   }
 
@@ -389,15 +397,19 @@ protected:
 
 class IndexExpr : public ExprPchorASTNode {
 public:
-  explicit IndexExpr(std::shared_ptr<IndexASTNode> baseIndex, std::unique_ptr<BaseArithmeticExpr> literal, bool isLiteral)
+  explicit IndexExpr(std::shared_ptr<IndexASTNode> baseIndex,
+                     std::unique_ptr<BaseArithmeticExpr> literal,
+                     bool isLiteral)
       : ExprPchorASTNode(Expr::IndexExpr), baseIndex(baseIndex),
-        literal(std::move(literal)), isLiteral(isLiteral){}
+        literal(std::move(literal)), isLiteral(isLiteral) {}
 
-  explicit IndexExpr(std::shared_ptr<IndexASTNode> unaryIndex) : ExprPchorASTNode(Expr::IndexExpr){
-    if(unaryIndex->getName() != "PchorUnaryIndex"){
+  explicit IndexExpr(std::shared_ptr<IndexASTNode> unaryIndex)
+      : ExprPchorASTNode(Expr::IndexExpr) {
+    if (unaryIndex->getName() != "PchorUnaryIndex") {
       throw std::runtime_error(
-        std::format("Only unary indexed types can be used with unary indeces. Instead got {}", unaryIndex->getName())
-      );
+          std::format("Only unary indexed types can be used with unary "
+                      "indeces. Instead got {}",
+                      unaryIndex->getName()));
     }
     baseIndex = std::move(unaryIndex);
     literal = std::make_unique<LiteralExpr>(1);
@@ -405,25 +417,23 @@ public:
   }
   void accept(AbstractPchorASTVisitor &visitor) const override;
 
-  void print() const override {
-    std::println("{}", this->toString());
-  }
+  void print() const override { std::println("{}", this->toString()); }
 
-  virtual std::string toString() const override  {
+  virtual std::string toString() const override {
     return std::format("Index Expr with base {} and value: {}",
-                  baseIndex->getName(), literal->toString());
-
+                       baseIndex->getName(), literal->toString());
   }
   std::string getName() const { return baseIndex->getName(); }
   bool isExprLiteral() const { return isLiteral; }
-  size_t getLiteral(std::unordered_map<std::string, size_t> &ctx) const { return literal->eval(ctx); }
-
-  std::string getArithmeticExprString() {
-    return literal->toString();
+  size_t getLiteral(std::unordered_map<std::string, size_t> &ctx) const {
+    return literal->eval(ctx);
   }
 
-  EquivalenceBaseType getEquivalenceBaseType(const std::string& i){
-    return literal->getEquivalenceBaseType(i, baseIndex->getLower(), baseIndex->getUpper());
+  std::string getArithmeticExprString() { return literal->toString(); }
+
+  EquivalenceBaseType getEquivalenceBaseType(const std::string &i) {
+    return literal->getEquivalenceBaseType(i, baseIndex->getLower(),
+                                           baseIndex->getUpper());
   }
 
 protected:
@@ -449,8 +459,9 @@ public:
     std::print("Participant {} indexed with: ", baseParticipant->getName());
     index->print();
   }
-  virtual std::string toString() const override  {
-    return std::format("Participant {} indexed with: {}", baseParticipant->getName(), index->toString());
+  virtual std::string toString() const override {
+    return std::format("Participant {} indexed with: {}",
+                       baseParticipant->getName(), index->toString());
   }
 
 protected:
@@ -476,7 +487,8 @@ public:
     index->print();
   }
   virtual std::string toString() const override {
-    return std::format("Channel {} indexed with: {}", baseParticipant->getName(), index->toString());
+    return std::format("Channel {} indexed with: {}",
+                       baseParticipant->getName(), index->toString());
   }
 
 protected:
@@ -497,12 +509,13 @@ public:
 
   void accept(AbstractPchorASTVisitor &visitor) const override;
 
-  void print() const override {
-    std::println("{}", this->toString());
-  }
+  void print() const override { std::println("{}", this->toString()); }
 
   virtual std::string toString() const override {
-    return std::format("Communication Expression:\nSender: {}\nReceiver: {}\nChannel: {}\nDatatype: {}\n", sender->toString(), reciever->toString(), channel->toString(), dataType);
+    return std::format("Communication Expression:\nSender: {}\nReceiver: "
+                       "{}\nChannel: {}\nDatatype: {}\n",
+                       sender->toString(), reciever->toString(),
+                       channel->toString(), dataType);
   }
 
   std::string getDataType() const { return dataType; }
@@ -535,7 +548,7 @@ public:
     }
   }
 
-  virtual std::string toString() const override  {
+  virtual std::string toString() const override {
     std::string str = "Expression List of: \n";
     for (const std::shared_ptr<ExprPchorASTNode> &expr : exprlist) {
       str.append(expr->toString());
@@ -557,9 +570,7 @@ public:
   std::vector<std::shared_ptr<ExprPchorASTNode>>::const_iterator end() const {
     return exprlist.cend();
   }
-  size_t size() const {
-    return exprlist.size();
-  }
+  size_t size() const { return exprlist.size(); }
 
 protected:
   std::vector<std::shared_ptr<ExprPchorASTNode>> exprlist;
@@ -569,7 +580,7 @@ Recexpr is defined as a initial state X(index list)
 and substitution for X, which is a Expr-list, which must end with a
 Continuation-Expr
 */
-//these exist but are not implemented
+// these exist but are not implemented
 class ConExpr : public ExprPchorASTNode {
 public:
   explicit ConExpr(const std::string &recVar,
@@ -580,9 +591,8 @@ public:
   void accept(AbstractPchorASTVisitor &visitor) const override;
 
   void print() const override { std::println("We print recursive expr"); }
-  virtual std::string toString() const override  {
-    return "";
-  }
+  virtual std::string toString() const override { return ""; }
+
 protected:
   std::string recVar;
   std::shared_ptr<std::vector<IndexExpr>> indexContDomain;
@@ -599,9 +609,8 @@ public:
   void accept(AbstractPchorASTVisitor &visitor) const override;
 
   void print() const override { std::println("We print recursive expr"); }
-  virtual std::string toString() const  override {
-    return "";
-  }
+  virtual std::string toString() const override { return ""; }
+
 protected:
   std::string recVar; // Ie X..
   std::shared_ptr<std::vector<IndexExpr>> indexDomain;
@@ -609,83 +618,83 @@ protected:
                                   // continuation
 };
 
-class IterExpr: public ExprPchorASTNode {
+class IterExpr : public ExprPchorASTNode {
 public:
-    explicit IterExpr(std::shared_ptr<IndexASTNode> baseIndex, size_t min, size_t max, const std::string& identifier):
-    ExprPchorASTNode(Expr::IterExpr), baseIndex(baseIndex), min(min), max(max), identifier(identifier) {}
+  explicit IterExpr(std::shared_ptr<IndexASTNode> baseIndex, size_t min,
+                    size_t max, const std::string &identifier)
+      : ExprPchorASTNode(Expr::IterExpr), baseIndex(baseIndex), min(min),
+        max(max), identifier(identifier) {}
 
-    void accept(AbstractPchorASTVisitor& visitor) const override;
+  void accept(AbstractPchorASTVisitor &visitor) const override;
 
-    void print() const override {
-      std::println("{}", this->toString());
-    }
+  void print() const override { std::println("{}", this->toString()); }
 
-    virtual std::string toString() const override {
-      constexpr size_t n = std::numeric_limits<size_t>::max();
-      if(max == n){
-        return std::format("Iteration Index with identifier {}, min {} and max n\n", identifier, min);
-      }
-      return std::format("Iteration Index with identifier {}, min {} and max {}\n", identifier, min, max);
+  virtual std::string toString() const override {
+    constexpr size_t n = std::numeric_limits<size_t>::max();
+    if (max == n) {
+      return std::format(
+          "Iteration Index with identifier {}, min {} and max n\n", identifier,
+          min);
     }
+    if (max == n - 1) {
+      return std::format(
+          "Iteration Index with identifier {}, min {} and max n-1\n",
+          identifier, min);
+    }
+    return std::format(
+        "Iteration Index with identifier {}, min {} and max {}\n", identifier,
+        min, max);
+  }
 
-    std::shared_ptr<IndexASTNode> getBaseIndex() const {
-      return baseIndex;
-    }
-    size_t getMin() const {
-      return min;
-    }
-    size_t getMax() const {
-      return max;
-    }
-    const std::string& getIdentifierRef() const {
-      return identifier;
-    }
+  std::shared_ptr<IndexASTNode> getBaseIndex() const { return baseIndex; }
+  size_t getMin() const { return min; }
+  size_t getMax() const { return max; }
+  const std::string &getIdentifierRef() const { return identifier; }
 
-    IterType getType() const {
-      if(min == baseIndex->getLower() && max == baseIndex->getUpper()){
-        return IterType::FullIter;
-      }
-      else if(min != baseIndex->getLower() && max == baseIndex->getUpper()){
-        return IterType::MinExIter;
-      }
-      else if(max != baseIndex->getUpper() && min == baseIndex->getLower()) {
-        return IterType::MaxExIter;
-      }
-      else {
-        throw std::runtime_error(std::format("[PchorAST] Error: Iteration Expression does not adheer to formal definitions, expected (i: I | i < max(I) | i > min(I)), received: {}", this->toString()));
-      }
+  IterType getType() const {
+    if (min == baseIndex->getLower() && max == baseIndex->getUpper()) {
+      return IterType::FullIter;
+    } else if (min != baseIndex->getLower() && max == baseIndex->getUpper()) {
+      return IterType::MinExIter;
+    } else if (max != baseIndex->getUpper() && min == baseIndex->getLower()) {
+      return IterType::MaxExIter;
+    } else {
+      throw std::runtime_error(
+          std::format("[PchorAST] Error: Iteration Expression does not adheer "
+                      "to formal definitions, expected (i: I | i < max(I) | i "
+                      "> min(I)), received: {}",
+                      this->toString()));
     }
+  }
+
 private:
   std::shared_ptr<IndexASTNode> baseIndex;
   size_t min;
   size_t max;
   std::string identifier;
-
-  
 };
-//recursive structure implemented through foreach
-class ForEachExpr: public ExprPchorASTNode {
+// recursive structure implemented through foreach
+class ForEachExpr : public ExprPchorASTNode {
 public:
-  explicit ForEachExpr(std::shared_ptr<IterExpr> idxExpr, std::shared_ptr<ExprList> body):
-  ExprPchorASTNode(Expr::ForEachExpr), idxExpr(std::move(idxExpr)), body(std::move(body)) {}
+  explicit ForEachExpr(std::shared_ptr<IterExpr> idxExpr,
+                       std::shared_ptr<ExprList> body)
+      : ExprPchorASTNode(Expr::ForEachExpr), idxExpr(std::move(idxExpr)),
+        body(std::move(body)) {}
 
-  void accept(AbstractPchorASTVisitor& visitor) const override;
-  void print() const override {
-    std::println("{}", this->toString());
+  void accept(AbstractPchorASTVisitor &visitor) const override;
+  void print() const override { std::println("{}", this->toString()); }
+
+  virtual std::string toString() const override {
+    return std::format("forEach expression\n{}{}", idxExpr->toString(),
+                       body->toString());
   }
 
-  virtual std::string toString() const override  {
-    return std::format("forEach expression\n{}{}", idxExpr->toString(), body->toString());
-  }
+  std::shared_ptr<IterExpr> getIter() const { return idxExpr; }
+  std::shared_ptr<ExprList> getBody() const { return body; }
 
-  std::shared_ptr<IterExpr> getIter() const {
-    return idxExpr;
-  }
-  std::shared_ptr<ExprList> getBody() const {
-    return body;
-  }
 protected:
-//we need some min and max for the value as well as the identifier to replace with in the subexpressions
+  // we need some min and max for the value as well as the identifier to replace
+  // with in the subexpressions
   std::shared_ptr<IterExpr> idxExpr;
   std::shared_ptr<ExprList> body;
 };
@@ -702,12 +711,11 @@ public:
 
   void accept(AbstractPchorASTVisitor &visitor) const override;
 
-  void print() const override {
-    std::println("{}", this->toString());
-  }
+  void print() const override { std::println("{}", this->toString()); }
 
-  virtual std::string toString() const  override {
-    return std::format("Global Type {} with expressions:\n{}", name, expr_ptr->toString());
+  virtual std::string toString() const override {
+    return std::format("Global Type {} with expressions:\n{}", name,
+                       expr_ptr->toString());
   }
 
   std::shared_ptr<ExprList> getExprList() const { return expr_ptr; }

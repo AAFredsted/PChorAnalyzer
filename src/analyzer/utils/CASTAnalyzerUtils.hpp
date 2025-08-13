@@ -6,9 +6,9 @@
 #include <clang/Frontend/FrontendPluginRegistry.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include <print>
 #include <string>
 #include <vector>
-#include <print>
 
 namespace PchorAST {
 // matcher templates to match for array of NodeType of one element of NodeType
@@ -63,7 +63,7 @@ public:
     if (const auto *node = matchResult.Nodes.getNodeAs<NodeType>(bindName)) {
       result = node;
     } else {
-      //std::println("Warning: No match for bind name: {}", bindName);;
+      // std::println("Warning: No match for bind name: {}", bindName);;
     }
   }
 

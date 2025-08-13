@@ -13,10 +13,9 @@ public:
 
   void printValidations();
 
-  clang::FunctionDecl *validateFuncDecl(
-      std::shared_ptr<CASTMapping> CASTMap,
-      const ProjectionList &projections,
-      const ParticipantKey &participantName);
+  clang::FunctionDecl *validateFuncDecl(std::shared_ptr<CASTMapping> CASTMap,
+                                        const ProjectionList &projections,
+                                        const ParticipantKey &participantName);
 
   bool validateProjection(clang::ASTContext &Context,
                           std::shared_ptr<CASTMapping> &CASTmap,

@@ -4,15 +4,15 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include "../pchor/parser/PchorParser.hpp"
+#include "./utils/ContextManager.hpp"
 #include "./visitors/AstVisitor.hpp"
 #include "./visitors/CASTValidator.hpp"
-#include "./utils/ContextManager.hpp"
 
+#include <iterator>
 #include <memory>
+#include <print>
 #include <string>
 #include <vector>
-#include <iterator>
-#include <print>
 
 using namespace clang;
 
@@ -22,18 +22,22 @@ public:
   explicit ChoreographyAstConsumer(
       std::shared_ptr<PchorAST::SymbolTable> sTable, bool debug, bool onlyproj)
       : sTable(std::move(sTable)), debug(debug), onlyproj(onlyproj) {}
-void HandleTranslationUnit(ASTContext &Context) override {
-    std::println("\n\nAST has been fully created. CASTMapping and Choreography Projection Commencing!\n");
+  void HandleTranslationUnit(ASTContext &Context) override {
+    std::println("\n\nAST has been fully created. CASTMapping and Choreography "
+                 "Projection Commencing!\n");
     try {
       if (!sTable) {
-       std::println("Error: HandleTranslationUnit received no SymbolTable. Continuing to compilation\n");
+        std::println("Error: HandleTranslationUnit received no SymbolTable. "
+                     "Continuing to compilation\n");
         return;
       }
 
-      std::println("Symbol table correctly passed to ChoreographyAstConsumer\n");
+      std::println(
+          "Symbol table correctly passed to ChoreographyAstConsumer\n");
       auto globalTypePtr = sTable->back();
       if ((*globalTypePtr)->getDeclType() != PchorAST::Decl::Global_Type_Decl) {
-        throw std::runtime_error("Final Expression is required to be a Global type expression.");
+        throw std::runtime_error(
+            "Final Expression is required to be a Global type expression.");
       }
 
       if (onlyproj) {
@@ -50,7 +54,8 @@ void HandleTranslationUnit(ASTContext &Context) override {
 
       for (auto itr = sTable->begin(); itr != sTable->end(); ++itr) {
         if ((*itr)->getDeclType() != PchorAST::Decl::Global_Type_Decl ||
-            (std::distance(itr, sTable->end()) == 1 && (*itr)->getDeclType() == PchorAST::Decl::Global_Type_Decl)) {
+            (std::distance(itr, sTable->end()) == 1 &&
+             (*itr)->getDeclType() == PchorAST::Decl::Global_Type_Decl)) {
           (*itr)->accept(CAST_visitor);
         }
       }
@@ -74,9 +79,8 @@ void HandleTranslationUnit(ASTContext &Context) override {
     } catch (const std::exception &e) {
       llvm::errs() << "Error in CAST Mapping or Choreography Projection: \n"
                    << e.what() << "\n";
-                   
     }
-}
+  }
 
 private:
   std::shared_ptr<PchorAST::SymbolTable> sTable;
@@ -95,7 +99,8 @@ protected:
   CreateASTConsumer([[maybe_unused]] CompilerInstance &CI,
                     llvm::StringRef) override {
     // Create and return your AST consumer that prints messages.
-    return std::make_unique<ChoreographyAstConsumer>(std::move(sTable), debug, onlyproj);
+    return std::make_unique<ChoreographyAstConsumer>(std::move(sTable), debug,
+                                                     onlyproj);
   }
 
   bool ParseArgs([[maybe_unused]] const CompilerInstance &CI,
@@ -111,9 +116,10 @@ protected:
         debug = true;
         std::println("Debug flag found. Debug Output will be printed\n");
       }
-      if(arg.find("--projection") != std::string::npos) {
+      if (arg.find("--projection") != std::string::npos) {
         onlyproj = true;
-        std::println("Projection flag found. Program will only generate local type projections\n");
+        std::println("Projection flag found. Program will only generate local "
+                     "type projections\n");
       }
     }
 
@@ -126,7 +132,7 @@ protected:
     try {
       PchorAST::PchorParser parser{corFilePath};
       parser.genTokens();
-      if(debug) {
+      if (debug) {
         parser.printTokenList();
       }
       parser.parse();
