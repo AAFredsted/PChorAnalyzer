@@ -605,6 +605,7 @@ public:
             range [n,l] is turned into [l, n) with new projection P[n][n,n] existing (that is all)
         */
         //(l,n)
+        Range lnRange{Bound{RangeSymbol::L, false, true}, Bound{RangeSymbol::N, false, false}};
         
         for(const auto& [iKey, iProj]: projectionMap.at(key.name)) {
 
@@ -679,8 +680,17 @@ public:
             //case 3: (l,n)
             else if(i != l && i != n && !iKey.index) {
               //dont remove anything, just add!
-              std::println("we should not enter this case for now !!");
+              //in this case, we take any ranges witin (l,n) and add our own twist (no need for differencing, just straight copying across an entire range)
+              Range range = lnRange.intersection(*(iKey.range));
+              ParticipantKey lnKey{iKey.name, i, range, *(iKey.even)};
+              std::shared_ptr<ProjectionList> lnProj = std::make_shared<ProjectionList>();
 
+              lnProj->appendCloneBack(iProj);
+              lnProj->appendBack(proj->clone());
+              std::print("Insert new internal range: {} ", lnKey.toString());
+              lnProj->print();
+
+              keysToInsert.emplace_back(lnKey, lnProj);
             }
         }
         // 3. Apply removals
