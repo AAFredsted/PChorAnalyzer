@@ -301,7 +301,7 @@ template <typename ComType>
 requires std::derived_from<ComType, AbstractProjection>
 void insertFullPattern(FullIter& iter, 
                    const std::shared_ptr<ParticipantExpr>& participant, 
-                   const std::string& channelName,
+                   const std::shared_ptr<ChannelExpr>& channel,
                    const std::string& dataType,
                    const std::string& identifier
                   ) {
@@ -311,7 +311,8 @@ void insertFullPattern(FullIter& iter,
   if evaluated to i, insert Comtype(Isend|Ireceive) into a and a+b
   if evaluated to n-i+l, insert Comtype(Isend|Ireceive) into b and a+b
   */
-  const auto index = participant->getIndex();
+  const std::string& channelName = channel->getBaseParticipant()->getName();
+  const auto index = channel->getIndex();
   switch (index->getEquivalenceBaseType(identifier)) {
     case EquivalenceBaseType::forward:
       iter.addForward<ComType>(channelName, dataType, index);
@@ -330,7 +331,7 @@ template <typename ComType>
 requires std::derived_from<ComType, AbstractProjection>
 void insertMaxExPattern(MaxExcludingIter& iter, 
                    const std::shared_ptr<ParticipantExpr>& participant, 
-                   const std::string& channelName,
+                   const std::shared_ptr<ChannelExpr>& channel,
                    const std::string& dataType,
                    const std::string& identifier
                   ) {
@@ -345,7 +346,8 @@ void insertMaxExPattern(MaxExcludingIter& iter,
       for all other cases, this function is undefined and throws an error
 
   */
-  const auto index = participant->getIndex();
+  const std::string& channelName = channel->getBaseParticipant()->getName();
+  const auto index = channel->getIndex();
   switch(index->getEquivalenceBaseType(identifier)) {
     case EquivalenceBaseType::forward :
       iter.addForward<ComType>(channelName, dataType, index);
@@ -371,7 +373,7 @@ template <typename ComType>
 requires std::derived_from<ComType, AbstractProjection>
 void insertMinExPattern(MinExcludingIter& iter, 
                    const std::shared_ptr<ParticipantExpr>& participant, 
-                   const std::string& channelName,
+                   const std::shared_ptr<ChannelExpr>& channel,
                    const std::string& dataType,
                    const std::string& identifier
                   ) {
@@ -386,8 +388,8 @@ void insertMinExPattern(MinExcludingIter& iter,
       for all other cases, this function is undefined and throws an error
 
   */
-  
-  const auto index = participant->getIndex();
+  const std::string& channelName = channel->getBaseParticipant()->getName();
+  const auto index = channel->getIndex();
   switch(index->getEquivalenceBaseType(identifier)) {
     case EquivalenceBaseType::forward :
       iter.addForward<ComType>(channelName, dataType, index);
@@ -449,13 +451,13 @@ std::unordered_map<std::string, FullIter> Proj_PchorASTVisitor::getCasesFull(con
     if(!BasePattern.contains(senderName)) {
       BasePattern.try_emplace(senderName);
     }
-    insertFullPattern<Isend>(BasePattern.at(senderName), sender, channelName, dataType, i);
+    insertFullPattern<Isend>(BasePattern.at(senderName), sender, channel, dataType, i);
 
     const std::string receiverName = receiver->getBaseParticipant()->getName();
     if(!BasePattern.contains(receiverName)) {
       BasePattern.try_emplace(receiverName);
     }
-    insertFullPattern<Ireceive>(BasePattern.at(receiverName), receiver, channelName, dataType, i);
+    insertFullPattern<Ireceive>(BasePattern.at(receiverName), receiver, channel, dataType, i);
 
   }
     return BasePattern;
@@ -509,13 +511,13 @@ std::unordered_map<std::string, MaxExcludingIter> Proj_PchorASTVisitor::getCases
       BasePattern.try_emplace(senderName);
     }
     //identifies what basetype it belongs to based on senders index :)
-    insertMaxExPattern<Isend>(BasePattern.at(senderName), sender, channelName, dataType, i);
+    insertMaxExPattern<Isend>(BasePattern.at(senderName), sender, channel, dataType, i);
 
     const std::string receiverName = receiver->getBaseParticipant()->getName();
     if(!BasePattern.contains(receiverName)) {
       BasePattern.try_emplace(receiverName);
     }
-    insertMaxExPattern<Ireceive>(BasePattern.at(receiverName), receiver, channelName, dataType, i);
+    insertMaxExPattern<Ireceive>(BasePattern.at(receiverName), receiver, channel, dataType, i);
 
   }
   return BasePattern;
@@ -564,13 +566,13 @@ std::unordered_map<std::string, MinExcludingIter> Proj_PchorASTVisitor::getCases
     if(!BasePattern.contains(senderName)) {
       BasePattern.try_emplace(senderName);
     }
-    insertMinExPattern<Isend>(BasePattern.at(senderName), sender, channelName, dataType, i);
+    insertMinExPattern<Isend>(BasePattern.at(senderName), sender, channel, dataType, i);
 
     const std::string receiverName = receiver->getBaseParticipant()->getName();
     if(!BasePattern.contains(receiverName)) {
       BasePattern.try_emplace(receiverName);
     }
-    insertMinExPattern<Ireceive>(BasePattern.at(receiverName), receiver, channelName, dataType, i);
+    insertMinExPattern<Ireceive>(BasePattern.at(receiverName), receiver, channel, dataType, i);
 
   }
   return BasePattern;
