@@ -312,18 +312,21 @@ void insertFullPattern(FullIter& iter,
   if evaluated to n-i+l, insert Comtype(Isend|Ireceive) into b and a+b
   */
   const std::string& channelName = channel->getBaseParticipant()->getName();
-  const auto index = channel->getIndex();
-  switch (index->getEquivalenceBaseType(identifier)) {
+  //index of channel that we insert
+  const auto channelIndex = channel->getIndex();
+  //index of participant used to identify case
+  const auto participantIndex = participant->getIndex();
+  switch (participantIndex->getEquivalenceBaseType(identifier)) {
     case EquivalenceBaseType::forward:
-      iter.addForward<ComType>(channelName, dataType, index);
+      iter.addForward<ComType>(channelName, dataType, channelIndex);
       break;
     case EquivalenceBaseType::backward:
-      iter.addBackward<ComType>(channelName, dataType, index);
+      iter.addBackward<ComType>(channelName, dataType, channelIndex);
       break;
     default:
       throw std::runtime_error(std::format(
         "[Proj_Visitor] The iteration pattern ({}: I) only allows expressions of type (i|n-i). Found {}",
-        identifier, index->toString()));
+        identifier, participantIndex->toString()));
   }
 }
 
@@ -347,24 +350,26 @@ void insertMaxExPattern(MaxExcludingIter& iter,
 
   */
   const std::string& channelName = channel->getBaseParticipant()->getName();
-  const auto index = channel->getIndex();
-  switch(index->getEquivalenceBaseType(identifier)) {
+  const auto channelIndex = channel->getIndex();
+  //index of participant used to identify case
+  const auto participantIndex = participant->getIndex();
+  switch(participantIndex->getEquivalenceBaseType(identifier)) {
     case EquivalenceBaseType::forward :
-      iter.addForward<ComType>(channelName, dataType, index);
+      iter.addForward<ComType>(channelName, dataType, channelIndex);
       break;
     case EquivalenceBaseType::backward :
-      iter.addBackward<ComType>(channelName, dataType, index);
+      iter.addBackward<ComType>(channelName, dataType, channelIndex);
       break;
     case EquivalenceBaseType::forwardPlus :
-      iter.addForwardPlus<ComType>(channelName, dataType, index);
+      iter.addForwardPlus<ComType>(channelName, dataType, channelIndex);
       break;
     case EquivalenceBaseType::backwardMinus :
-      iter.addBackwardMinus<ComType>(channelName, dataType, index);
+      iter.addBackwardMinus<ComType>(channelName, dataType, channelIndex);
       break;
     default:
       throw std::runtime_error(std::format(
         "[Proj_Visitor] The iteration pattern ({} < max(I)) only allows expressions of type (i|n-i+l|i+1|n-i+l-1). Found {}",
-        identifier, index->toString()));
+        identifier, participantIndex->toString()));
   }
 }
 
@@ -389,24 +394,27 @@ void insertMinExPattern(MinExcludingIter& iter,
 
   */
   const std::string& channelName = channel->getBaseParticipant()->getName();
-  const auto index = channel->getIndex();
-  switch(index->getEquivalenceBaseType(identifier)) {
+  //channel index used for insertion
+  const auto channelIndex = channel->getIndex();
+  //index of participant used to identify case
+  const auto participantIndex = participant->getIndex();
+  switch(participantIndex->getEquivalenceBaseType(identifier)) {
     case EquivalenceBaseType::forward :
-      iter.addForward<ComType>(channelName, dataType, index);
+      iter.addForward<ComType>(channelName, dataType, channelIndex);
       break;
     case EquivalenceBaseType::backward :
-      iter.addBackward<ComType>(channelName, dataType, index);
+      iter.addBackward<ComType>(channelName, dataType, channelIndex);
       break;
     case EquivalenceBaseType::forwardMinus :
-      iter.addForwardMinus<ComType>(channelName, dataType, index);
+      iter.addForwardMinus<ComType>(channelName, dataType, channelIndex);
       break;
     case EquivalenceBaseType::backwardPlus :
-      iter.addBackwardPlus<ComType>(channelName, dataType, index);
+      iter.addBackwardPlus<ComType>(channelName, dataType, channelIndex);
       break;
     default:
       throw std::runtime_error(std::format(
         "[Proj_Visitor] The iteration pattern ({} < max(I)) only allows expressions of type (i|n-i+l|i+1|n-i+l-1). Found {}",
-        identifier, index->toString()));
+        identifier, participantIndex->toString()));
   }
 }
 /*
