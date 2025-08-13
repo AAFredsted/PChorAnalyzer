@@ -1,0 +1,11 @@
+Index I{0..n}
+
+Participant P{I}
+Channel c{I}
+
+iterexample = 
+    foreach(i : I) {
+        P[i] -> P[max(I)-i+min(I)]: c[i]<something>.
+        P[max(I)-i+min(I)] -> P[i]: c[i]<something>.
+        end
+    }. P[0] -> P[1]: c[1]<something>. end

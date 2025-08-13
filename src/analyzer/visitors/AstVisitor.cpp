@@ -169,25 +169,35 @@ void Proj_PchorASTVisitor::visit(const ParticipantExpr &expr) {
   auto baseIndex = expr.getBaseParticipant()->getIndex();
   size_t literal = indexExpr->getLiteral(this->indexIdentifierMap);
 
+  size_t lower = baseIndex->getLower();
+  size_t upper = baseIndex->getUpper();
 
-  if(literal < baseIndex->getLower() || literal > baseIndex->getUpper()){
+  if(literal < lower|| literal > upper){
     throw std::runtime_error(std::format("Index expression {} evaluated to {}, which is not within the range of [{}, {}].", indexExpr->toString(), literal, baseIndex->getLower(), baseIndex->getUpper()));
   }
   ParticipantKey key{expr.getBaseParticipant()->getName(), literal};
 
-  if (!this->ctx->hasParticipant(key)) {
-    this->ctx->addParticipant(key);
+
+  //this needs to be rewritten, and we can work it out
+  if (!this->ctx->hasParticipantGroup(key.name)) {
+    this->ctx->addParticipantGroup(key.name);
   }
   if (this->isSender) {
-    this->ctx->addProjection(key,
+    this->ctx->addLiteralProjection(key,
                               std::make_unique<Psend>(this->currentChannelName,
                                                       this->currentDataType,
-                                                      this->channelIndex));
+                                                      this->channelIndex),
+                              lower,
+                              upper
+                                                    );
   } else {
-    this->ctx->addProjection(
+    this->ctx->addLiteralProjection(
         key, std::make_unique<Preceive>(this->currentChannelName,
                                         this->currentDataType,
-                                        this->channelIndex));
+                                        this->channelIndex),
+             lower,
+             upper                         
+                                      );
   }
 }
 void Proj_PchorASTVisitor::visit(const ChannelExpr &expr) {
@@ -592,7 +602,7 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
 
       // a.b : [l,c) for K|2 and K!|2
       Range r1 = Range{Bound{RangeSymbol::L, true, true}, Bound{RangeSymbol::C, false, false}};
-      ParticipantKey key1e{name, r1, EvenCase::Even};
+      ParticipantKey key1{name, r1, EvenCase::Both};
       ParticipantKey key1o{name, r1, EvenCase::Odd};
 
       std::shared_ptr<ProjectionList> case1 = std::make_shared<ProjectionList>();
@@ -601,8 +611,8 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
 
       //add to other relevant types here
       //new function to handle all cases for us :) <3
-      ctx->appendCloneRangedProjection(key1e, case1,l, n);
-      ctx->appendCloneRangedProjection(key1o, case1,l, n);
+      ctx->appendCloneRangedProjection(key1, case1,l, n);
+      //ctx->appendCloneRangedProjection(key1o, case1,l, n);
 
 
       //a+b : [c,c] for K!|2
@@ -629,9 +639,7 @@ void Proj_PchorASTVisitor::addEquivalenceClassesFull(std::unordered_map<std::str
 
       //add to other relevant types here
       //return here
-      std::println("we fail here");
       ctx->appendCloneRangedProjection(key3e, case3, l, n);
-      std::println("we fail here");
       //we only remove when adding closing odd case !
       ctx->appendCloneRangedProjection(key3o, case3, l, n);
 
